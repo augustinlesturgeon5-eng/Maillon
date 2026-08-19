@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 /* =========================================================================
    MAILLON v4 — Prototype cliquable
@@ -715,6 +716,21 @@ const buildEmailSkeleton=(subject)=>`<!DOCTYPE html>
   </body>
 </html>`;
 
+const mapCompanyRow=(c)=>{
+  const plan=PLANS.find((p)=>p.id===c.plan_id)||PLANS[0];
+  return {
+    id:c.id,name:c.name,sector:c.sector||"Non précisé",loc:c.loc||"France",emp:c.emp,
+    size:(c.emp||"")+" pers.",founded:c.founded||"—",ca:c.ca,dispo:c.dispo,web:c.web||"—",
+    refs:0,rating:5.0,plan:plan.name,planId:plan.id,billing:c.billing||"Mensuelle",
+    membre:plan.id==="pro",logo:c.logo_url,color:c.color||"#0F846B",desc:c.description||"Présentation à compléter.",
+    seek:c.seek||[],offer:c.offer||[],certifs:c.certifs||[],langues:c.langues&&c.langues.length?c.langues:["Français"],
+    services:c.services&&c.services.length?c.services:["Direction","Commercial"],
+    receptionPole:c.reception_pole||"Direction",siret:c.siret||"",verifiedSiren:!!c.verified_siren,verified:!!c.verified,
+  };
+};
+const mapProfileRow=(p,email)=>({id:p.id,name:p.full_name||"Vous",role:p.role||"Direction",status:p.status||"active",email:email||""});
+const mapDirectoryCompany=(row)=>{const base=mapCompanyRow(row);return {...base,tag:base.desc,rel:"none",channels:{}};};
+
 const FIRST_NAMES=["Jérôme","Kevin","Nicolas","Anthony","Philippe","Yann","Camille","Julie","Sophie","Thomas","Marion","Alexandre","Claire","Mathieu","Laura","Vincent"];
 const LAST_NAMES=["Lesoudeer","Simon","Perennes","Garcia","Desaize","Parcheminier","Moreau","Girard","Lefebvre","Roussel","Faure","Marchand","Guillou","Le Goff","Bertin"];
 const slugify=(s)=>(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"");
@@ -900,6 +916,11 @@ const INTERNAL_REPLIES = [
 
 export default function Maillon(){
   const [me,setMe]=useState(null);
+  const [session,setSession]=useState(null);
+  const [authReady,setAuthReady]=useState(false);
+  const [authMode,setAuthMode]=useState("signin");
+  const [authError,setAuthError]=useState("");
+  const [authBusy,setAuthBusy]=useState(false);
   const [obStep,setObStep]=useState(0);
   const [form,setForm]=useState({name:"",sector:"",loc:"",emp:EMP[0],color:COLORS[0],radius:50,
     desc:"",seek:"",offer:"",founded:"",ca:CA[0],dispo:DISPO[0],web:"",certifs:"",langues:"",plan:"gratuit",billing:"Mensuelle",logo:null,services:["Direction","Commercial","Marketing & Com","RH","Comptabilité"],receptionPole:"Direction",siret:""});
@@ -929,9 +950,6 @@ export default function Maillon(){
   const [loginPwd,setLoginPwd]=useState("");
   const [inviteEmail,setInviteEmail]=useState("");
   const [inviteRole,setInviteRole]=useState("");
-  const [activating,setActivating]=useState(null);
-  const [actName,setActName]=useState("");
-  const [actPwd,setActPwd]=useState("");
   const [access,setAccess]=useState({admins:["Direction"],grants:{}});
   const [accessOpen,setAccessOpen]=useState(false);
   const [auditLog,setAuditLog]=useState([]);
@@ -1029,7 +1047,50 @@ export default function Maillon(){
     setInternalMsg("");
   };
   useEffect(()=>{const k=(e)=>{if(e.key==="Escape"){setProspect(null);setOpenC(null);}};window.addEventListener("keydown",k);return()=>window.removeEventListener("keydown",k);},[]);
+
+  const hydrateFromSession=async(sess)=>{
+    setSession(sess);
+    if(!sess){setMe(null);setCurrentUser(null);setTeam([]);setAuthReady(true);return;}
+    const {data:profile}=await supabase.from("profiles").select("*").eq("id",sess.user.id).single();
+    if(!profile||!profile.company_id){
+      setMe(null);setCurrentUser(profile?mapProfileRow(profile,sess.user.email):null);setTeam([]);setAuthReady(true);return;
+    }
+    const [{data:company},{data:teammates}]=await Promise.all([
+      supabase.from("companies").select("*").eq("id",profile.company_id).single(),
+      supabase.from("profiles").select("*").eq("company_id",profile.company_id),
+    ]);
+    if(!company){setMe(null);setCurrentUser(mapProfileRow(profile,sess.user.email));setTeam([]);setAuthReady(true);return;}
+    const mappedCompany=mapCompanyRow(company);
+    setMe(mappedCompany);
+    setCurrentUser(mapProfileRow(profile,sess.user.email));
+    setTeam((teammates||[]).map((p)=>mapProfileRow(p,p.id===sess.user.id?sess.user.email:"")));
+    const adminSvc=mappedCompany.services.includes("Direction")?"Direction":mappedCompany.services[0];
+    setAccess({admins:[adminSvc],grants:{}});
+    setAuthReady(true);
+  };
+
+  useEffect(()=>{
+    let active=true;
+    supabase.auth.getSession().then(({data})=>{if(active)hydrateFromSession(data.session);});
+    const {data:sub}=supabase.auth.onAuthStateChange((_event,sess)=>{hydrateFromSession(sess);});
+    return ()=>{active=false;sub.subscription.unsubscribe();};
+  },[]);
   useEffect(()=>{if(!notifOpen)return;const onDown=(e)=>{if(notifRef.current&&!notifRef.current.contains(e.target))setNotifOpen(false);};document.addEventListener("mousedown",onDown);return()=>document.removeEventListener("mousedown",onDown);},[notifOpen]);
+
+  useEffect(()=>{
+    if(!me)return;
+    let active=true;
+    supabase.from("companies").select("*").neq("id",me.id).then(({data,error})=>{
+      if(!active||error||!data)return;
+      const real=data.map(mapDirectoryCompany);
+      setCompanies((cs)=>{
+        const existing=new Set(cs.map((c)=>c.id));
+        const fresh=real.filter((c)=>!existing.has(c.id));
+        return fresh.length?[...fresh,...cs]:cs;
+      });
+    });
+    return ()=>{active=false;};
+  },[me&&me.id]);
 
   const update=(id,patch)=>setCompanies((cs)=>cs.map((c)=>c.id===id?{...c,...patch}:c));
   const addLog=(id,entry)=>setCompanies((cs)=>cs.map((c)=>c.id===id?{...c,log:[...(c.log||[]),entry]}:c));
@@ -1070,33 +1131,37 @@ export default function Maillon(){
     reader.readAsDataURL(file);
   };
 
-  const finishOnboarding=()=>{
+  const finishOnboarding=async()=>{
+    if(!session){toast("Session expirée, reconnectez-vous.");return;}
     const chosen=PLANS.find((p)=>p.id===form.plan)||PLANS[0];
-    setMe({name:form.name||"Mon Entreprise",sector:form.sector||"Non précisé",loc:form.loc||"France",emp:form.emp,radius:form.radius,
-      size:form.emp+" pers.",color:form.color,desc:form.desc||"Présentation à compléter.",
-      founded:form.founded||"—",ca:form.ca,dispo:form.dispo,web:form.web||"—",refs:0,rating:5.0,
-      plan:chosen.name,planId:chosen.id,billing:form.billing,membre:chosen.id==="pro",logo:form.logo,
-      services:(form.services&&form.services.length)?form.services:["Direction","Commercial"],
-      receptionPole:(form.services.includes(form.receptionPole)?form.receptionPole:(form.services.includes("Direction")?"Direction":(form.services[0]||"Direction"))),
-      siret:form.siret,verifiedSiren:!!form.siret.trim(),
-      certifs:form.certifs?form.certifs.split(",").map((s)=>s.trim()).filter(Boolean):[],
-      langues:form.langues?form.langues.split(",").map((s)=>s.trim()).filter(Boolean):["Français"],
-      seek:form.seek?form.seek.split(",").map((s)=>s.trim()).filter(Boolean):["Partenaires"],
-      offer:form.offer?form.offer.split(",").map((s)=>s.trim()).filter(Boolean):["Services"]});
+    const services=(form.services&&form.services.length)?form.services:["Direction","Commercial"];
+    const receptionPole=services.includes(form.receptionPole)?form.receptionPole:(services.includes("Direction")?"Direction":(services[0]||"Direction"));
+    const splitList=(s)=>s?s.split(",").map((x)=>x.trim()).filter(Boolean):[];
+    setAuthBusy(true);
+    const {data:company,error}=await supabase.from("companies").insert({
+      name:form.name||"Mon Entreprise",sector:form.sector||"Non précisé",loc:form.loc||"France",emp:form.emp,
+      founded:form.founded||null,ca:form.ca,dispo:form.dispo,web:form.web||null,siret:form.siret||null,
+      verified_siren:!!form.siret.trim(),color:form.color,logo_url:form.logo||null,
+      description:form.desc||"Présentation à compléter.",seek:splitList(form.seek),offer:splitList(form.offer),
+      certifs:splitList(form.certifs),langues:form.langues?splitList(form.langues):["Français"],
+      services,reception_pole:receptionPole,plan_id:chosen.id,billing:form.billing,
+    }).select().single();
+    if(error){setAuthBusy(false);toast("Erreur : "+error.message);return;}
+    const {data:profile,error:profErr}=await supabase.from("profiles").update({
+      company_id:company.id,full_name:form.name,role:receptionPole,status:"active",
+    }).eq("id",session.user.id).select().single();
+    setAuthBusy(false);
+    if(profErr){toast("Erreur : "+profErr.message);return;}
+    setMe(mapCompanyRow(company));
+    setCurrentUser(mapProfileRow(profile,session.user.email));
+    setTeam([mapProfileRow(profile,session.user.email)]);
+    setAccess({admins:[receptionPole],grants:{}});
     setView("discover");toast("Votre page est en ligne");
     setProspectsUsed(0);
-    const NAMES=["Camille Ropars","Malo Le Guen","Inès Tanguy","Yann Corre","Nolwenn Prigent","Erwan Salaün","Gwen Riou","Lucie Merrien"];
-    const svcs=form.services;const adminSvc=svcs.includes("Direction")?"Direction":(svcs[0]||"Direction");
-    const domain=(form.web||"entreprise.fr").replace(/^https?:\/\//,"").replace(/\/.*$/,"");
-    const slug=(n)=>n.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,".");
-    const t=svcs.map((s,i)=>({id:i+1,name:NAMES[i%NAMES.length],role:s,email:`${slug(NAMES[i%NAMES.length])}@${domain}`,status:"active"}));
-    setTeam(t);
-    setAccess({admins:[adminSvc],grants:{}});
   };
   const updateRole=(id,r)=>{setTeam((ts)=>ts.map((x)=>x.id===id?{...x,role:r}:x));setCurrentUser((u)=>u&&u.id===id?{...u,role:r}:u);logEvent(`Rôle modifié → ${r}`);};
-  const logout=()=>{if(currentUser)logEvent(`Déconnexion — ${currentUser.name}`);setCurrentUser(null);setLoginEmail("");setLoginPwd("");setView("discover");};
+  const logout=async()=>{if(currentUser)logEvent(`Déconnexion — ${currentUser.name}`);await supabase.auth.signOut();setLoginEmail("");setLoginPwd("");setView("discover");};
   const sendInvite=(email,rl)=>{const e=(email||"").trim();if(!e||!/@/.test(e))return;const local=e.split("@")[0];const nm=local.split(/[._-]/).map((p)=>p?p[0].toUpperCase()+p.slice(1):p).join(" ");setTeam((ts)=>[...ts,{id:Date.now(),name:nm,email:e,role:rl,status:"invited"}]);logEvent(`Invitation envoyée à ${e} (${rl})`);toast(`Invitation envoyée à ${e}`);};
-  const activateAccount=(m,name,pwd)=>{setTeam((ts)=>ts.map((x)=>x.id===m.id?{...x,status:"active",name:name||x.name}:x));setCurrentUser({...m,status:"active",name:name||m.name});logEvent(`Compte créé — ${name||m.name} (${m.role})`);toast("Compte créé — bienvenue !");};
 
   const planCredits=()=>{const p=PLANS.find((x)=>x.id===(me&&me.planId));return p?p.credits:null;};
   const remaining=()=>{const c=planCredits();return c==null?null:Math.max(0,c-prospectsUsed);};
@@ -1252,6 +1317,58 @@ export default function Maillon(){
 
   const relLabel=(rel)=>({sent:["En attente","var(--amber)"],incoming:["Vous a démarché","var(--blue)"],declined:["Décliné","var(--slate-soft)"]}[rel]);
 
+  /* ============ CHARGEMENT ============ */
+  if(!authReady){
+    return(
+      <div className="mln"><style>{CSS}</style>
+        <div className="login">
+          <div className="loginbox" style={{textAlign:"center"}}>
+            <div className="brand" style={{marginBottom:22,justifyContent:"center"}}><Mark/><b className="disp" style={{fontSize:20}}>Maillon</b></div>
+            <p className="loginsub">Chargement…</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ============ AUTHENTIFICATION ============ */
+  if(!session){
+    const doAuth=async()=>{
+      setAuthError("");
+      if(!loginEmail.trim()||!loginPwd){setAuthError("Renseignez un email et un mot de passe.");return;}
+      setAuthBusy(true);
+      const {error}=authMode==="signup"
+        ?await supabase.auth.signUp({email:loginEmail.trim(),password:loginPwd})
+        :await supabase.auth.signInWithPassword({email:loginEmail.trim(),password:loginPwd});
+      setAuthBusy(false);
+      if(error){setAuthError(error.message);return;}
+      toast(authMode==="signup"?"Compte créé !":"Connexion réussie");
+    };
+    return(
+      <div className="mln"><style>{CSS}</style>
+        <div className="login">
+          <div className="loginbox">
+            <div className="brand" style={{marginBottom:22}}><Mark/><b className="disp" style={{fontSize:20}}>Maillon</b></div>
+            <h1 className="disp">{authMode==="signup"?"Créer votre compte":"Connexion"}</h1>
+            <p className="loginsub">{authMode==="signup"?"Créez votre compte, vous publierez ensuite la page de votre entreprise.":"Connectez-vous pour accéder à votre espace."}</p>
+            <div className="field"><label>E-mail</label>
+              <input value={loginEmail} onChange={(e)=>setLoginEmail(e.target.value)} placeholder="prenom.nom@entreprise.fr" onKeyDown={(e)=>e.key==="Enter"&&doAuth()}/></div>
+            <div className="field"><label>Mot de passe</label>
+              <input type="password" value={loginPwd} onChange={(e)=>setLoginPwd(e.target.value)} placeholder="••••••••" onKeyDown={(e)=>e.key==="Enter"&&doAuth()}/></div>
+            {authError&&<p style={{color:"var(--coral)",fontSize:13,margin:"0 0 12px"}}>{authError}</p>}
+            <button className="btn block" disabled={authBusy} onClick={doAuth}>{authBusy?"Un instant…":(authMode==="signup"?"Créer mon compte":"Se connecter")}</button>
+            <div style={{textAlign:"center",marginTop:14}}>
+              <button className="linkbtn" onClick={()=>{setAuthMode(authMode==="signup"?"signin":"signup");setAuthError("");}}>
+                {authMode==="signup"?"Vous avez déjà un compte ? Se connecter":"Pas encore de compte ? En créer un"}
+              </button>
+            </div>
+            <p className="simnote">Vos identifiants sont gérés de façon sécurisée par Supabase.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   /* ============ ONBOARDING ============ */
   if(!me){
     const hints=["Identité","Activité","Détails","Abonnement"];
@@ -1366,73 +1483,6 @@ export default function Maillon(){
           </div>
         </div>
         <div className="foot">Prototype <b>Maillon</b> — maquette cliquable · données fictives</div>
-      </div>
-    );
-  }
-
-  /* ============ CONNEXION ============ */
-  if(!currentUser){
-    const adminMember=team.find((m)=>access.admins.includes(m.role))||team[0];
-    const doLogin=()=>{const found=team.find((m)=>m.email&&m.email.toLowerCase()===loginEmail.trim().toLowerCase());const u=found||adminMember||{id:0,name:"Vous",role:(me.services&&me.services[0])||"Direction"};if(u.status==="disabled"){toast("Ce compte est désactivé");return;}setCurrentUser(u);logEvent(`Connexion — ${u.name} (${u.role})`);toast("Connexion réussie");};
-    return(
-      <div className="mln"><style>{CSS}</style>
-        <div className="login">
-          <div className="loginbox">
-            <div className="brand" style={{marginBottom:22}}><Mark/><b className="disp" style={{fontSize:20}}>Maillon</b></div>
-            <div className="logco">
-              <div className="logologo" style={{background:me.color}}>{logoImg(me)}</div>
-              <div><b>{me.name}</b><small>{me.sector} · {me.loc}</small></div>
-            </div>
-            <h1 className="disp">Connexion</h1>
-            <p className="loginsub">Connectez-vous avec votre compte pour accéder à votre espace.</p>
-            <div className="field"><label>E-mail professionnel</label>
-              <input value={loginEmail} onChange={(e)=>setLoginEmail(e.target.value)} placeholder="prenom.nom@entreprise.fr" onKeyDown={(e)=>e.key==="Enter"&&doLogin()}/></div>
-            <div className="field"><label>Mot de passe</label>
-              <input type="password" value={loginPwd} onChange={(e)=>setLoginPwd(e.target.value)} placeholder="••••••••" onKeyDown={(e)=>e.key==="Enter"&&doLogin()}/></div>
-            <button className="btn block" onClick={doLogin}>Se connecter</button>
-            <div style={{textAlign:"center",marginTop:12}}><button className="linkbtn" onClick={()=>toast("Lien de réinitialisation envoyé (démo)")}>Mot de passe oublié ?</button></div>
-            <div className="logsep"><span>Comptes de l'entreprise</span></div>
-            <div className="logaccts">
-              {team.filter((m)=>m.status!=="invited").map((m)=>(
-                <button key={m.id} className="logacct" disabled={m.status==="disabled"} style={m.status==="disabled"?{opacity:.5,cursor:"not-allowed"}:{}} onClick={()=>{if(m.status==="disabled")return;setCurrentUser(m);logEvent(`Connexion — ${m.name} (${m.role})`);toast(`Connecté en tant que ${m.name}`);}}>
-                  <div className="lav" style={{background:access.admins.includes(m.role)?"var(--emerald)":"var(--ink)"}}>{m.name[0]}</div>
-                  <div style={{minWidth:0}}><b>{m.name}</b><small>{m.role}{access.admins.includes(m.role)?" · admin":""}{m.status==="disabled"?" · désactivé":""}</small></div>
-                </button>
-              ))}
-            </div>
-            {team.some((m)=>m.status==="invited")&&(
-              <>
-                <div className="logsep"><span>Invitations en attente</span></div>
-                <div className="logaccts">
-                  {team.filter((m)=>m.status==="invited").map((m)=>(
-                    <div key={m.id} className="logacct" style={{cursor:"default"}}>
-                      <div className="lav" style={{background:"var(--amber)"}}>{m.name[0]}</div>
-                      <div style={{minWidth:0,flex:1}}><b>{m.name}</b><small>{m.email} · {m.role}</small></div>
-                      <button className="btn sm" onClick={()=>{setActivating(m);setActName(m.name);setActPwd("");}}>Activer mon compte</button>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-            <p className="simnote">Démonstration — la connexion n'est pas sécurisée dans la maquette. Cliquez un compte pour vous connecter directement.</p>
-          </div>
-        </div>
-
-        {activating&&(
-          <>
-            <div className="scrim" onClick={()=>setActivating(null)}/>
-            <div className="modal" onClick={()=>setActivating(null)}>
-              <div className="mbox" onClick={(e)=>e.stopPropagation()}>
-                <h3 className="disp">Activer votre compte</h3>
-                <p className="mi" style={{marginBottom:16}}>Invitation reçue sur <b>{activating.email}</b> pour rejoindre {me.name} en tant que <b>{activating.role}</b>. Créez votre accès.</p>
-                <div className="field"><label>Votre nom</label><input value={actName} onChange={(e)=>setActName(e.target.value)} placeholder="Prénom Nom"/></div>
-                <div className="field"><label>Choisir un mot de passe</label><input type="password" value={actPwd} onChange={(e)=>setActPwd(e.target.value)} placeholder="••••••••"/></div>
-                <button className="btn block" onClick={()=>{activateAccount(activating,actName,actPwd);setActivating(null);}}>Créer mon compte et entrer</button>
-                <p className="simnote">Le rôle est fixé par votre entreprise — vous ne pourrez pas le modifier.</p>
-              </div>
-            </div>
-          </>
-        )}
       </div>
     );
   }
