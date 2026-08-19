@@ -730,6 +730,7 @@ const mapCompanyRow=(c)=>{
 };
 const mapProfileRow=(p,email)=>({id:p.id,name:p.full_name||"Vous",role:p.role||"Direction",status:p.status||"active",email:email||""});
 const mapDirectoryCompany=(row)=>{const base=mapCompanyRow(row);return {...base,tag:base.desc,rel:"none",channels:{}};};
+const isRealCompany=(c)=>!!c&&typeof c.id==="string";
 
 const FIRST_NAMES=["Jérôme","Kevin","Nicolas","Anthony","Philippe","Yann","Camille","Julie","Sophie","Thomas","Marion","Alexandre","Claire","Mathieu","Laura","Vincent"];
 const LAST_NAMES=["Lesoudeer","Simon","Perennes","Garcia","Desaize","Parcheminier","Moreau","Girard","Lefebvre","Roussel","Faure","Marchand","Guillou","Le Goff","Bertin"];
@@ -1088,6 +1089,18 @@ export default function Maillon(){
         const fresh=real.filter((c)=>!existing.has(c.id));
         return fresh.length?[...fresh,...cs]:cs;
       });
+      supabase.from("connections").select("*").or(`from_company_id.eq.${me.id},to_company_id.eq.${me.id}`).then(({data:conns})=>{
+        if(!active||!conns)return;
+        conns.forEach((row)=>{
+          const otherId=row.from_company_id===me.id?row.to_company_id:row.from_company_id;
+          let patch=null;
+          if(row.status==="pending"){
+            patch=row.from_company_id===me.id?{rel:"sent",sentTo:row.service}:{rel:"incoming",reqMsg:row.message};
+          }else if(row.status==="accepted"){patch={rel:"connected"};}
+          else if(row.status==="declined"){patch={rel:"declined"};}
+          if(patch)update(otherId,{...patch,connectionId:row.id});
+        });
+      });
     });
     return ()=>{active=false;};
   },[me&&me.id]);
@@ -1173,6 +1186,11 @@ export default function Maillon(){
       `On aimerait explorer une collaboration autour de ${(c.seek&&c.seek[0])||"nos activités"}. Ouvert à en discuter ?`);};
   const sendProspect=()=>{
     const c=prospect;const target=c.receptionPole||"Direction";setProspectsUsed((n)=>n+1);update(c.id,{rel:"sent",sentTo:target});setProspect(null);logHist(`Demande de mise en relation envoyée à ${c.name} (pôle ${target})`,"send");toast(`Demande envoyée à ${c.name} · pôle ${target}`);
+    if(isRealCompany(c)&&isRealCompany(me)){
+      supabase.from("connections").insert({from_company_id:me.id,to_company_id:c.id,status:"pending",service:target,message:pmsg}).select().single()
+        .then(({data,error})=>{if(!error&&data)update(c.id,{connectionId:data.id});});
+      return;
+    }
     setTimeout(()=>{
       const common=commonServices(c);const svc=common.includes(target)?target:(common[0]||"Direction");
       const emailingConsent=Math.random()<0.65;
@@ -1187,6 +1205,10 @@ export default function Maillon(){
   };
 
   const accept=(c,emailingOptIn,emailingAddresses)=>{const pole=(me&&me.receptionPole)||"Direction";const common=commonServices(c);const svc=common.includes(pole)?pole:(common[0]||"Direction");const addrs=emailingOptIn?(emailingAddresses||[]).map((e)=>e.trim()).filter(Boolean):[];update(c.id,{rel:"connected",emailingOptIn:!!emailingOptIn,emailingAddresses:addrs,channels:{[svc]:[{from:"sys",text:`Vous avez accepté la demande de ${c.name} · service ${svc}.`},{from:"them",text:c.reqMsg}]}});setActiveConv(c.id);setActiveService(svc);logEvent(`Mise en relation acceptée — ${c.name}`);logHist(`Vous avez accepté la demande de ${c.name}${emailingOptIn?" · abonné à l'emailing":""}`,"accept");toast(`Connecté avec ${c.name}`);
+    if(isRealCompany(c)){
+      if(c.connectionId)supabase.from("connections").update({status:"accepted",service:svc,emailing_opt_in:!!emailingOptIn,emailing_addresses:addrs,responded_at:new Date().toISOString()}).eq("id",c.connectionId).then(()=>{});
+      return;
+    }
     setTimeout(()=>{
       const emailingConsent=Math.random()<0.65;
       update(c.id,{emailingConsent,emailingContacts:emailingConsent?genContacts(c):undefined});
@@ -1194,7 +1216,9 @@ export default function Maillon(){
       else{logHist(`${c.name} n'a pas souhaité recevoir vos campagnes d'emailing`,"info");}
     },1800);
   };
-  const decline=(c)=>{update(c.id,{rel:"declined"});logHist(`Demande de ${c.name} déclinée`,"info");toast(`Demande de ${c.name} déclinée`);};
+  const decline=(c)=>{update(c.id,{rel:"declined"});logHist(`Demande de ${c.name} déclinée`,"info");toast(`Demande de ${c.name} déclinée`);
+    if(isRealCompany(c)&&c.connectionId)supabase.from("connections").update({status:"declined",responded_at:new Date().toISOString()}).eq("id",c.connectionId).then(()=>{});
+  };
   const updateRsvp=(campId,companyId,status)=>{
     setCampaigns((cs)=>cs.map((c)=>c.id===campId?{...c,rsvp:c.rsvp.map((r)=>r.companyId===companyId?{...r,status}:r)}:c));
   };
