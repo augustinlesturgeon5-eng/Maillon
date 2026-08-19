@@ -1065,8 +1065,7 @@ export default function Maillon(){
     setMe(mappedCompany);
     setCurrentUser(mapProfileRow(profile,sess.user.email));
     setTeam((teammates||[]).map((p)=>mapProfileRow(p,p.id===sess.user.id?sess.user.email:"")));
-    const adminSvc=mappedCompany.services.includes("Direction")?"Direction":mappedCompany.services[0];
-    setAccess({admins:[adminSvc],grants:{}});
+    setAccess({admins:[mappedCompany.receptionPole],grants:{}});
     setAuthReady(true);
   };
 
@@ -1100,9 +1099,39 @@ export default function Maillon(){
           else if(row.status==="declined"){patch={rel:"declined"};}
           if(patch)update(otherId,{...patch,connectionId:row.id});
         });
+        const accepted=conns.filter((c)=>c.status==="accepted");
+        if(!accepted.length)return;
+        const otherOf={};accepted.forEach((row)=>{otherOf[row.id]=row.from_company_id===me.id?row.to_company_id:row.from_company_id;});
+        supabase.from("messages").select("*").in("connection_id",accepted.map((c)=>c.id)).order("created_at",{ascending:true}).then(({data:msgs})=>{
+          if(!active||!msgs)return;
+          const byCompany={};
+          msgs.forEach((m)=>{
+            const otherId=otherOf[m.connection_id];if(!otherId)return;
+            byCompany[otherId]=byCompany[otherId]||{};
+            (byCompany[otherId][m.service]=byCompany[otherId][m.service]||[]).push({from:m.sender_company_id===me.id?"me":"them",text:m.body,id:m.id});
+          });
+          Object.keys(byCompany).forEach((otherId)=>update(otherId,{channels:byCompany[otherId]}));
+        });
       });
     });
     return ()=>{active=false;};
+  },[me&&me.id]);
+
+  useEffect(()=>{
+    if(!me)return;
+    const channel=supabase.channel("messages-"+me.id)
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},(payload)=>{
+        const m=payload.new;
+        if(m.sender_company_id===me.id)return;
+        setCompanies((cs)=>cs.map((c)=>{
+          if(c.connectionId!==m.connection_id)return c;
+          const arr=(c.channels&&c.channels[m.service])||[];
+          return {...c,channels:{...(c.channels||{}),[m.service]:[...arr,{from:"them",text:m.body,id:m.id}]}};
+        }));
+        toast("💬 Nouveau message reçu");
+      })
+      .subscribe();
+    return ()=>{supabase.removeChannel(channel);};
   },[me&&me.id]);
 
   const update=(id,patch)=>setCompanies((cs)=>cs.map((c)=>c.id===id?{...c,...patch}:c));
@@ -1261,10 +1290,14 @@ export default function Maillon(){
 
   const send=()=>{
     if(!draft.trim())return;const id=activeConv;const text=draft.trim();setDraft("");
-    const c=companies.find((x)=>x.id===id);const svcs=commonServices(c);const svc=(activeService&&svcs.includes(activeService))?activeService:svcs[0];
+    const c=companies.find((x)=>x.id===id);const svc=mSvc;
     if(!svc)return;
     const push=(from,t)=>setCompanies((cs)=>cs.map((x)=>x.id===id?{...x,channels:{...(x.channels||{}),[svc]:[...((x.channels&&x.channels[svc])||[]),{from,text:t}]}}:x));
     push("me",text);
+    if(isRealCompany(c)&&c.connectionId){
+      supabase.from("messages").insert({connection_id:c.connectionId,sender_company_id:me.id,service:svc,body:text}).then(()=>{});
+      return;
+    }
     setTimeout(()=>push("them",REPLIES[Math.floor(Math.random()*REPLIES.length)]),1400);
   };
 
