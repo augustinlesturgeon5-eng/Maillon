@@ -53,7 +53,7 @@ const FRANCE_PTS = [
 const FRANCE_PATH = FRANCE_PTS.map((p,i)=>{const[x,y]=project(p[0],p[1]);return`${i?"L":"M"}${x.toFixed(1)} ${y.toFixed(1)}`;}).join(" ")+" Z";
 
 const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;450;500;600&family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;450;500;600;700&display=swap');
 .mln * { box-sizing:border-box; }
 .mln {
   --ink:#0F1826; --paper:#FBFAF7; --surface:#FFFFFF;
@@ -63,7 +63,7 @@ const CSS = `
   font-family:'Inter',system-ui,sans-serif; color:var(--ink); background:var(--paper);
   min-height:100vh; -webkit-font-smoothing:antialiased; line-height:1.5;
 }
-.mln .mono{font-family:'Space Mono',monospace;}
+.mln .mono{font-family:'Inter',monospace;}
 .mln .disp{font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-.02em;line-height:1.04;}
 .mln button{font-family:inherit;cursor:pointer;border:none;background:none;}
 .mln :focus-visible{outline:2px solid var(--emerald);outline-offset:2px;border-radius:4px;}
@@ -89,16 +89,16 @@ const CSS = `
 .mln .psub{font-size:14.5px;color:var(--slate);margin:0 0 24px;}
 
 .mln .onb{max-width:560px;margin:0 auto;padding:48px 24px;}
-.mln .onb .eyebrow{font-family:'Space Mono';font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--emerald);font-weight:700;}
+.mln .onb .eyebrow{font-family:'Inter';font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--emerald);font-weight:700;}
 .mln .onb h1{font-family:'Bricolage Grotesque';font-weight:800;font-size:clamp(28px,5vw,42px);margin:14px 0 10px;letter-spacing:-.02em;}
 .mln .onb p.lead{font-size:16px;color:var(--slate);margin:0 0 26px;}
 .mln .steps{display:flex;gap:8px;margin-bottom:22px;}
 .mln .stp{flex:1;height:4px;border-radius:2px;background:var(--line);}
 .mln .stp.on{background:var(--emerald);}
-.mln .stphint{font-family:'Space Mono';font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate-soft);margin-bottom:16px;}
+.mln .stphint{font-family:'Inter';font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate-soft);margin-bottom:16px;}
 
 .mln .field{margin-bottom:16px;}
-.mln .field>label{display:block;font-family:'Space Mono';font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-bottom:6px;}
+.mln .field>label{display:block;font-family:'Inter';font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-bottom:6px;}
 .mln .field input,.mln .field textarea,.mln .field select{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:15px;color:var(--ink);outline:none;background:#fff;}
 .mln .field input:focus,.mln .field textarea:focus,.mln .field select:focus{border-color:var(--emerald);}
 .mln .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
@@ -126,12 +126,12 @@ const CSS = `
 .mln .maptoggle button.on{background:var(--ink);color:#fff;}
 .mln .advbar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;}
 .mln .advbar .grp{display:flex;flex-direction:column;gap:3px;}
-.mln .advbar .grp label{font-family:'Space Mono';font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--slate-soft);}
+.mln .advbar .grp label{font-family:'Inter';font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--slate-soft);}
 .mln .advbar select{border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--ink);background:#fff;cursor:pointer;outline:none;}
 .mln .advbar .toggle{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--slate);cursor:pointer;padding-bottom:6px;}
 .mln .advbar .toggle input{accent-color:var(--emerald);width:15px;height:15px;}
 .mln .advbar .clear{margin-left:auto;font-size:12.5px;color:var(--coral);font-weight:600;padding-bottom:6px;}
-.mln .rescount{font-family:'Space Mono';font-size:12px;color:var(--slate);margin-bottom:14px;}
+.mln .rescount{font-family:'Inter';font-size:12px;color:var(--slate);margin-bottom:14px;}
 
 .mln .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 .mln .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px;transition:.16s;}
@@ -143,8 +143,8 @@ const CSS = `
 .mln .verif{width:15px;height:15px;color:var(--emerald);}
 .mln .csector{font-size:12.5px;color:var(--slate);}
 .mln .aff{margin-left:auto;text-align:center;flex:0 0 auto;padding:5px 9px;border-radius:10px;background:var(--emerald-wash);}
-.mln .aff .n{font-family:'Space Mono';font-weight:700;font-size:14px;color:var(--emerald);line-height:1;}
-.mln .aff .l{font-family:'Space Mono';font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:#0c5f4d;margin-top:2px;}
+.mln .aff .n{font-family:'Inter';font-weight:700;font-size:14px;color:var(--emerald);line-height:1;}
+.mln .aff .l{font-family:'Inter';font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:#0c5f4d;margin-top:2px;}
 .mln .ctag{font-size:14px;color:var(--slate);line-height:1.5;}
 .mln .metaline{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--slate);}
 .mln .metaline span{display:flex;align-items:center;gap:5px;}
@@ -170,7 +170,7 @@ const CSS = `
 .mln .mapop .oph .logo{width:40px;height:40px;font-size:17px;border-radius:11px;overflow:hidden;}
 .mln .mapop b{font-size:14px;display:flex;align-items:center;gap:5px;}
 .mln .mapop small{font-size:11.5px;color:var(--slate);}
-.mln .mapop .opaff{font-family:'Space Mono';font-size:11.5px;color:var(--emerald);font-weight:700;margin-bottom:11px;}
+.mln .mapop .opaff{font-family:'Inter';font-size:11.5px;color:var(--emerald);font-weight:700;margin-bottom:11px;}
 .mln .mapop .opact{display:flex;gap:8px;}
 .mln .mapop .opclose{position:absolute;top:9px;right:9px;width:22px;height:22px;border-radius:50%;background:var(--paper);display:flex;align-items:center;justify-content:center;color:var(--slate);}
 .mln .maparrow{position:absolute;width:12px;height:12px;background:#fff;border-right:1px solid var(--line);border-bottom:1px solid var(--line);left:50%;bottom:-7px;transform:translateX(-50%) rotate(45deg);}
@@ -186,7 +186,7 @@ const CSS = `
 .mln .av,.mln .logo,.mln .proflogo,.mln .plogo{overflow:hidden;}
 .mln .av img,.mln .logo img,.mln .proflogo img,.mln .plogo img{width:100%;height:100%;object-fit:cover;}
 .mln .maplegend{width:210px;}
-.mln .maplegend h5{font-family:'Space Mono';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate-soft);margin:0 0 12px;}
+.mln .maplegend h5{font-family:'Inter';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate-soft);margin:0 0 12px;}
 .mln .legitem{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--slate);padding:4px 0;}
 .mln .legdot{width:11px;height:11px;border-radius:50%;flex:0 0 auto;}
 .mln .maphint{font-size:12.5px;color:var(--slate-soft);margin-top:14px;line-height:1.5;}
@@ -194,9 +194,11 @@ const CSS = `
 .mln .reqcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:12px;}
 .mln .reqhead{display:flex;gap:13px;align-items:center;}
 .mln .reqmsg{margin:12px 0 0;padding:13px 15px;background:var(--paper);border-radius:12px;font-size:14px;color:var(--ink);line-height:1.55;border:1px solid var(--line-soft);}
-.mln .reqmsg .q{font-family:'Space Mono';font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate-soft);display:block;margin-bottom:5px;}
+.mln .consentrow{display:flex;align-items:flex-start;gap:9px;font-size:13px;color:var(--slate);margin:14px 0 4px;cursor:pointer;}
+.mln .consentrow input{accent-color:var(--emerald);width:16px;height:16px;margin-top:1px;flex:0 0 auto;}
+.mln .reqmsg .q{font-family:'Inter';font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate-soft);display:block;margin-bottom:5px;}
 .mln .reqact{display:flex;gap:9px;margin-top:14px;}
-.mln .seclabel{font-family:'Space Mono';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate-soft);margin:26px 0 12px;display:flex;align-items:center;gap:8px;}
+.mln .seclabel{font-family:'Inter';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate-soft);margin:26px 0 12px;display:flex;align-items:center;gap:8px;}
 
 .mln .msgwrap{display:grid;grid-template-columns:280px 1fr;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;height:560px;}
 .mln .convlist{border-right:1px solid var(--line);overflow-y:auto;}
@@ -234,7 +236,7 @@ const CSS = `
 .mln .meetcard .btn{margin-left:auto;}
 .mln .visio{position:fixed;inset:0;z-index:80;background:#0B1220;display:flex;flex-direction:column;animation:fade .2s;}
 .mln .vishead{padding:16px 22px;color:#e8eaee;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;}
-.mln .vistimer{margin-left:auto;font-family:'Space Mono';font-size:14px;background:rgba(255,255,255,.12);padding:5px 12px;border-radius:999px;display:flex;align-items:center;gap:7px;}
+.mln .vistimer{margin-left:auto;font-family:'Inter';font-size:14px;background:rgba(255,255,255,.12);padding:5px 12px;border-radius:999px;display:flex;align-items:center;gap:7px;}
 .mln .vistimer .rec{width:8px;height:8px;border-radius:50%;background:var(--coral);}
 .mln .vistiles{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 22px;min-height:0;}
 .mln .vistile{position:relative;border-radius:18px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
@@ -250,7 +252,7 @@ const CSS = `
 .mln .visctrls button.hang:hover{background:#c94d34;}
 .mln .vissim{text-align:center;color:#6b7686;font-size:12px;padding-bottom:16px;}
 .mln .agenda{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:18px;}
-.mln .agtitle{font-family:'Space Mono';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate-soft);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.mln .agtitle{font-family:'Inter';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate-soft);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
 .mln .aggroup{margin-bottom:10px;}
 .mln .agsvc{font-size:12.5px;font-weight:700;color:var(--emerald);margin-bottom:2px;}
 .mln .agitem{display:flex;align-items:center;gap:11px;padding:9px 0;border-top:1px solid var(--line-soft);}
@@ -262,7 +264,7 @@ const CSS = `
 .mln .agday{margin-bottom:22px;}
 .mln .agdate{font-family:'Bricolage Grotesque';font-weight:700;font-size:17px;text-transform:capitalize;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line);}
 .mln .agevent{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;}
-.mln .agtime{font-family:'Space Mono';font-weight:700;font-size:15px;color:var(--ink);min-width:50px;}
+.mln .agtime{font-family:'Inter';font-weight:700;font-size:15px;color:var(--ink);min-width:50px;}
 .mln .agevent .aginfo b{font-size:14.5px;}
 .mln .agsvcs{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
 .mln .agevent .btn{margin-left:auto;}
@@ -276,11 +278,11 @@ const CSS = `
 .mln .gearbtn{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--slate);display:flex;align-items:center;justify-content:center;margin-right:8px;flex:0 0 auto;}
 .mln .gearbtn:hover{border-color:var(--ink);color:var(--ink);}
 .mln .accsec{margin-bottom:18px;}
-.mln .accsec h5{font-family:'Space Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate-soft);margin:0 0 4px;}
+.mln .accsec h5{font-family:'Inter';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate-soft);margin:0 0 4px;}
 .mln .accsec p.d{font-size:12.5px;color:var(--slate);margin:0 0 10px;}
 .mln .accrow{padding:12px 0;border-top:1px solid var(--line-soft);}
 .mln .accrow .rn{font-size:13.5px;font-weight:700;margin-bottom:7px;display:flex;align-items:center;gap:7px;}
-.mln .accrow .rn .adm{font-family:'Space Mono';font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;background:var(--emerald);color:#fff;padding:2px 7px;border-radius:999px;}
+.mln .accrow .rn .adm{font-family:'Inter';font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;background:var(--emerald);color:#fff;padding:2px 7px;border-radius:999px;}
 .mln .accnote{font-size:12px;color:var(--slate-soft);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-top:6px;}
 .mln .rolepick span.rolename{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;}
 .mln .login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 20px;background:radial-gradient(120% 120% at 50% 0%, #fff 0%, var(--paper) 60%);}
@@ -307,7 +309,7 @@ const CSS = `
 
 /* recommandations */
 .mln .recowrap{margin:0 0 22px;}
-.mln .recohead{display:flex;align-items:center;gap:8px;font-family:'Space Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate-soft);margin-bottom:12px;}
+.mln .recohead{display:flex;align-items:center;gap:8px;font-family:'Inter';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate-soft);margin-bottom:12px;}
 .mln .recohead svg{color:var(--amber);}
 .mln .recorow{display:flex;gap:14px;overflow-x:auto;padding-bottom:4px;}
 .mln .recocard{flex:0 0 258px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;}
@@ -316,7 +318,7 @@ const CSS = `
 .mln .recocard .rname{font-weight:700;font-size:14.5px;}
 .mln .recocard .rname:hover{color:var(--emerald);}
 .mln .recocard .reason{font-size:12px;color:var(--emerald);font-weight:600;}
-.mln .recocard .raff{margin-left:auto;font-family:'Space Mono';font-weight:700;font-size:13px;color:var(--emerald);}
+.mln .recocard .raff{margin-left:auto;font-family:'Inter';font-weight:700;font-size:13px;color:var(--emerald);}
 
 /* mur de besoins */
 .mln .needwrap{display:flex;flex-direction:column;gap:14px;max-width:720px;}
@@ -325,7 +327,7 @@ const CSS = `
 .mln .needhead .logo{width:42px;height:42px;font-size:18px;border-radius:11px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Bricolage Grotesque';font-weight:800;flex:0 0 auto;}
 .mln .needhead b{font-size:14px;display:block;}
 .mln .needhead small{font-size:12px;color:var(--slate);}
-.mln .needmatch{margin-left:auto;font-family:'Space Mono';font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;background:var(--emerald-wash);color:#0c5f4d;padding:5px 10px;border-radius:999px;flex:0 0 auto;}
+.mln .needmatch{margin-left:auto;font-family:'Inter';font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;background:var(--emerald-wash);color:#0c5f4d;padding:5px 10px;border-radius:999px;flex:0 0 auto;}
 .mln .needcard h3{font-family:'Bricolage Grotesque';font-weight:700;font-size:17px;margin:0 0 10px;line-height:1.28;}
 .mln .needmeta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
 .mln .needfoot{display:flex;align-items:center;gap:12px;padding-top:12px;border-top:1px solid var(--line-soft);}
@@ -336,8 +338,18 @@ const CSS = `
 .mln .bell:hover{border-color:var(--ink);color:var(--ink);}
 .mln .bell .nb{position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--coral);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;}
 .mln .notifpanel{position:absolute;top:calc(100% + 6px);right:16px;width:320px;max-height:74vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 60px -30px rgba(15,24,38,.5);z-index:50;}
-.mln .notifpanel .nh{padding:13px 16px;font-family:'Space Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate-soft);border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);}
-.mln .nat{display:block;font-family:'Space Mono';font-size:10.5px;color:var(--slate-soft);margin-top:3px;text-transform:capitalize;}
+.mln .chatpanel{position:fixed;top:90px;right:24px;bottom:24px;width:360px;background:var(--surface);border-radius:18px;box-shadow:0 30px 80px -20px rgba(15,24,38,.5);z-index:60;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--line);}
+.mln .chatpanel .cphead{background:var(--ink);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex:0 0 auto;gap:10px;}
+.mln .chatpanel .cphead .cptitle{font-family:'Bricolage Grotesque';font-weight:800;font-size:19px;}
+.mln .chatpanel .cpback{display:flex;align-items:center;gap:9px;cursor:pointer;min-width:0;}
+.mln .chatpanel .cpback b{font-size:16px;font-family:'Bricolage Grotesque';font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mln .chatpanel .cpclose{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;background:rgba(255,255,255,.14);flex:0 0 auto;}
+.mln .chatpanel .cpclose:hover{background:rgba(255,255,255,.24);}
+.mln .chatpanel .cpbody{flex:1;overflow-y:auto;min-height:0;}
+.mln .chatpanel .cpthread{flex:1;display:flex;flex-direction:column;min-height:0;}
+@media(max-width:520px){.mln .chatpanel{left:12px;right:12px;top:70px;bottom:12px;width:auto;}}
+.mln .notifpanel .nh{padding:13px 16px;font-family:'Inter';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate-soft);border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);}
+.mln .nat{display:block;font-family:'Inter';font-size:10.5px;color:var(--slate-soft);margin-top:3px;text-transform:capitalize;}
 .mln .notifitem{display:flex;gap:11px;align-items:flex-start;padding:13px 16px;border-bottom:1px solid var(--line-soft);cursor:pointer;text-align:left;width:100%;background:none;}
 .mln .notifitem:hover{background:var(--paper);}
 .mln .notifitem .ni{width:30px;height:30px;border-radius:8px;background:var(--emerald-wash);color:var(--emerald);display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
@@ -347,9 +359,20 @@ const CSS = `
 .mln .setrow input{accent-color:var(--emerald);width:17px;height:17px;}
 .mln .auditlist{display:flex;flex-direction:column;gap:0;}
 .mln .auditrow{font-size:12.5px;color:var(--slate);padding:7px 0;border-top:1px solid var(--line-soft);display:flex;gap:10px;}
-.mln .auditrow .at{font-family:'Space Mono';font-size:11px;color:var(--slate-soft);flex:0 0 auto;}
+.mln .auditrow .at{font-family:'Inter';font-size:11px;color:var(--slate-soft);flex:0 0 auto;}
+.mln .libcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+.mln .libitem{display:flex;gap:12px;align-items:flex-start;padding:14px 18px;border-bottom:1px solid var(--line-soft);}
+.mln .libitem:last-child{border-bottom:none;}
+.mln .libitem .ni{width:30px;height:30px;border-radius:8px;background:var(--emerald-wash);color:var(--emerald);display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.mln .libitem p{margin:0;font-size:13.5px;line-height:1.4;color:var(--ink);flex:1;}
+.mln .libitem .nat{margin:0;flex:0 0 auto;white-space:nowrap;}
+.mln .subgrp{padding:13px 18px;border-bottom:1px solid var(--line-soft);}
+.mln .subgrp:last-child{border-bottom:none;}
+.mln .subhead{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:14px;}
+.mln .subrow{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--slate);padding:4px 0 4px 16px;}
+.mln .subrow .tree{color:var(--slate-soft);}
 .mln .dashsec{max-width:720px;}
-.mln .dashh{font-family:'Space Mono';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate-soft);margin:0 0 12px;}
+.mln .dashh{font-family:'Inter';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate-soft);margin:0 0 12px;}
 .mln .dash{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 26px;}
 .mln .dtile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;}
 .mln .dtile b{font-family:'Bricolage Grotesque';font-weight:800;font-size:26px;display:block;line-height:1.1;}
@@ -359,7 +382,7 @@ const CSS = `
 .mln .loginrow .lav{width:38px;height:38px;border-radius:10px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque';font-weight:800;flex:0 0 auto;}
 .mln .loginrow b{font-size:14px;display:block;}
 .mln .loginrow small{font-size:12px;color:var(--slate);}
-.mln .loginrow .cur{margin-left:auto;font-family:'Space Mono';font-size:10px;color:var(--emerald);font-weight:700;}
+.mln .loginrow .cur{margin-left:auto;font-family:'Inter';font-size:10px;color:var(--emerald);font-weight:700;}
 .mln .accrole{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line-soft);}
 .mln .accrole b{font-size:13.5px;}
 .mln .accrole small{font-size:11.5px;color:var(--slate);}
@@ -373,6 +396,8 @@ const CSS = `
 .mln .mhead{display:flex;gap:13px;align-items:center;margin-bottom:18px;}
 .mln .mbox h3{font-family:'Bricolage Grotesque';font-weight:700;font-size:21px;margin:0;}
 .mln .mbox .mi{font-size:13.5px;color:var(--slate);margin:2px 0 0;}
+.mln .msec{font-family:'Bricolage Grotesque';font-weight:700;font-size:14px;margin:20px 0 12px;padding-top:16px;border-top:1px solid var(--line-soft);}
+.mln .mhead+.msec{padding-top:0;border-top:none;margin-top:0;}
 
 .mln .panel{position:fixed;top:0;right:0;bottom:0;width:min(540px,96vw);background:var(--paper);z-index:62;overflow-y:auto;box-shadow:-30px 0 80px -40px rgba(15,24,38,.6);animation:slide .28s cubic-bezier(.22,1,.36,1);}
 @keyframes slide{from{transform:translateX(40px);opacity:.4}to{transform:translateX(0);opacity:1}}
@@ -387,10 +412,10 @@ const CSS = `
 .mln .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;margin-top:18px;}
 .mln .pcell{padding:13px 15px;border-bottom:1px solid var(--line-soft);border-right:1px solid var(--line-soft);}
 .mln .pcell:nth-child(even){border-right:none;}
-.mln .pcell .k{font-family:'Space Mono';font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--slate-soft);margin-bottom:3px;}
+.mln .pcell .k{font-family:'Inter';font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--slate-soft);margin-bottom:3px;}
 .mln .pcell .v{font-size:14px;font-weight:600;}
 .mln .psec{padding:20px 30px;border-top:1px solid var(--line);}
-.mln .psec h5{font-family:'Space Mono';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate-soft);margin:0 0 10px;}
+.mln .psec h5{font-family:'Inter';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate-soft);margin:0 0 10px;}
 .mln .psec p{margin:0;font-size:14.5px;line-height:1.6;}
 .mln .pcta{position:sticky;bottom:0;padding:15px 30px;background:rgba(251,250,247,.94);backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex;gap:10px;}
 
@@ -402,7 +427,7 @@ const CSS = `
 .mln .profname{font-family:'Bricolage Grotesque';font-weight:700;font-size:27px;display:flex;align-items:center;gap:8px;}
 .mln .profmeta{font-size:13.5px;color:var(--slate);}
 .mln .profsec{margin-top:18px;}
-.mln .profsec h5{font-family:'Space Mono';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate-soft);margin:0 0 9px;}
+.mln .profsec h5{font-family:'Inter';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate-soft);margin:0 0 9px;}
 .mln .profsec p{margin:0;font-size:14.5px;line-height:1.6;}
 
 .mln .toasts{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:90;display:flex;flex-direction:column;gap:8px;align-items:center;}
@@ -426,13 +451,20 @@ const CSS = `
 .mln .posthead .logo{width:42px;height:42px;font-size:18px;border-radius:11px;}
 .mln .posthead .who b{font-size:14.5px;display:flex;align-items:center;gap:5px;}
 .mln .posthead .who small{font-size:12px;color:var(--slate);}
-.mln .posttag{margin-left:auto;font-family:'Space Mono';font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 11px;border-radius:999px;background:var(--emerald-wash);color:#0c5f4d;}
+.mln .posttag{margin-left:auto;font-family:'Inter';font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 11px;border-radius:999px;background:var(--emerald-wash);color:#0c5f4d;}
 .mln .post h3{font-family:'Bricolage Grotesque';font-weight:700;font-size:19px;margin:0 0 8px;line-height:1.18;}
 .mln .post p.body{margin:0;font-size:14.5px;color:var(--slate);line-height:1.6;}
 .mln .postfoot{display:flex;align-items:center;gap:18px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line-soft);}
 .mln .like{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--slate);cursor:pointer;}
 .mln .like.on{color:var(--coral);}
-.mln .postself{font-family:'Space Mono';font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--emerald);margin-left:auto;}
+.mln .postself{font-family:'Inter';font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--emerald);margin-left:auto;}
+.mln .postphoto{width:100%;max-height:340px;object-fit:cover;border-radius:12px;margin-top:14px;display:block;}
+.mln .repostmeta{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--slate);margin-bottom:12px;}
+.mln .repostmeta svg{color:var(--slate-soft);flex:0 0 auto;}
+.mln .like.rep:hover{color:var(--emerald);}
+.mln .photopick{display:flex;align-items:center;gap:10px;margin-top:4px;}
+.mln .photopick img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line);}
+.mln .photopick .rm{font-size:12px;color:var(--coral);font-weight:600;cursor:pointer;}
 .mln .bside{position:sticky;top:78px;display:flex;flex-direction:column;gap:14px;}
 .mln .memcard{background:var(--ink);color:#fff;border-radius:18px;padding:22px;}
 .mln .memcard h4{font-family:'Bricolage Grotesque';font-weight:700;font-size:18px;margin:0 0 8px;}
@@ -450,14 +482,14 @@ const CSS = `
 .mln .plan .pn{font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;}
 .mln .plan .pp{font-family:'Bricolage Grotesque';font-weight:800;font-size:26px;margin-top:4px;}
 .mln .plan .pp small{font-size:13px;font-weight:500;color:var(--slate);}
-.mln .plan .best{font-family:'Space Mono';font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;background:var(--emerald);color:#fff;padding:3px 8px;border-radius:999px;}
+.mln .plan .best{font-family:'Inter';font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;background:var(--emerald);color:#fff;padding:3px 8px;border-radius:999px;}
 .mln .simnote{font-size:11.5px;color:var(--slate-soft);text-align:center;margin-top:6px;}
 
 /* onboarding : choix d'abonnement */
 .mln .billtoggle{display:inline-flex;background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:3px;gap:2px;margin-bottom:16px;}
 .mln .billtoggle button{font-size:13px;font-weight:600;padding:8px 16px;border-radius:9px;color:var(--slate);display:flex;align-items:center;gap:5px;}
 .mln .billtoggle button.on{background:var(--ink);color:#fff;}
-.mln .billtoggle .save{font-family:'Space Mono';font-size:10px;color:var(--emerald-bright);}
+.mln .billtoggle .save{font-family:'Inter';font-size:10px;color:var(--emerald-bright);}
 .mln .billtoggle button.on .save{color:#7fe6cf;}
 .mln .planpick{border:1.5px solid var(--line);border-radius:16px;padding:18px;margin-bottom:12px;cursor:pointer;transition:.14s;background:#fff;}
 .mln .planpick:hover{border-color:var(--slate);}
@@ -637,14 +669,14 @@ const SEED_NEEDS=[
 /* ---- Offres d'abonnement (tarifs fictifs) ---- */
 const PLANS=[
   {id:"gratuit",name:"Découverte",monthly:0,annual:0,credits:5,tagline:"Pour tester et rejoindre le réseau, sans carte bancaire.",
-   features:[{t:"Fiche entreprise + badge SIREN",ok:true},{t:"Annuaire, carte & score d'affinité",ok:true},{t:"5 démarchages (non renouvelables)",ok:true},{t:"Messagerie de base",ok:true},
-     {t:"Mur de besoins (publication)",ok:false},{t:"Visio de groupe & actualités",ok:false}]},
+   features:[{t:"Fiche entreprise + badge SIREN",ok:true},{t:"Annuaire, carte & score d'affinité",ok:true},{t:"5 démarchages (non renouvelables)",ok:true},{t:"Messagerie de base + Bibliothèque",ok:true},
+     {t:"Mur de besoins (publication)",ok:false},{t:"Chat interne, Emailing & actualités",ok:false}]},
   {id:"essentiel",name:"Pro",monthly:19,annual:182,credits:null,tagline:"Pour prospecter activement et être trouvé.",
-   features:[{t:"Tout Découverte",ok:true},{t:"Démarchages illimités",ok:true},{t:"Mur de besoins + recommandations",ok:true},{t:"Messagerie cloisonnée & visio",ok:true},
+   features:[{t:"Tout Découverte",ok:true},{t:"Démarchages illimités",ok:true},{t:"Mur de besoins + recommandations",ok:true},{t:"Messagerie cloisonnée, visio & chat interne",ok:true},
      {t:"Collaboration (devis & documents)",ok:true},{t:"Publication d'actualités (blog)",ok:false}]},
   {id:"pro",name:"Business",monthly:39,annual:374,credits:null,tagline:"Pour la visibilité et les équipes.",best:true,
-   features:[{t:"Tout Pro",ok:true},{t:"Actualités (blog) + mise en avant",ok:true},{t:"Visio de groupe multi-services",ok:true},{t:"Tableau de bord avancé + synchro agenda",ok:true},
-     {t:"Accès illimités + journal + 2FA",ok:true},{t:"Support prioritaire",ok:true}]},
+   features:[{t:"Tout Pro",ok:true},{t:"Emailing illimité + listes de diffusion sur-mesure",ok:true},{t:"Actualités avec photos, republication & mise en avant",ok:true},{t:"Visio de groupe multi-services + tableau de bord avancé",ok:true},
+     {t:"Badge « Entreprise vérifiée » + priorité dans l'annuaire",ok:true},{t:"Accès illimités + journal, 2FA & support prioritaire",ok:true}]},
 ];
 
 function Mark(){return(<svg className="mark" viewBox="0 0 32 32" fill="none"><rect x="1" y="1" width="30" height="30" rx="9" fill="#0F1826"/><path d="M11 20.5a4.5 4.5 0 0 1 0-9h2.2M21 11.5a4.5 4.5 0 0 1 0 9h-2.2M13 16h6" stroke="#16A886" strokeWidth="2.1" strokeLinecap="round"/></svg>);}
@@ -659,12 +691,45 @@ function Ring({score,size=52}){
     <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={col} strokeWidth="4" strokeLinecap="round"
       strokeDasharray={c} strokeDashoffset={c-(c*score)/100} transform={`rotate(-90 ${size/2} ${size/2})`}
       style={{transition:"stroke-dashoffset .5s cubic-bezier(.22,1,.36,1)"}}/>
-    <text x="50%" y="52%" textAnchor="middle" dominantBaseline="middle" fontFamily="Space Mono" fontWeight="700" fontSize="14" fill={col}>{score}</text>
+    <text x="50%" y="52%" textAnchor="middle" dominantBaseline="middle" fontFamily="Inter" fontWeight="700" fontSize="14" fill={col}>{score}</text>
   </svg>);
 }
 
 const logoImg=(o)=>o&&o.logo?<img src={o.logo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(o?o.name[0]:"?");
 const fmtDate=(d)=>{try{const dt=new Date(d+"T00:00:00");if(isNaN(dt))return d;return dt.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});}catch(e){return d;}};
+const buildEmailSkeleton=(subject)=>`<!DOCTYPE html>
+<html>
+  <body style="margin:0;padding:0;background:#F5F4F0;font-family:Arial,sans-serif;">
+    {{HEADER}}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;">
+      <tr><td style="padding:32px;">
+        <p>Bonjour [Prénom],</p>
+        <p>${subject||"Votre message ici."}</p>
+        <p style="text-align:center;margin:32px 0;">
+          <a href="[REDIRECT_URL]" style="background:#0F846B;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">Découvrir</a>
+        </p>
+        <p style="font-size:12px;color:#8A929C;">Si l'email ne s'affiche pas correctement, <a href="[VIEW_ONLINE]">consultez-le en ligne</a>.</p>
+      </td></tr>
+    </table>
+    {{FOOTER}}
+  </body>
+</html>`;
+
+const FIRST_NAMES=["Jérôme","Kevin","Nicolas","Anthony","Philippe","Yann","Camille","Julie","Sophie","Thomas","Marion","Alexandre","Claire","Mathieu","Laura","Vincent"];
+const LAST_NAMES=["Lesoudeer","Simon","Perennes","Garcia","Desaize","Parcheminier","Moreau","Girard","Lefebvre","Roussel","Faure","Marchand","Guillou","Le Goff","Bertin"];
+const slugify=(s)=>(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"");
+const genContacts=(c)=>{
+  const domain=c.web||`${slugify(c.name)}.fr`;
+  const n=1+Math.floor(Math.random()*2);
+  const used=new Set();const out=[];
+  while(out.length<n){
+    const first=FIRST_NAMES[Math.floor(Math.random()*FIRST_NAMES.length)];
+    const last=LAST_NAMES[Math.floor(Math.random()*LAST_NAMES.length)];
+    const key=first+last;if(used.has(key))continue;used.add(key);
+    out.push({name:`${first} ${last}`,email:`${slugify(first)}.${slugify(last)}@${domain}`});
+  }
+  return out;
+};
 
 function FranceMap({companies,onOpen,onProspect,aff}){
   const [scale,setScale]=useState(1);
@@ -727,7 +792,7 @@ function FranceMap({companies,onOpen,onProspect,aff}){
                    onMouseDown={(e)=>e.stopPropagation()} onClick={()=>applyZoom(1.9,cl.x*scale+tx,cl.y*scale+ty)}>
                   <circle r="18" fill="#0F1826" opacity="0.9"/>
                   <circle r="18" fill="none" stroke="#fff" strokeWidth="2.5"/>
-                  <text textAnchor="middle" dominantBaseline="central" fill="#fff" fontFamily="Space Mono" fontWeight="700" fontSize="14">{cl.items.length}</text>
+                  <text textAnchor="middle" dominantBaseline="central" fill="#fff" fontFamily="Inter" fontWeight="700" fontSize="14">{cl.items.length}</text>
                 </g>
               );
             }
@@ -825,6 +890,13 @@ const REPLIES = [
   "Parfait, merci du message ! Je transmets à l'équipe.",
   "Tout à fait aligné avec ce qu'on cherche. On avance ?",
 ];
+const INTERNAL_REPLIES = [
+  "Reçu, je regarde ça et je reviens vers toi.",
+  "Top, je m'en occupe cet après-midi.",
+  "On en parle au point d'équipe ?",
+  "Noté, merci pour l'info !",
+  "Je valide de mon côté, ça me va.",
+];
 
 export default function Maillon(){
   const [me,setMe]=useState(null);
@@ -873,15 +945,36 @@ export default function Maillon(){
   const [draft,setDraft]=useState("");
   const [posts,setPosts]=useState(SEED_POSTS);
   const [composeOpen,setComposeOpen]=useState(false);
-  const [postForm,setPostForm]=useState({title:"",body:"",tag:""});
+  const [postForm,setPostForm]=useState({title:"",body:"",tag:"",photo:null});
   const [adhesion,setAdhesion]=useState(false);
   const [needs,setNeeds]=useState(SEED_NEEDS);
   const [needOpen,setNeedOpen]=useState(false);
   const [needForm,setNeedForm]=useState({title:"",sought:SECTORS[0],loc:""});
   const [needFilter,setNeedFilter]=useState("all");
   const [notifOpen,setNotifOpen]=useState(false);
+  const notifRef=useRef(null);
   const [toasts,setToasts]=useState([]);
+  const [libQuery,setLibQuery]=useState("");
+  const [emailOptIn,setEmailOptIn]=useState({});
+  const [emailAddrByCompany,setEmailAddrByCompany]=useState({});
+  const [campaigns,setCampaigns]=useState([]);
+  const [campaignOpen,setCampaignOpen]=useState(false);
+  const [campaignForm,setCampaignForm]=useState({name:"",subject:"",body:"",list:"all",html:"",needsRsvp:false});
+  const [expandedCampaignId,setExpandedCampaignId]=useState(null);
+  const [distLists,setDistLists]=useState([]);
+  const [expandedListId,setExpandedListId]=useState(null);
+  const [listOpen,setListOpen]=useState(false);
+  const [listForm,setListForm]=useState({name:"",companyIds:[]});
+  const [selectedIds,setSelectedIds]=useState([]);
   const streamRef=useRef(null);
+  const teamStreamRef=useRef(null);
+  const [internalChat,setInternalChat]=useState([]);
+  const [internalMsg,setInternalMsg]=useState("");
+  const [internalDMs,setInternalDMs]=useState({});
+  const [activeTeammateId,setActiveTeammateId]=useState(null);
+  const [chatOpen,setChatOpen]=useState(false);
+  const [chatPane,setChatPane]=useState("list");
+  const dmKey=(a,b)=>[a,b].sort((x,y)=>x-y).join("-");
 
   const toast=(t)=>{const id=Math.random();setToasts((x)=>[...x,{id,t}]);setTimeout(()=>setToasts((x)=>x.filter((y)=>y.id!==id)),3200);};
   const logEvent=(text)=>setAuditLog((l)=>[{id:Date.now()+Math.random(),text,at:new Date().toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})},...l].slice(0,60));
@@ -904,7 +997,39 @@ export default function Maillon(){
   const regions=useMemo(()=>[...new Set(companies.map((c)=>c.loc))].sort(),[companies]);
 
   useEffect(()=>{if(streamRef.current)streamRef.current.scrollTop=streamRef.current.scrollHeight;},[activeConv,activeService,companies]);
+  useEffect(()=>{if(teamStreamRef.current)teamStreamRef.current.scrollTop=teamStreamRef.current.scrollHeight;},[internalChat,internalDMs,activeTeammateId]);
+  const sendInternalMsg=()=>{
+    if(!internalMsg.trim()||!currentUser)return;
+    const text=internalMsg.trim();const ts=Date.now();
+    if(activeTeammateId==null){
+      const msg={id:ts,authorId:currentUser.id,authorName:currentUser.name,text};
+      setInternalChat((c)=>[...c,msg]);
+      const others=team.filter((m)=>m.status==="active"&&m.id!==currentUser.id);
+      if(others.length&&Math.random()<0.5){
+        const replier=others[Math.floor(Math.random()*others.length)];
+        setTimeout(()=>{
+          const reply={id:ts+1,authorId:replier.id,authorName:replier.name,text:INTERNAL_REPLIES[Math.floor(Math.random()*INTERNAL_REPLIES.length)]};
+          setInternalChat((c)=>[...c,reply]);
+          toast(`💬 Nouveau message de ${replier.name} (Général)`);
+        },1800+Math.random()*2200);
+      }
+    }else{
+      const other=team.find((m)=>m.id===activeTeammateId);
+      const key=dmKey(currentUser.id,activeTeammateId);
+      const msg={id:ts,authorId:currentUser.id,authorName:currentUser.name,text};
+      setInternalDMs((d)=>({...d,[key]:[...(d[key]||[]),msg]}));
+      if(other&&other.status==="active"&&Math.random()<0.6){
+        setTimeout(()=>{
+          const reply={id:ts+1,authorId:other.id,authorName:other.name,text:INTERNAL_REPLIES[Math.floor(Math.random()*INTERNAL_REPLIES.length)]};
+          setInternalDMs((d)=>({...d,[key]:[...(d[key]||[]),reply]}));
+          toast(`💬 Nouveau message de ${other.name}`);
+        },1800+Math.random()*2200);
+      }
+    }
+    setInternalMsg("");
+  };
   useEffect(()=>{const k=(e)=>{if(e.key==="Escape"){setProspect(null);setOpenC(null);}};window.addEventListener("keydown",k);return()=>window.removeEventListener("keydown",k);},[]);
+  useEffect(()=>{if(!notifOpen)return;const onDown=(e)=>{if(notifRef.current&&!notifRef.current.contains(e.target))setNotifOpen(false);};document.addEventListener("mousedown",onDown);return()=>document.removeEventListener("mousedown",onDown);},[notifOpen]);
 
   const update=(id,patch)=>setCompanies((cs)=>cs.map((c)=>c.id===id?{...c,...patch}:c));
   const addLog=(id,entry)=>setCompanies((cs)=>cs.map((c)=>c.id===id?{...c,log:[...(c.log||[]),entry]}:c));
@@ -985,14 +1110,58 @@ export default function Maillon(){
     const c=prospect;const target=c.receptionPole||"Direction";setProspectsUsed((n)=>n+1);update(c.id,{rel:"sent",sentTo:target});setProspect(null);logHist(`Demande de mise en relation envoyée à ${c.name} (pôle ${target})`,"send");toast(`Demande envoyée à ${c.name} · pôle ${target}`);
     setTimeout(()=>{
       const common=commonServices(c);const svc=common.includes(target)?target:(common[0]||"Direction");
-      update(c.id,{rel:"connected",channels:{[svc]:[{from:"sys",text:`${c.name} a accepté votre mise en relation · service ${svc}.`},
+      const emailingConsent=Math.random()<0.65;
+      update(c.id,{rel:"connected",emailingConsent,channels:{[svc]:[{from:"sys",text:`${c.name} a accepté votre mise en relation · service ${svc}.`},
         {from:"them",text:REPLIES[Math.floor(Math.random()*REPLIES.length)]}]}});
       logHist(`${c.name} a accepté votre mise en relation`,"accept");toast(`✓ ${c.name} a accepté la mise en relation`);
+      setTimeout(()=>{
+        if(emailingConsent){update(c.id,{emailingContacts:genContacts(c)});logHist(`${c.name} a accepté de recevoir vos campagnes d'emailing`,"info");toast(`✓ ${c.name} a accepté de recevoir vos campagnes d'emailing`);}
+        else{logHist(`${c.name} n'a pas souhaité recevoir vos campagnes d'emailing`,"info");}
+      },1400);
     },2600);
   };
 
-  const accept=(c)=>{const pole=(me&&me.receptionPole)||"Direction";const common=commonServices(c);const svc=common.includes(pole)?pole:(common[0]||"Direction");update(c.id,{rel:"connected",channels:{[svc]:[{from:"sys",text:`Vous avez accepté la demande de ${c.name} · service ${svc}.`},{from:"them",text:c.reqMsg}]}});setActiveConv(c.id);setActiveService(svc);logEvent(`Mise en relation acceptée — ${c.name}`);logHist(`Vous avez accepté la demande de ${c.name}`,"accept");toast(`Connecté avec ${c.name}`);};
+  const accept=(c,emailingOptIn,emailingAddresses)=>{const pole=(me&&me.receptionPole)||"Direction";const common=commonServices(c);const svc=common.includes(pole)?pole:(common[0]||"Direction");const addrs=emailingOptIn?(emailingAddresses||[]).map((e)=>e.trim()).filter(Boolean):[];update(c.id,{rel:"connected",emailingOptIn:!!emailingOptIn,emailingAddresses:addrs,channels:{[svc]:[{from:"sys",text:`Vous avez accepté la demande de ${c.name} · service ${svc}.`},{from:"them",text:c.reqMsg}]}});setActiveConv(c.id);setActiveService(svc);logEvent(`Mise en relation acceptée — ${c.name}`);logHist(`Vous avez accepté la demande de ${c.name}${emailingOptIn?" · abonné à l'emailing":""}`,"accept");toast(`Connecté avec ${c.name}`);
+    setTimeout(()=>{
+      const emailingConsent=Math.random()<0.65;
+      update(c.id,{emailingConsent,emailingContacts:emailingConsent?genContacts(c):undefined});
+      if(emailingConsent){logHist(`${c.name} a accepté de recevoir vos campagnes d'emailing`,"info");toast(`✓ ${c.name} a accepté de recevoir vos campagnes d'emailing`);}
+      else{logHist(`${c.name} n'a pas souhaité recevoir vos campagnes d'emailing`,"info");}
+    },1800);
+  };
   const decline=(c)=>{update(c.id,{rel:"declined"});logHist(`Demande de ${c.name} déclinée`,"info");toast(`Demande de ${c.name} déclinée`);};
+  const updateRsvp=(campId,companyId,status)=>{
+    setCampaigns((cs)=>cs.map((c)=>c.id===campId?{...c,rsvp:c.rsvp.map((r)=>r.companyId===companyId?{...r,status}:r)}:c));
+  };
+  const sendCampaign=(recipients)=>{
+    if(!campaignForm.name.trim()||!campaignForm.subject.trim()||recipients.length===0)return;
+    const needsRsvp=campaignForm.needsRsvp;
+    const camp={id:Date.now(),name:campaignForm.name.trim(),subject:campaignForm.subject.trim(),body:campaignForm.body.trim(),html:campaignForm.html,list:campaignForm.list,date:"À l'instant",recipients:recipients.map((c)=>c.name),
+      rsvp:needsRsvp?recipients.map((c)=>({companyId:c.id,name:c.name,status:"pending"})):null};
+    setCampaigns((cs)=>[camp,...cs]);setCampaignOpen(false);setCampaignForm({name:"",subject:"",body:"",list:"all",html:"",needsRsvp:false});
+    logHist(`Campagne d'emailing envoyée : « ${camp.name} » (${recipients.length} destinataire${recipients.length>1?"s":""})`,"info");
+    toast(`Campagne envoyée à ${recipients.length} entreprise${recipients.length>1?"s":""}`);
+    if(needsRsvp){
+      recipients.forEach((c,i)=>{
+        setTimeout(()=>{
+          const status=Math.random()<0.7?"confirmed":"declined";
+          updateRsvp(camp.id,c.id,status);
+          logHist(`${c.name} a ${status==="confirmed"?"confirmé sa présence":"décliné l'invitation"} pour « ${camp.name} »`,"info");
+          toast(`${status==="confirmed"?"✓":"✗"} ${c.name} a ${status==="confirmed"?"confirmé sa présence":"décliné"}`);
+        },2600+i*1700+Math.random()*1400);
+      });
+    }
+  };
+  const toggleRecipient=(id)=>setSelectedIds((ids)=>ids.includes(id)?ids.filter((x)=>x!==id):[...ids,id]);
+  const toggleListMember=(id)=>setListForm((f)=>({...f,companyIds:f.companyIds.includes(id)?f.companyIds.filter((x)=>x!==id):[...f.companyIds,id]}));
+  const createList=()=>{
+    if(!listForm.name.trim()||listForm.companyIds.length===0)return;
+    const list={id:Date.now(),name:listForm.name.trim(),companyIds:[...listForm.companyIds]};
+    setDistLists((ls)=>[list,...ls]);setListOpen(false);setListForm({name:"",companyIds:[]});
+    logHist(`Liste de diffusion créée : « ${list.name} » (${list.companyIds.length} entreprise${list.companyIds.length>1?"s":""})`,"info");
+    toast(`Liste « ${list.name} » créée`);
+  };
+  const deleteList=(id)=>{const l=distLists.find((x)=>x.id===id);setDistLists((ls)=>ls.filter((x)=>x.id!==id));if(l)toast(`Liste « ${l.name} » supprimée`);};
 
   const commonServices=(c)=>((me&&me.services)||[]).filter((s)=>(c.services||[]).includes(s));
   const getChan=(c,svc)=>(c.channels&&c.channels[svc])||[];
@@ -1023,10 +1192,17 @@ export default function Maillon(){
   const publish=()=>{
     if(!postForm.title.trim())return;
     const post={id:Date.now(),author:{name:me.name,color:me.color,sector:me.sector,loc:me.loc,logo:me.logo,isMe:true},
-      title:postForm.title.trim(),body:postForm.body.trim(),tag:postForm.tag.trim()||"Actu",date:"À l'instant",likes:0,liked:false};
-    setPosts((p)=>[post,...p]);setComposeOpen(false);setPostForm({title:"",body:"",tag:""});toast("Actualité publiée");
+      title:postForm.title.trim(),body:postForm.body.trim(),tag:postForm.tag.trim()||"Actu",photo:postForm.photo||null,date:"À l'instant",likes:0,liked:false};
+    setPosts((p)=>[post,...p]);setComposeOpen(false);setPostForm({title:"",body:"",tag:"",photo:null});logHist("Actualité publiée","info");toast("Actualité publiée");
   };
   const toggleLike=(id)=>setPosts((ps)=>ps.map((p)=>p.id===id?{...p,liked:!p.liked,likes:p.likes+(p.liked?-1:1)}:p));
+  const repost=(p)=>{
+    const original=p.repostOf||p.author;
+    const clone={id:Date.now(),author:{name:me.name,color:me.color,sector:me.sector,loc:me.loc,logo:me.logo,isMe:true},
+      repostOf:original,title:p.title,body:p.body,tag:p.tag,photo:p.photo||null,date:"À l'instant",likes:0,liked:false};
+    setPosts((ps)=>[clone,...ps]);logHist(`Actualité de ${original.name} republiée`,"info");toast("Actualité republiée sur votre fil");
+  };
+  const onPhotoPick=(e)=>{const file=e.target.files&&e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>setPostForm((f)=>({...f,photo:reader.result}));reader.readAsDataURL(file);};
 
   // moteur de mise en relation
   const recoReason=(c)=>{
@@ -1293,32 +1469,41 @@ export default function Maillon(){
           <button className={view==="discover"?"on":""} onClick={()=>setView("discover")}><span className="lbl">Découvrir</span></button>
           <button className={view==="requests"?"on":""} onClick={()=>setView("requests")}><span className="lbl">Demandes</span>{visIncoming.length>0&&<span className="badge">{visIncoming.length}</span>}</button>
           <button className={view==="messages"?"on":""} onClick={()=>setView("messages")}><span className="lbl">Messages</span>{connected.length>0&&<span className="badge">{connected.length}</span>}</button>
-          <button className={view==="blog"?"on":""} onClick={()=>setView("blog")}><span className="lbl">Actualités</span></button>
-          <button className={view==="agenda"?"on":""} onClick={()=>setView("agenda")}><span className="lbl">Agenda</span>{roleEvents.length>0&&<span className="badge">{roleEvents.length}</span>}</button>
+          <button className={view==="lists"?"on":""} onClick={()=>setView("lists")}><span className="lbl">Listes</span></button>
+          <button className={view==="emailing"?"on":""} onClick={()=>setView("emailing")}><span className="lbl">Emailing</span></button>
           <button className={view==="needs"?"on":""} onClick={()=>setView("needs")}><span className="lbl">Besoins</span>{matchingNeeds.length>0&&<span className="badge">{matchingNeeds.length}</span>}</button>
+          <button className={view==="agenda"?"on":""} onClick={()=>setView("agenda")}><span className="lbl">Événements</span>{roleEvents.length>0&&<span className="badge">{roleEvents.length}</span>}</button>
+          <button className={view==="library"?"on":""} onClick={()=>setView("library")}><span className="lbl">Bibliothèque</span></button>
+          <button className={view==="blog"?"on":""} onClick={()=>setView("blog")}><span className="lbl">Actualités</span></button>
+          <button className={"teamnav"+(chatOpen?" on":"")} onClick={()=>{setChatPane("list");setChatOpen(true);}}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 7V5a4 4 0 0 1 8 0v2M3 7h10v6H3z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/></svg>
+            <span className="lbl">Chat</span>
+          </button>
         </div>
-        <button className="bell" title="Notifications" onClick={()=>setNotifOpen((v)=>!v)}>
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6M10 21h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          {notifs.length>0&&<span className="nb">{notifs.length}</span>}
-        </button>
-        {notifOpen&&(
-          <div className="notifpanel">
-            <div className="nh">Alertes</div>
-            {notifs.length===0?(<div className="notifempty">Rien de nouveau pour l'instant.</div>):notifs.map((n)=>(
-              <button key={n.id} className="notifitem" onClick={n.onClick}>
-                <div className="ni">{n.kind==="need"?<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8"/><path d="M20 20l-4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>:<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.4 7.4H22l-6 4.4 2.3 7.2L12 17.6 5.7 22 8 14.8 2 10.4h7.6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>}</div>
-                <p>{n.text}</p>
-              </button>
-            ))}
-            <div className="nh">Activité récente</div>
-            {history.length===0?(<div className="notifempty">Aucune activité pour l'instant.</div>):history.map((e)=>(
-              <div key={e.id} className="notifitem" style={{cursor:"default"}}>
-                <div className="ni">{histIcon(e.kind)}</div>
-                <div style={{minWidth:0}}><p>{e.text}</p><span className="nat">{e.at}</span></div>
-              </div>
-            ))}
-          </div>
-        )}
+        <div ref={notifRef} style={{display:"contents"}}>
+          <button className="bell" title="Notifications" onClick={()=>setNotifOpen((v)=>!v)}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6M10 21h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            {notifs.length>0&&<span className="nb">{notifs.length}</span>}
+          </button>
+          {notifOpen&&(
+            <div className="notifpanel">
+              <div className="nh">Alertes</div>
+              {notifs.length===0?(<div className="notifempty">Rien de nouveau pour l'instant.</div>):notifs.map((n)=>(
+                <button key={n.id} className="notifitem" onClick={n.onClick}>
+                  <div className="ni">{n.kind==="need"?<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8"/><path d="M20 20l-4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>:<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.4 7.4H22l-6 4.4 2.3 7.2L12 17.6 5.7 22 8 14.8 2 10.4h7.6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>}</div>
+                  <p>{n.text}</p>
+                </button>
+              ))}
+              <div className="nh">Activité récente</div>
+              {history.length===0?(<div className="notifempty">Aucune activité pour l'instant.</div>):history.map((e)=>(
+                <div key={e.id} className="notifitem" style={{cursor:"default"}}>
+                  <div className="ni">{histIcon(e.kind)}</div>
+                  <div style={{minWidth:0}}><p>{e.text}</p><span className="nat">{e.at}</span></div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="rolepick" title="Votre compte">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>
           <span className="rolename">{role}{isAdmin?" · admin":""}</span>
@@ -1464,8 +1649,24 @@ export default function Maillon(){
                 </div>
               </div>
               <div className="reqmsg"><span className="q">Son message</span>{c.reqMsg}</div>
+              <label className="consentrow">
+                <input type="checkbox" checked={!!emailOptIn[c.id]} onChange={(e)=>setEmailOptIn((m)=>({...m,[c.id]:e.target.checked}))}/>
+                J'accepte de recevoir les campagnes d'emailing de {c.name}
+              </label>
+              {emailOptIn[c.id]&&(()=>{const emails=emailAddrByCompany[c.id]&&emailAddrByCompany[c.id].length?emailAddrByCompany[c.id]:[""];return(
+                <div className="field" style={{margin:"0 0 14px 26px"}}>
+                  <label>Adresse(s) email de réception</label>
+                  {emails.map((val,i)=>(
+                    <div key={i} style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
+                      <input type="email" value={val} onChange={(e)=>{const next=[...emails];next[i]=e.target.value;setEmailAddrByCompany((m)=>({...m,[c.id]:next}));}} placeholder="contact@votre-entreprise.fr"/>
+                      {emails.length>1&&<span className="rm" style={{color:"var(--coral)",cursor:"pointer",fontSize:12,fontWeight:600,flex:"0 0 auto"}} onClick={()=>{const next=emails.filter((_,x)=>x!==i);setEmailAddrByCompany((m)=>({...m,[c.id]:next}));}}>Retirer</span>}
+                    </div>
+                  ))}
+                  <span className="rm" style={{color:"var(--emerald)",cursor:"pointer",fontSize:12.5,fontWeight:600}} onClick={()=>setEmailAddrByCompany((m)=>({...m,[c.id]:[...emails,""]}))}>+ Ajouter un autre email</span>
+                </div>
+              );})()}
               <div className="reqact">
-                <button className="btn sm" onClick={()=>accept(c)}><span style={{display:"inline-flex",alignItems:"center",gap:6}}><Check/>Accepter</span></button>
+                <button className="btn sm" disabled={!!emailOptIn[c.id]&&!(emailAddrByCompany[c.id]||[]).some((e)=>e.trim())} onClick={()=>accept(c,emailOptIn[c.id],emailAddrByCompany[c.id])}><span style={{display:"inline-flex",alignItems:"center",gap:6}}><Check/>Accepter</span></button>
                 <button className="btn-danger" onClick={()=>decline(c)}><span style={{display:"inline-flex",alignItems:"center",gap:6}}><XI/>Décliner</span></button>
               </div>
             </div>
@@ -1585,13 +1786,76 @@ export default function Maillon(){
         </div></div>
       )}
 
+      {/* CHAT INTERNE — panneau flottant */}
+      {chatOpen&&(()=>{
+        const mates=team.filter((m)=>m.status==="active"&&(!currentUser||m.id!==currentUser.id));
+        const dmThread=currentUser&&activeTeammateId!=null?(internalDMs[dmKey(currentUser.id,activeTeammateId)]||[]):[];
+        const activeMate=activeTeammateId!=null?team.find((m)=>m.id===activeTeammateId):null;
+        const thread=activeTeammateId==null?internalChat:dmThread;
+        const lastOf=(arr)=>arr.length?arr[arr.length-1]:null;
+        const openThread=(id)=>{setActiveTeammateId(id);setChatPane("thread");};
+        return(
+          <div className="chatpanel">
+            <div className="cphead">
+              {chatPane==="list"?(
+                <span className="cptitle">Chat</span>
+              ):(
+                <div className="cpback" onClick={()=>setChatPane("list")}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <b>{activeTeammateId==null?"Général":(activeMate?activeMate.name:"")}</b>
+                </div>
+              )}
+              <span className="cpclose" onClick={()=>setChatOpen(false)}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 5l14 14M19 5L5 19" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>
+              </span>
+            </div>
+            {chatPane==="list"?(
+              <div className="cpbody convlist">
+                <div className="conv" onClick={()=>openThread(null)}>
+                  <div className="logo" style={{background:"var(--ink)"}}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M17 20v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M7 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM20 20v-1a3.5 3.5 0 0 0-2.5-3.4M15 4.2a3 3 0 0 1 0 5.6" stroke="#fff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </div>
+                  <div style={{minWidth:0}}><b>Général</b>
+                    <small>{lastOf(internalChat)?`${lastOf(internalChat).authorId===(currentUser&&currentUser.id)?"Vous : ":""}${lastOf(internalChat).text}`:"Conversation d'équipe"}</small>
+                  </div>
+                </div>
+                {mates.map((m)=>{const l=lastOf(currentUser?(internalDMs[dmKey(currentUser.id,m.id)]||[]):[]);return(
+                  <div key={m.id} className="conv" onClick={()=>openThread(m.id)}>
+                    <div className="logo" style={{background:"var(--ink)"}}>{m.name[0]}</div>
+                    <div style={{minWidth:0}}><b>{m.name}</b>
+                      <small>{l?`${l.authorId===currentUser.id?"Vous : ":""}${l.text}`:"Nouvelle conversation"}</small>
+                    </div>
+                  </div>
+                );})}
+              </div>
+            ):(
+              <div className="cpthread">
+                <div className="stream" ref={teamStreamRef}>
+                  {thread.length===0?(
+                    <div className="bub sys">Aucun message pour l'instant — lancez la discussion.</div>
+                  ):thread.map((m)=>{const mine=currentUser&&m.authorId===currentUser.id;return(
+                    <div key={m.id} className={"bub "+(mine?"me":"them")}>
+                      {!mine&&activeTeammateId==null&&<b style={{display:"block",fontSize:11.5,marginBottom:3,opacity:.75}}>{m.authorName}</b>}
+                      {m.text}
+                    </div>
+                  );})}
+                </div>
+                <div className="composer">
+                  <input placeholder={activeTeammateId==null?"Écrire au canal Général…":`Écrire à ${activeMate?activeMate.name:""}…`} value={internalMsg} onChange={(e)=>setInternalMsg(e.target.value)} onKeyDown={(e)=>e.key==="Enter"&&sendInternalMsg()}/>
+                  <button className="btn sm" onClick={sendInternalMsg}>Envoyer</button>
+                </div>
+              </div>
+            )}
+          </div>
+        );})()}
+
       {/* AGENDA */}
       {view==="agenda"&&(
         <div className="wrap"><div className="page">
-          <h2 className="ptitle disp">Agenda</h2>
+          <h2 className="ptitle disp">Événements</h2>
           <p className="psub">Toutes vos visios à venir avec les entreprises connectées, classées par date. Une visio de groupe apparaît avec tous ses services.{!isAdmin&&` En tant que ${role}, vous ne voyez que les visios de votre service.`}</p>
           <div style={{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap"}}>
-            <button className="btn-ghost sm" onClick={()=>toast("Agenda exporté (.ics) — démo")}>Exporter (.ics)</button>
+            <button className="btn-ghost sm" onClick={()=>toast("Événements exportés (.ics) — démo")}>Exporter (.ics)</button>
             <button className="btn-ghost sm" onClick={()=>toast("Connexion à Google Agenda — démo")}>Connecter Google Agenda</button>
             <button className="btn-ghost sm" onClick={()=>toast("Connexion à Outlook — démo")}>Connecter Outlook</button>
           </div>
@@ -1618,6 +1882,282 @@ export default function Maillon(){
           )}
         </div></div>
       )}
+
+      {/* BIBLIOTHÈQUE — registre de toutes les actions */}
+      {view==="library"&&(
+        <div className="wrap"><div className="page">
+          <h2 className="ptitle disp">Bibliothèque</h2>
+          <p className="psub">Le registre de toutes les actions effectuées sur votre espace : demandes envoyées, mises en relation, visios, publications…</p>
+          <div className="toolbar">
+            <div className="search">
+              <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6" stroke="var(--slate)" strokeWidth="1.8"/><path d="M14 14l4 4" stroke="var(--slate)" strokeWidth="1.8" strokeLinecap="round"/></svg>
+              <input placeholder="Rechercher dans la bibliothèque…" value={libQuery} onChange={(e)=>setLibQuery(e.target.value)}/>
+            </div>
+          </div>
+          {(()=>{const filtered=libQuery.trim()?history.filter((e)=>e.text.toLowerCase().includes(libQuery.trim().toLowerCase())):history;
+            if(history.length===0)return(
+              <div className="empty">
+                <svg width="46" height="46" viewBox="0 0 24 24" fill="none"><path d="M4 5h16M4 12h16M4 19h10" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinecap="round"/></svg>
+                <h3>Aucune activité pour l'instant</h3><p>Chaque action que vous effectuez apparaîtra ici, avec la date et l'heure.</p>
+              </div>
+            );
+            if(filtered.length===0)return(
+              <div className="empty">
+                <svg width="46" height="46" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6" stroke="var(--slate-soft)" strokeWidth="1.6"/><path d="M14 14l4 4" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinecap="round"/></svg>
+                <h3>Aucun résultat</h3><p>Aucune action ne correspond à « {libQuery} ».</p>
+              </div>
+            );
+            return(
+              <div className="libcard">
+                {filtered.map((e)=>(
+                  <div key={e.id} className="libitem">
+                    <div className="ni">{histIcon(e.kind)}</div>
+                    <p>{e.text}</p>
+                    <span className="nat">{e.at}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </div></div>
+      )}
+
+      {/* EMAILING */}
+      {view==="emailing"&&(()=>{const emailingRecipients=connected.filter((c)=>c.emailingConsent);
+        const selectedCompanies=emailingRecipients.filter((c)=>selectedIds.includes(c.id));
+        const allListedIds=[...new Set(distLists.flatMap((l)=>l.companyIds))];
+        const allListedCompanies=emailingRecipients.filter((c)=>allListedIds.includes(c.id));
+        const applyList=(val)=>{
+          let pool;
+          if(val==="all")pool=allListedCompanies;
+          else if(val.startsWith("list:")){const l=distLists.find((x)=>x.id===Number(val.slice(5)));pool=l?emailingRecipients.filter((c)=>l.companyIds.includes(c.id)):[];}
+          else pool=[];
+          setSelectedIds(pool.map((c)=>c.id));
+        };
+        const openCampaign=()=>{setCampaignForm({name:"",subject:"",body:"",list:"all",html:""});setSelectedIds(allListedCompanies.map((c)=>c.id));setCampaignOpen(true);};
+        return(
+        <div className="wrap"><div className="page">
+          <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+            <div><h2 className="ptitle disp">Emailing</h2>
+              <p className="psub" style={{marginBottom:0}}>Envoyez des campagnes uniquement aux entreprises qui ont accepté de les recevoir, au moment de la mise en relation.</p></div>
+            <button className="btn sm" disabled={emailingRecipients.length===0} onClick={openCampaign}>Nouvelle campagne</button>
+          </div>
+
+          <div className="seclabel" style={{marginTop:26}}>Destinataires éligibles {emailingRecipients.length>0&&<span className="badge">{emailingRecipients.length}</span>}</div>
+          {emailingRecipients.length===0?(
+            <p style={{color:"var(--slate)",fontSize:14}}>Aucune entreprise n'a encore accepté de recevoir vos campagnes. Le consentement se donne dans l'onglet « Demandes » au moment d'accepter une mise en relation.</p>
+          ):(
+            <div className="libcard" style={{marginBottom:28}}>
+              {emailingRecipients.map((c)=>(
+                <div key={c.id} className="libitem">
+                  <div className="logo" style={{background:c.color,width:30,height:30,fontSize:13,borderRadius:8}}>{logoImg(c)}</div>
+                  <p>{c.name}</p>
+                  <span className="nat">{c.sector}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="seclabel">Campagnes envoyées</div>
+          {campaigns.length===0?(
+            <div className="empty">
+              <svg width="46" height="46" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4z" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinejoin="round"/><path d="M4 7l8 6 8-6" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <h3>Aucune campagne envoyée</h3><p>Créez votre première campagne d'emailing ci-dessus.</p>
+            </div>
+          ):(
+            <div className="libcard">
+              {campaigns.map((camp)=>{
+                const open=expandedCampaignId===camp.id;
+                const confirmed=camp.rsvp?camp.rsvp.filter((r)=>r.status==="confirmed").length:0;
+                const declined=camp.rsvp?camp.rsvp.filter((r)=>r.status==="declined").length:0;
+                const pending=camp.rsvp?camp.rsvp.filter((r)=>r.status==="pending").length:0;
+                return(
+                <div key={camp.id}>
+                  <div className="libitem" style={{borderBottom:"1px solid var(--line-soft)",cursor:camp.rsvp?"pointer":"default"}} onClick={()=>{if(camp.rsvp)setExpandedCampaignId(open?null:camp.id);}}>
+                    <div className="ni"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><path d="M4 7l8 6 8-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <p style={{fontWeight:600}}>{camp.name||camp.subject}</p>
+                      <p style={{margin:"3px 0 0",fontSize:12.5,color:"var(--slate)"}}>Sujet : {camp.subject}</p>
+                      {camp.body&&<p style={{margin:"4px 0 0",fontSize:13,color:"var(--slate)"}}>{camp.body}</p>}
+                      {camp.rsvp&&(
+                        <p style={{margin:"6px 0 0",fontSize:12,fontWeight:600}}>
+                          <span style={{color:"var(--emerald)"}}>✓ {confirmed} confirmé{confirmed>1?"s":""}</span>{" · "}
+                          <span style={{color:"var(--coral)"}}>✗ {declined} décliné{declined>1?"s":""}</span>{" · "}
+                          <span style={{color:"var(--amber)"}}>⏳ {pending} en attente</span>
+                        </p>
+                      )}
+                    </div>
+                    <span className="nat">{camp.recipients.length} destinataire{camp.recipients.length>1?"s":""} · {camp.date}</span>
+                  </div>
+                  {open&&camp.rsvp&&(
+                    <div style={{background:"var(--paper)",borderBottom:"1px solid var(--line-soft)"}}>
+                      {camp.rsvp.map((r)=>(
+                        <div key={r.companyId} className="subrow" style={{padding:"8px 18px"}}>
+                          <span className="tree">└</span>{r.name}
+                          <span style={{marginLeft:"auto",fontWeight:600,fontSize:12,color:r.status==="confirmed"?"var(--emerald)":r.status==="declined"?"var(--coral)":"var(--amber)"}}>
+                            {r.status==="confirmed"?"✓ Confirmé":r.status==="declined"?"✗ Décliné":"⏳ En attente"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );})}
+            </div>
+          )}
+
+          {campaignOpen&&(
+            <>
+              <div className="scrim" onClick={()=>setCampaignOpen(false)}/>
+              <div className="modal" onClick={()=>setCampaignOpen(false)}>
+                <div className="mbox" onClick={(e)=>e.stopPropagation()}>
+                  <div className="mhead">
+                    <div><h3 className="disp">Nouvelle campagne d'emailing</h3>
+                      <p className="mi">Renseignez son identité, choisissez les destinataires, puis le contenu.</p></div>
+                  </div>
+
+                  <div className="msec">Identité de la campagne</div>
+                  <div className="field"><label>Nom de la campagne</label>
+                    <input value={campaignForm.name} onChange={(e)=>setCampaignForm({...campaignForm,name:e.target.value})} placeholder="ex : Promo rentrée 2026 — Réseau Maillon"/></div>
+                  <div className="field"><label>Sujet de l'email</label>
+                    <input value={campaignForm.subject} onChange={(e)=>setCampaignForm({...campaignForm,subject:e.target.value})} placeholder="ex : Nos nouveautés du mois"/></div>
+                  <div className="field"><label>Liste de diffusion</label>
+                    <select value={campaignForm.list} onChange={(e)=>{const val=e.target.value;setCampaignForm({...campaignForm,list:val});applyList(val);}}>
+                      <option value="all">Toutes les listes de diffusion ({allListedCompanies.length})</option>
+                      {distLists.length>0&&<optgroup label="Vos listes">
+                        {distLists.map((l)=><option key={l.id} value={"list:"+l.id}>{l.name} ({l.companyIds.filter((id)=>emailingRecipients.some((c)=>c.id===id)).length})</option>)}
+                      </optgroup>}
+                    </select>
+                    <div className="uphint">Présélectionne les destinataires ci-dessous ; vous pouvez encore ajuster la sélection à la main. Créez vos propres listes dans l'onglet « Listes ».</div>
+                  </div>
+                  <label className="consentrow">
+                    <input type="checkbox" checked={campaignForm.needsRsvp} onChange={(e)=>setCampaignForm({...campaignForm,needsRsvp:e.target.checked})}/>
+                    Cette campagne demande une confirmation (ex : présence à un événement)
+                  </label>
+
+                  <div className="msec">Destinataires</div>
+                  <div className="field">
+                    <label>Sélection ({selectedCompanies.length}/{emailingRecipients.length})</label>
+                    <div className="libcard" style={{maxHeight:180,overflowY:"auto"}}>
+                      {emailingRecipients.map((c)=>(
+                        <label key={c.id} className="consentrow" style={{padding:"10px 14px",margin:0}}>
+                          <input type="checkbox" checked={selectedIds.includes(c.id)} onChange={()=>toggleRecipient(c.id)}/>
+                          {c.name} <span style={{color:"var(--slate-soft)"}}>· {c.sector}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="msec">Template &amp; tracking</div>
+                  <div className="field"><label>Message (texte simple)</label>
+                    <textarea rows={3} value={campaignForm.body} onChange={(e)=>setCampaignForm({...campaignForm,body:e.target.value})} placeholder="Votre message aux entreprises abonnées."/></div>
+                  <div className="field">
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                      <label style={{margin:0}}>HTML de l'email (facultatif)</label>
+                      <button type="button" className="btn-ghost sm" onClick={()=>setCampaignForm((f)=>({...f,html:buildEmailSkeleton(f.subject)}))}>Générer le squelette email</button>
+                    </div>
+                    <textarea rows={6} className="mono" style={{fontSize:12.5}} value={campaignForm.html} onChange={(e)=>setCampaignForm({...campaignForm,html:e.target.value})} placeholder="<!DOCTYPE html><html>…"/>
+                    <div className="uphint">Placeholders : [Prénom] · [VIEW_ONLINE] · {"{{HEADER}}"} (header expéditeur) · {"{{FOOTER}}"} (footer + désabo) · [REDIRECT_URL] (lien bouton tracké). Le pixel d'ouverture est injecté automatiquement.</div>
+                  </div>
+
+                  <div style={{display:"flex",gap:10,marginTop:4}}>
+                    <button className="btn-ghost" onClick={()=>setCampaignOpen(false)}>Annuler</button>
+                    <button className="btn block" disabled={!campaignForm.name.trim()||!campaignForm.subject.trim()||selectedCompanies.length===0} onClick={()=>sendCampaign(selectedCompanies)}>Envoyer la campagne</button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div></div>
+      );})()}
+
+      {/* LISTES DE DIFFUSION */}
+      {view==="lists"&&(()=>{const eligible=connected.filter((c)=>c.emailingConsent);return(
+        <div className="wrap"><div className="page">
+          <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+            <div><h2 className="ptitle disp">Listes de diffusion</h2>
+              <p className="psub" style={{marginBottom:0}}>Regroupez vos entreprises abonnées dans des listes réutilisables (ex : « Mail du jeudi matin ») pour ne plus avoir à tout recocher à chaque campagne.</p></div>
+            <button className="btn sm" disabled={eligible.length===0} onClick={()=>{setListForm({name:"",companyIds:[]});setListOpen(true);}}>Créer une liste</button>
+          </div>
+
+          {eligible.length===0&&distLists.length===0?(
+            <p style={{color:"var(--slate)",fontSize:14,marginTop:26}}>Aucune entreprise n'a encore accepté de recevoir vos campagnes. Le consentement se donne dans l'onglet « Demandes » au moment d'accepter une mise en relation.</p>
+          ):distLists.length===0?(
+            <div className="empty">
+              <svg width="46" height="46" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h10M4 18h7" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinecap="round"/></svg>
+              <h3>Aucune liste pour l'instant</h3><p>Créez votre première liste de diffusion ci-dessus.</p>
+            </div>
+          ):(
+            <div className="libcard" style={{marginTop:26}}>
+              {distLists.map((l)=>{const members=eligible.filter((c)=>l.companyIds.includes(c.id));const open=expandedListId===l.id;return(
+                <div key={l.id}>
+                  <div className="libitem" style={{cursor:"pointer",borderBottom:"1px solid var(--line-soft)"}} onClick={()=>setExpandedListId(open?null:l.id)}>
+                    <div className="ni"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h10M4 18h7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg></div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <p style={{fontWeight:600}}>{l.name}</p>
+                      <p style={{margin:"4px 0 0",fontSize:12.5,color:"var(--slate)"}}>{members.map((c)=>c.name).join(", ")||"Aucune entreprise (retirée depuis)"}</p>
+                    </div>
+                    <span className="nat" style={{display:"flex",alignItems:"center",gap:12}}>
+                      {members.length} entreprise{members.length>1?"s":""}
+                      <span className="rm" style={{color:"var(--coral)",cursor:"pointer",fontWeight:600}} onClick={(e)=>{e.stopPropagation();deleteList(l.id);}}>Supprimer</span>
+                    </span>
+                  </div>
+                  {open&&(
+                    <div style={{background:"var(--paper)",borderBottom:"1px solid var(--line-soft)"}}>
+                      {members.length===0?(
+                        <p style={{margin:0,padding:"14px 18px",fontSize:13,color:"var(--slate-soft)"}}>Aucune entreprise dans cette liste.</p>
+                      ):members.map((c)=>(
+                        <div key={c.id} className="subgrp">
+                          <div className="subhead">
+                            <div className="logo" style={{background:c.color,width:28,height:28,fontSize:12,borderRadius:7}}>{logoImg(c)}</div>
+                            <b>{c.name}</b>
+                          </div>
+                          {(c.emailingContacts||[]).length===0?(
+                            <div className="subrow"><span className="tree">└</span><span style={{color:"var(--slate-soft)"}}>Aucun contact enregistré</span></div>
+                          ):c.emailingContacts.map((ct,i)=>(
+                            <div key={i} className="subrow"><span className="tree">└</span><b style={{color:"var(--ink)"}}>{ct.name}</b>&nbsp;{ct.email}</div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );})}
+            </div>
+          )}
+
+          {listOpen&&(
+            <>
+              <div className="scrim" onClick={()=>setListOpen(false)}/>
+              <div className="modal" onClick={()=>setListOpen(false)}>
+                <div className="mbox" onClick={(e)=>e.stopPropagation()}>
+                  <div className="mhead">
+                    <div><h3 className="disp">Nouvelle liste de diffusion</h3>
+                      <p className="mi">ex : « Mail du jeudi matin »</p></div>
+                  </div>
+                  <div className="field"><label>Nom de la liste</label>
+                    <input value={listForm.name} onChange={(e)=>setListForm({...listForm,name:e.target.value})} placeholder="ex : Mail du jeudi matin"/></div>
+                  <div className="field">
+                    <label>Entreprises ({listForm.companyIds.length}/{eligible.length})</label>
+                    <div className="libcard" style={{maxHeight:220,overflowY:"auto"}}>
+                      {eligible.map((c)=>(
+                        <label key={c.id} className="consentrow" style={{padding:"10px 14px",margin:0}}>
+                          <input type="checkbox" checked={listForm.companyIds.includes(c.id)} onChange={()=>toggleListMember(c.id)}/>
+                          {c.name} <span style={{color:"var(--slate-soft)"}}>· {c.sector}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:10,marginTop:4}}>
+                    <button className="btn-ghost" onClick={()=>setListOpen(false)}>Annuler</button>
+                    <button className="btn block" disabled={!listForm.name.trim()||listForm.companyIds.length===0} onClick={createList}>Créer la liste</button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div></div>
+      );})()}
 
       {/* MUR DE BESOINS */}
       {view==="needs"&&(
@@ -1727,16 +2267,23 @@ export default function Maillon(){
                 </div>
               )}
               <div className="feed">
-                {posts.map((p)=>(
+                {posts.map((p)=>{const orig=p.repostOf||p.author;return(
                   <div key={p.id} className="post">
+                    {p.repostOf&&(
+                      <div className="repostmeta">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 2l4 4-4 4M3 12V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 12v3a3 3 0 0 1-3 3H3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        Republié par <b>{p.author.name}</b>
+                      </div>
+                    )}
                     <div className="posthead">
-                      <div className="logo" style={{background:p.author.color}}>{logoImg(p.author)}</div>
-                      <div className="who"><b>{p.author.name}{p.author.isMe&&<Check className="verif"/>}</b>
-                        <small>{p.author.sector} · {p.author.loc} · {p.date}</small></div>
+                      <div className="logo" style={{background:orig.color}}>{logoImg(orig)}</div>
+                      <div className="who"><b>{orig.name}{orig.isMe&&<Check className="verif"/>}</b>
+                        <small>{orig.sector} · {orig.loc} · {p.date}</small></div>
                       <span className="posttag">{p.tag}</span>
                     </div>
                     <h3>{p.title}</h3>
                     {p.body&&<p className="body">{p.body}</p>}
+                    {p.photo&&<img className="postphoto" src={p.photo} alt=""/>}
                     <div className="postfoot">
                       <button className={"like"+(p.liked?" on":"")} onClick={()=>toggleLike(p.id)}>
                         <svg width="16" height="16" viewBox="0 0 16 16" fill={p.liked?"currentColor":"none"}><path d="M8 13.5S2 9.8 2 5.9A3 3 0 0 1 8 4a3 3 0 0 1 6 1.9c0 3.9-6 7.6-6 7.6z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/></svg>
@@ -1744,10 +2291,14 @@ export default function Maillon(){
                       </button>
                       <span style={{fontSize:13,color:"var(--slate)",display:"flex",alignItems:"center",gap:6}}>
                         <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 3h10v8H6l-3 2.5V3z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/></svg>Commenter</span>
-                      {p.author.isMe&&<span className="postself">Votre publication</span>}
+                      <button className="like rep" onClick={()=>repost(p)}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M17 2l4 4-4 4M3 12V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 12v3a3 3 0 0 1-3 3H3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        Republier
+                      </button>
+                      {p.author.isMe&&<span className="postself">{p.repostOf?"Republié par vous":"Votre publication"}</span>}
                     </div>
                   </div>
-                ))}
+                );})}
               </div>
             </div>
 
@@ -1894,6 +2445,16 @@ export default function Maillon(){
                 <input value={postForm.tag} onChange={(e)=>setPostForm({...postForm,tag:e.target.value})} placeholder="Offre, Recrutement, Certification…"/></div>
               <div className="field"><label>Message</label>
                 <textarea rows={4} value={postForm.body} onChange={(e)=>setPostForm({...postForm,body:e.target.value})} placeholder="Votre actualité en quelques lignes."/></div>
+              <div className="field"><label>Photo (facultative)</label>
+                {postForm.photo?(
+                  <div className="photopick">
+                    <img src={postForm.photo} alt=""/>
+                    <span className="rm" onClick={()=>setPostForm((f)=>({...f,photo:null}))}>Retirer la photo</span>
+                  </div>
+                ):(
+                  <label className="uplabel btn-ghost sm">Ajouter une photo<input type="file" accept="image/*" onChange={onPhotoPick} style={{display:"none"}}/></label>
+                )}
+              </div>
               <div style={{display:"flex",gap:10,marginTop:4}}>
                 <button className="btn-ghost" onClick={()=>setComposeOpen(false)}>Annuler</button>
                 <button className="btn block" onClick={publish}>Publier</button>
