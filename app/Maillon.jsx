@@ -228,6 +228,9 @@ const CSS = `
 .mln .svcwrap{display:flex;gap:8px;flex-wrap:wrap;}
 .mln .svcchip{font-size:13px;font-weight:600;padding:8px 13px;border-radius:10px;background:#fff;border:1px solid var(--line);color:var(--slate);cursor:pointer;}
 .mln .svcchip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+.mln .fchip{font-size:13px;font-weight:600;padding:8px 13px;border-radius:999px;background:#fff;border:1px solid var(--line);color:var(--slate);cursor:pointer;white-space:nowrap;}
+.mln .fchip:hover{border-color:var(--ink);color:var(--ink);}
+.mln .fchip.on{background:var(--emerald);color:#fff;border-color:var(--emerald);}
 
 /* visio */
 .mln .meetcard{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;align-self:stretch;box-shadow:0 10px 26px -20px rgba(15,24,38,.4);}
@@ -334,11 +337,6 @@ const CSS = `
 .mln .needfoot{display:flex;align-items:center;gap:12px;padding-top:12px;border-top:1px solid var(--line-soft);}
 .mln .needfoot .resp{font-size:12.5px;color:var(--slate);}
 
-/* notifications */
-.mln .bell{position:relative;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--slate);display:flex;align-items:center;justify-content:center;margin-right:8px;flex:0 0 auto;}
-.mln .bell:hover{border-color:var(--ink);color:var(--ink);}
-.mln .bell .nb{position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--coral);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;}
-.mln .notifpanel{position:absolute;top:calc(100% + 6px);right:16px;width:320px;max-height:74vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 60px -30px rgba(15,24,38,.5);z-index:50;}
 .mln .chatpanel{position:fixed;top:90px;right:24px;bottom:24px;width:360px;background:var(--surface);border-radius:18px;box-shadow:0 30px 80px -20px rgba(15,24,38,.5);z-index:60;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--line);}
 .mln .chatpanel .cphead{background:var(--ink);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex:0 0 auto;gap:10px;}
 .mln .chatpanel .cphead .cptitle{font-family:'Bricolage Grotesque';font-weight:800;font-size:19px;}
@@ -349,13 +347,7 @@ const CSS = `
 .mln .chatpanel .cpbody{flex:1;overflow-y:auto;min-height:0;}
 .mln .chatpanel .cpthread{flex:1;display:flex;flex-direction:column;min-height:0;}
 @media(max-width:520px){.mln .chatpanel{left:12px;right:12px;top:70px;bottom:12px;width:auto;}}
-.mln .notifpanel .nh{padding:13px 16px;font-family:'Inter';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate-soft);border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);}
 .mln .nat{display:block;font-family:'Inter';font-size:10.5px;color:var(--slate-soft);margin-top:3px;text-transform:capitalize;}
-.mln .notifitem{display:flex;gap:11px;align-items:flex-start;padding:13px 16px;border-bottom:1px solid var(--line-soft);cursor:pointer;text-align:left;width:100%;background:none;}
-.mln .notifitem:hover{background:var(--paper);}
-.mln .notifitem .ni{width:30px;height:30px;border-radius:8px;background:var(--emerald-wash);color:var(--emerald);display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
-.mln .notifitem p{margin:0;font-size:13px;line-height:1.4;color:var(--ink);}
-.mln .notifempty{padding:26px 16px;text-align:center;color:var(--slate-soft);font-size:13px;}
 .mln .setrow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-top:1px solid var(--line-soft);font-size:13.5px;color:var(--ink);cursor:pointer;}
 .mln .setrow input{accent-color:var(--emerald);width:17px;height:17px;}
 .mln .auditlist{display:flex;flex-direction:column;gap:0;}
@@ -726,9 +718,10 @@ const mapCompanyRow=(c)=>{
     seek:c.seek||[],offer:c.offer||[],certifs:c.certifs||[],langues:c.langues&&c.langues.length?c.langues:["Français"],
     services:c.services&&c.services.length?c.services:["Direction","Commercial"],
     receptionPole:c.reception_pole||"Direction",siret:c.siret||"",verifiedSiren:!!c.verified_siren,verified:!!c.verified,
+    adminServices:c.admin_services&&c.admin_services.length?c.admin_services:null,accessGrants:c.access_grants||{},
   };
 };
-const mapProfileRow=(p,email)=>({id:p.id,name:p.full_name||"Vous",role:p.role||"Direction",status:p.status||"active",email:email||""});
+const mapProfileRow=(p,email)=>({id:p.id,name:p.full_name||"Vous",role:p.role||"Direction",status:p.status||"active",email:email||"",notifyEmail:p.notify_email!==false});
 const mapDirectoryCompany=(row)=>{const base=mapCompanyRow(row);return {...base,tag:base.desc,rel:"none",channels:{}};};
 const isRealCompany=(c)=>!!c&&typeof c.id==="string";
 
@@ -915,7 +908,8 @@ export default function Maillon(){
   const [authError,setAuthError]=useState("");
   const [authBusy,setAuthBusy]=useState(false);
   const [obStep,setObStep]=useState(0);
-  const [form,setForm]=useState({name:"",sector:"",loc:"",emp:EMP[0],color:COLORS[0],radius:50,
+  const [customService,setCustomService]=useState("");
+  const [form,setForm]=useState({name:"",ownerName:"",sector:"",loc:"",emp:EMP[0],color:COLORS[0],radius:50,
     desc:"",seek:"",offer:"",founded:"",ca:CA[0],dispo:DISPO[0],web:"",certifs:"",langues:"",plan:"gratuit",billing:"Mensuelle",logo:null,services:["Direction","Commercial","Marketing & Com","RH","Comptabilité"],receptionPole:"Direction",siret:""});
   const [view,setView]=useState("discover");
   const [mode,setMode]=useState("list");           // list | map
@@ -943,13 +937,37 @@ export default function Maillon(){
   const [loginPwd,setLoginPwd]=useState("");
   const [inviteEmail,setInviteEmail]=useState("");
   const [inviteRole,setInviteRole]=useState("");
+  const [inviteRoleCustom,setInviteRoleCustom]=useState("");
+  const [pendingInvites,setPendingInvites]=useState([]);
+  const [inviteToken,setInviteToken]=useState(null);
+  const [inviteInfo,setInviteInfo]=useState(null);
+  const [inviteChecked,setInviteChecked]=useState(false);
+  const [joinName,setJoinName]=useState("");
   const [access,setAccess]=useState({admins:["Direction"],grants:{}});
-  const [accessOpen,setAccessOpen]=useState(false);
+  const [savedAccess,setSavedAccess]=useState({admins:["Direction"],grants:{}});
+  const [accessDirty,setAccessDirty]=useState(false);
+  const [accessSaving,setAccessSaving]=useState(false);
+  const [directionConfirm,setDirectionConfirm]=useState(null);
+  const [customRolePrompt,setCustomRolePrompt]=useState(null);
+  const [customRoleValue,setCustomRoleValue]=useState("");
   const [auditLog,setAuditLog]=useState([]);
   const [history,setHistory]=useState([]);
   const [notifEmail,setNotifEmail]=useState(true);
   const [notifPush,setNotifPush]=useState(false);
-  const [twofa,setTwofa]=useState(false);
+  const [mfaFactors,setMfaFactors]=useState([]);
+  const twofa=mfaFactors.length>0;
+  const [mfaEnrollOpen,setMfaEnrollOpen]=useState(false);
+  const [mfaQr,setMfaQr]=useState(null);
+  const [mfaSecret,setMfaSecret]=useState("");
+  const [mfaFactorId,setMfaFactorId]=useState(null);
+  const [mfaCode,setMfaCode]=useState("");
+  const [mfaBusy,setMfaBusy]=useState(false);
+  const [mfaError,setMfaError]=useState("");
+  const [mfaChallengeNeeded,setMfaChallengeNeeded]=useState(false);
+  const [mfaChallengeFactorId,setMfaChallengeFactorId]=useState(null);
+  const [mfaLoginCode,setMfaLoginCode]=useState("");
+  const [mfaLoginError,setMfaLoginError]=useState("");
+  const [mfaLoginBusy,setMfaLoginBusy]=useState(false);
   const [collab,setCollab]=useState(null);
   const [collabForm,setCollabForm]=useState({subject:"",budget:"",name:""});
   const [schedForm,setSchedForm]=useState({date:"",time:""});
@@ -962,10 +980,11 @@ export default function Maillon(){
   const [needOpen,setNeedOpen]=useState(false);
   const [needForm,setNeedForm]=useState({title:"",sought:SECTORS[0],loc:""});
   const [needFilter,setNeedFilter]=useState("all");
-  const [notifOpen,setNotifOpen]=useState(false);
-  const notifRef=useRef(null);
+  const [unreadChat,setUnreadChat]=useState({});
   const [toasts,setToasts]=useState([]);
   const [libQuery,setLibQuery]=useState("");
+  const [libFilters,setLibFilters]=useState([]);
+  const toggleLibFilter=(k)=>setLibFilters((f)=>f.includes(k)?f.filter((x)=>x!==k):[...f,k]);
   const [emailOptIn,setEmailOptIn]=useState({});
   const [emailAddrByCompany,setEmailAddrByCompany]=useState({});
   const [campaigns,setCampaigns]=useState([]);
@@ -988,19 +1007,49 @@ export default function Maillon(){
   const dmKey=(a,b)=>[String(a),String(b)].sort().join("_");
 
   const toast=(t)=>{const id=Math.random();setToasts((x)=>[...x,{id,t}]);setTimeout(()=>setToasts((x)=>x.filter((y)=>y.id!==id)),3200);};
-  const logEvent=(text)=>setAuditLog((l)=>[{id:Date.now()+Math.random(),text,at:new Date().toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})},...l].slice(0,60));
-  const logHist=(text,kind)=>setHistory((h)=>[{id:Date.now()+Math.random(),text,kind:kind||"info",at:new Date().toLocaleString("fr-FR",{weekday:"short",day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})},...h].slice(0,80));
+  const logEvent=(text)=>{
+    setAuditLog((l)=>[{id:Date.now()+Math.random(),text,at:new Date().toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})},...l].slice(0,60));
+    if(me&&currentUser)supabase.from("audit_log").insert({company_id:me.id,created_by:currentUser.id,text}).then(()=>{});
+  };
+  const histAt=(d)=>d.toLocaleString("fr-FR",{weekday:"short",day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});
+  const logHist=(text,kind)=>{
+    setHistory((h)=>[{id:Date.now()+Math.random(),text,kind:kind||"info",at:histAt(new Date())},...h].slice(0,80));
+    if(me&&currentUser)supabase.from("history_log").insert({company_id:me.id,created_by:currentUser.id,text,kind:kind||"info"}).then(()=>{});
+  };
   const histIcon=(k)=>({
     visio:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="12" height="12" rx="2.5" stroke="currentColor" strokeWidth="1.8"/><path d="M15 10l6-3v10l-6-3" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>,
-    send:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-    accept:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-    need:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8"/><path d="M20 20l-4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
-    collab:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M6 2h8l4 4v16H6z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>,
+    demande:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    acceptation:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    refus:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
+    besoin:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8"/><path d="M20 20l-4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
+    devis:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M6 2h8l4 4v16H6z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>,
+    document:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M6 2h8l4 4v16H6z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>,
+    emailing:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.7"/><path d="M4 6l8 6 8-6" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>,
+    liste:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"/></svg>,
+    actualite:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.4 7.4H22l-6 4.4 2.3 7.2L12 17.6 5.7 22 8 14.8 2 10.4h7.6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>,
     info:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7"/><path d="M12 8v.4M12 11v5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
   }[k]||null);
-  const setReceptionPole=(pole)=>{setMe((m)=>({...m,receptionPole:pole}));logEvent(`Pôle de réception changé → ${pole}`);toast(`Pôle de réception : ${pole}`);};
-  const toggleAccount=(id)=>{setTeam((ts)=>ts.map((x)=>x.id===id?{...x,status:x.status==="disabled"?"active":"disabled"}:x));const m=team.find((x)=>x.id===id);logEvent(`Compte ${m?m.name:""} ${m&&m.status==="disabled"?"réactivé":"désactivé"}`);};
-  const postCollab=()=>{if(!active||!mSvc)return;if(collab==="quote"){if(!collabForm.subject.trim())return;pushCh(active.id,mSvc,{from:"me",kind:"quote",subject:collabForm.subject.trim(),budget:collabForm.budget.trim()});logHist(`Devis demandé à ${active.name}`,"collab");toast("Demande de devis envoyée");}else if(collab==="doc"){if(!collabForm.name.trim())return;pushCh(active.id,mSvc,{from:"me",kind:"doc",name:collabForm.name.trim()});logHist(`Document partagé avec ${active.name}`,"collab");toast("Document partagé");}setCollab(null);setCollabForm({subject:"",budget:"",name:""});};
+  const HIST_CATEGORIES=[
+    {kind:"demande",label:"Démarchages envoyés"},
+    {kind:"acceptation",label:"Mises en relation acceptées"},
+    {kind:"refus",label:"Demandes refusées"},
+    {kind:"emailing",label:"Emailing"},
+    {kind:"liste",label:"Listes de diffusion"},
+    {kind:"visio",label:"Visioconférences"},
+    {kind:"devis",label:"Devis"},
+    {kind:"document",label:"Documents partagés"},
+    {kind:"besoin",label:"Besoins"},
+    {kind:"actualite",label:"Actualités"},
+  ];
+  const setReceptionPole=(pole)=>{setMe((m)=>({...m,receptionPole:pole}));if(me)supabase.from("companies").update({reception_pole:pole}).eq("id",me.id).then(()=>{});logEvent(`Pôle de réception changé → ${pole}`);toast(`Pôle de réception : ${pole}`);};
+  const toggleAccount=(id)=>{
+    const m=team.find((x)=>x.id===id);
+    const nextStatus=m&&m.status==="disabled"?"active":"disabled";
+    setTeam((ts)=>ts.map((x)=>x.id===id?{...x,status:nextStatus}:x));
+    supabase.from("profiles").update({status:nextStatus}).eq("id",id).then(()=>{});
+    logEvent(`Compte ${m?m.name:""} ${nextStatus==="active"?"réactivé":"désactivé"}`);
+  };
+  const postCollab=()=>{if(!active||!mSvc)return;if(collab==="quote"){if(!collabForm.subject.trim())return;pushCh(active.id,mSvc,{from:"me",kind:"quote",subject:collabForm.subject.trim(),budget:collabForm.budget.trim()});logHist(`Devis demandé à ${active.name}`,"devis");toast("Demande de devis envoyée");}else if(collab==="doc"){if(!collabForm.name.trim())return;pushCh(active.id,mSvc,{from:"me",kind:"doc",name:collabForm.name.trim()});logHist(`Document partagé avec ${active.name}`,"document");toast("Document partagé");}setCollab(null);setCollabForm({subject:"",budget:"",name:""});};
 
   const incoming=companies.filter((c)=>c.rel==="incoming");
   const sent=companies.filter((c)=>c.rel==="sent");
@@ -1023,7 +1072,17 @@ export default function Maillon(){
 
   const hydrateFromSession=async(sess)=>{
     setSession(sess);
-    if(!sess){setMe(null);setCurrentUser(null);setTeam([]);setAuthReady(true);return;}
+    if(!sess){setMe(null);setCurrentUser(null);setTeam([]);setMfaChallengeNeeded(false);setAuthReady(true);return;}
+    const {data:aal}=await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if(aal&&aal.nextLevel==="aal2"&&aal.nextLevel!==aal.currentLevel){
+      const {data:factors}=await supabase.auth.mfa.listFactors();
+      const factor=factors&&factors.totp&&factors.totp[0];
+      setMfaChallengeFactorId(factor?factor.id:null);
+      setMfaChallengeNeeded(true);
+      setAuthReady(true);
+      return;
+    }
+    setMfaChallengeNeeded(false);
     const {data:profile}=await supabase.from("profiles").select("*").eq("id",sess.user.id).single();
     if(!profile||!profile.company_id){
       setMe(null);setCurrentUser(profile?mapProfileRow(profile,sess.user.email):null);setTeam([]);setAuthReady(true);return;
@@ -1034,11 +1093,64 @@ export default function Maillon(){
     ]);
     if(!company){setMe(null);setCurrentUser(mapProfileRow(profile,sess.user.email));setTeam([]);setAuthReady(true);return;}
     const mappedCompany=mapCompanyRow(company);
+    const mappedProfile=mapProfileRow(profile,sess.user.email);
     setMe(mappedCompany);
-    setCurrentUser(mapProfileRow(profile,sess.user.email));
+    setCurrentUser(mappedProfile);
     setTeam((teammates||[]).map((p)=>mapProfileRow(p,p.id===sess.user.id?sess.user.email:"")));
-    setAccess({admins:[mappedCompany.receptionPole],grants:{}});
+    {const loadedAccess={admins:mappedCompany.adminServices||[mappedCompany.receptionPole],grants:mappedCompany.accessGrants||{}};setAccess(loadedAccess);setSavedAccess(loadedAccess);setAccessDirty(false);}
+    setNotifEmail(mappedProfile.notifyEmail);
+    refreshMfaFactors();
     setAuthReady(true);
+  };
+
+  const refreshMfaFactors=async()=>{
+    const {data}=await supabase.auth.mfa.listFactors();
+    setMfaFactors(data&&data.totp?data.totp.filter((f)=>f.status==="verified"):[]);
+  };
+  const startMfaEnroll=async()=>{
+    setMfaError("");setMfaBusy(true);
+    const {data,error}=await supabase.auth.mfa.enroll({factorType:"totp"});
+    setMfaBusy(false);
+    if(error){toast("Erreur : "+error.message);return;}
+    if(!data||!data.totp||!data.totp.qr_code){toast("Erreur : le QR code n'a pas pu être généré.");return;}
+    setMfaFactorId(data.id);setMfaQr(data.totp.qr_code);setMfaSecret(data.totp.secret);setMfaCode("");setMfaEnrollOpen(true);
+  };
+  const cancelMfaEnroll=()=>{
+    if(mfaFactorId)supabase.auth.mfa.unenroll({factorId:mfaFactorId}).then(()=>{});
+    setMfaEnrollOpen(false);setMfaQr(null);setMfaSecret("");setMfaFactorId(null);setMfaCode("");setMfaError("");
+  };
+  const confirmMfaEnroll=async()=>{
+    if(!mfaCode.trim()||!mfaFactorId)return;
+    setMfaBusy(true);setMfaError("");
+    const {data:ch,error:chErr}=await supabase.auth.mfa.challenge({factorId:mfaFactorId});
+    if(chErr){setMfaBusy(false);setMfaError(chErr.message);return;}
+    const {error:vErr}=await supabase.auth.mfa.verify({factorId:mfaFactorId,challengeId:ch.id,code:mfaCode.trim()});
+    setMfaBusy(false);
+    if(vErr){setMfaError("Code incorrect, réessayez.");return;}
+    setMfaEnrollOpen(false);setMfaCode("");setMfaQr(null);setMfaSecret("");setMfaFactorId(null);
+    await refreshMfaFactors();
+    logEvent("Double authentification activée");toast("2FA activée !");
+  };
+  const disableMfa=async()=>{
+    const f=mfaFactors[0];if(!f)return;
+    setMfaBusy(true);
+    const {error}=await supabase.auth.mfa.unenroll({factorId:f.id});
+    setMfaBusy(false);
+    if(error){toast("Erreur : "+error.message);return;}
+    await refreshMfaFactors();
+    logEvent("Double authentification désactivée");toast("2FA désactivée");
+  };
+  const submitMfaChallenge=async()=>{
+    if(!mfaChallengeFactorId||!mfaLoginCode.trim())return;
+    setMfaLoginError("");setMfaLoginBusy(true);
+    const {data:ch,error:chErr}=await supabase.auth.mfa.challenge({factorId:mfaChallengeFactorId});
+    if(chErr){setMfaLoginBusy(false);setMfaLoginError(chErr.message);return;}
+    const {error:vErr}=await supabase.auth.mfa.verify({factorId:mfaChallengeFactorId,challengeId:ch.id,code:mfaLoginCode.trim()});
+    setMfaLoginBusy(false);
+    if(vErr){setMfaLoginError("Code incorrect.");return;}
+    setMfaLoginCode("");
+    const {data:{session:freshSession}}=await supabase.auth.getSession();
+    hydrateFromSession(freshSession);
   };
 
   useEffect(()=>{
@@ -1047,7 +1159,16 @@ export default function Maillon(){
     const {data:sub}=supabase.auth.onAuthStateChange((_event,sess)=>{hydrateFromSession(sess);});
     return ()=>{active=false;sub.subscription.unsubscribe();};
   },[]);
-  useEffect(()=>{if(!notifOpen)return;const onDown=(e)=>{if(notifRef.current&&!notifRef.current.contains(e.target))setNotifOpen(false);};document.addEventListener("mousedown",onDown);return()=>document.removeEventListener("mousedown",onDown);},[notifOpen]);
+  useEffect(()=>{
+    const token=new URLSearchParams(window.location.search).get("invite");
+    if(!token){setInviteChecked(true);return;}
+    setInviteToken(token);
+    supabase.rpc("get_invite",{invite_token:token}).then(({data})=>{
+      const row=Array.isArray(data)?data[0]:data;
+      setInviteInfo(row&&row.status==="pending"?row:null);
+      setInviteChecked(true);
+    });
+  },[]);
 
   useEffect(()=>{
     if(!me)return;
@@ -1106,6 +1227,7 @@ export default function Maillon(){
           return {...c,channels:{...(c.channels||{}),[m.service]:[...arr,{from:"them",text:m.body,id:m.id}]}};
         }));
         toast("💬 Nouveau message reçu");
+        notifyByEmail("Nouveau message sur Maillon","Vous avez reçu un nouveau message sur votre messagerie Maillon.");
       })
       .subscribe();
     return ()=>{supabase.removeChannel(channel);};
@@ -1135,17 +1257,116 @@ export default function Maillon(){
         const row=payload.new;
         if(row.sender_id===currentUser.id)return;
         const msg={id:row.id,authorId:row.sender_id,text:row.body};
+        setUnreadChat((u)=>({...u,[row.channel]:(u[row.channel]||0)+1}));
         if(row.channel==="general"){
           setInternalChat((c)=>[...c,msg]);
           toast("💬 Nouveau message (Général)");
+          notifyByEmail("Nouveau message sur Maillon","Vous avez reçu un nouveau message dans le canal Général de votre équipe.");
         }else{
           setInternalDMs((d)=>({...d,[row.channel]:[...(d[row.channel]||[]),msg]}));
-          if(row.channel===dmKey(currentUser.id,row.sender_id))toast("💬 Nouveau message reçu");
+          if(row.channel===dmKey(currentUser.id,row.sender_id)){
+            toast("💬 Nouveau message reçu");
+            notifyByEmail("Nouveau message sur Maillon","Vous avez reçu un nouveau message privé sur votre chat interne Maillon.");
+          }
         }
       })
       .subscribe();
     return ()=>{supabase.removeChannel(channel);};
   },[me&&me.id,currentUser&&currentUser.id]);
+
+  useEffect(()=>{
+    if(!me)return;
+    let active=true;
+    supabase.from("history_log").select("*").eq("company_id",me.id).order("created_at",{ascending:false}).limit(80).then(({data})=>{
+      if(!active||!data)return;
+      setHistory(data.map((row)=>({id:row.id,text:row.text,kind:row.kind,at:histAt(new Date(row.created_at))})));
+    });
+    return ()=>{active=false;};
+  },[me&&me.id]);
+
+  useEffect(()=>{
+    if(!me||!currentUser)return;
+    const channel=supabase.channel("history-"+me.id)
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"history_log",filter:`company_id=eq.${me.id}`},(payload)=>{
+        const row=payload.new;
+        if(row.created_by===currentUser.id)return;
+        setHistory((h)=>[{id:row.id,text:row.text,kind:row.kind,at:histAt(new Date(row.created_at))},...h].slice(0,80));
+      })
+      .subscribe();
+    return ()=>{supabase.removeChannel(channel);};
+  },[me&&me.id,currentUser&&currentUser.id]);
+
+  useEffect(()=>{
+    if(!me)return;
+    let active=true;
+    supabase.from("audit_log").select("*").eq("company_id",me.id).order("created_at",{ascending:false}).limit(60).then(({data})=>{
+      if(!active||!data)return;
+      setAuditLog(data.map((row)=>({id:row.id,text:row.text,at:histAt(new Date(row.created_at))})));
+    });
+    return ()=>{active=false;};
+  },[me&&me.id]);
+
+  useEffect(()=>{
+    if(!me||!currentUser)return;
+    const channel=supabase.channel("audit-"+me.id)
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"audit_log",filter:`company_id=eq.${me.id}`},(payload)=>{
+        const row=payload.new;
+        if(row.created_by===currentUser.id)return;
+        setAuditLog((l)=>[{id:row.id,text:row.text,at:histAt(new Date(row.created_at))},...l].slice(0,60));
+      })
+      .subscribe();
+    return ()=>{supabase.removeChannel(channel);};
+  },[me&&me.id,currentUser&&currentUser.id]);
+
+  useEffect(()=>{
+    if(!me)return;
+    let active=true;
+    supabase.from("posts").select("*").order("created_at",{ascending:false}).limit(60).then(async({data})=>{
+      if(!active||!data)return;
+      const ids=data.map((r)=>r.id);
+      const {data:likeRows}=ids.length?await supabase.from("post_likes").select("post_id,company_id").in("post_id",ids):{data:[]};
+      const countOf={};const mineOf={};
+      (likeRows||[]).forEach((l)=>{countOf[l.post_id]=(countOf[l.post_id]||0)+1;if(l.company_id===me.id)mineOf[l.post_id]=true;});
+      if(!active)return;
+      const real=data.map((row)=>({id:row.id,companyId:row.company_id,repostOfCompanyId:row.repost_of_company_id||null,title:row.title,body:row.body||"",tag:row.tag||"Actu",photo:row.photo||null,date:relDate(row.created_at),likes:countOf[row.id]||0,liked:!!mineOf[row.id]}));
+      setPosts((ps)=>{
+        const existing=new Set(ps.map((p)=>p.id));
+        const fresh=real.filter((p)=>!existing.has(p.id));
+        return fresh.length?[...fresh,...ps]:ps;
+      });
+    });
+    return ()=>{active=false;};
+  },[me&&me.id]);
+
+  useEffect(()=>{
+    if(!me)return;
+    const channel=supabase.channel("posts-feed")
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"posts"},(payload)=>{
+        const row=payload.new;
+        if(row.company_id===me.id)return;
+        const post={id:row.id,companyId:row.company_id,repostOfCompanyId:row.repost_of_company_id||null,title:row.title,body:row.body||"",tag:row.tag||"Actu",photo:row.photo||null,date:relDate(row.created_at),likes:0,liked:false};
+        setPosts((ps)=>[post,...ps]);
+      })
+      .subscribe();
+    return ()=>{supabase.removeChannel(channel);};
+  },[me&&me.id]);
+
+  useEffect(()=>{
+    if(!me)return;
+    const channel=supabase.channel("post-likes-feed")
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"post_likes"},(payload)=>{
+        const row=payload.new;
+        if(row.company_id===me.id)return;
+        setPosts((ps)=>ps.map((p)=>p.id===row.post_id?{...p,likes:p.likes+1}:p));
+      })
+      .on("postgres_changes",{event:"DELETE",schema:"public",table:"post_likes"},(payload)=>{
+        const row=payload.old;
+        if(!row||row.company_id===me.id)return;
+        setPosts((ps)=>ps.map((p)=>p.id===row.post_id?{...p,likes:Math.max(0,p.likes-1)}:p));
+      })
+      .subscribe();
+    return ()=>{supabase.removeChannel(channel);};
+  },[me&&me.id]);
 
   useEffect(()=>{
     if(!me)return;
@@ -1157,6 +1378,10 @@ export default function Maillon(){
     supabase.from("distribution_lists").select("*").eq("company_id",me.id).order("created_at",{ascending:false}).then(({data})=>{
       if(!active||!data)return;
       setDistLists(data.map((row)=>({id:row.id,name:row.name,companyIds:row.company_ids||[]})));
+    });
+    supabase.from("invites").select("*").eq("company_id",me.id).eq("status","pending").order("created_at",{ascending:false}).then(({data})=>{
+      if(!active||!data)return;
+      setPendingInvites(data);
     });
     return ()=>{active=false;};
   },[me&&me.id]);
@@ -1200,6 +1425,24 @@ export default function Maillon(){
     reader.readAsDataURL(file);
   };
 
+  const joinViaInvite=async()=>{
+    if(!session||!inviteToken||!joinName.trim())return;
+    setAuthBusy(true);
+    const {error}=await supabase.rpc("accept_invite",{invite_token:inviteToken,new_full_name:joinName.trim()});
+    setAuthBusy(false);
+    if(error){toast("Erreur : "+error.message);return;}
+    window.history.replaceState({},"",window.location.pathname);
+    setInviteToken(null);setInviteInfo(null);setJoinName("");
+    toast("Vous avez rejoint l'entreprise !");
+    hydrateFromSession(session);
+  };
+
+  const addCustomService=()=>{
+    const v=customService.trim();
+    if(!v)return;
+    setForm((f)=>f.services.includes(v)?f:{...f,services:[...f.services,v]});
+    setCustomService("");
+  };
   const finishOnboarding=async()=>{
     if(!session){toast("Session expirée, reconnectez-vous.");return;}
     const chosen=PLANS.find((p)=>p.id===form.plan)||PLANS[0];
@@ -1217,20 +1460,38 @@ export default function Maillon(){
     }).select().single();
     if(error){setAuthBusy(false);toast("Erreur : "+error.message);return;}
     const {data:profile,error:profErr}=await supabase.from("profiles").update({
-      company_id:company.id,full_name:form.name,role:receptionPole,status:"active",
+      company_id:company.id,full_name:form.ownerName.trim()||form.name,role:receptionPole,status:"active",
     }).eq("id",session.user.id).select().single();
     setAuthBusy(false);
     if(profErr){toast("Erreur : "+profErr.message);return;}
     setMe(mapCompanyRow(company));
     setCurrentUser(mapProfileRow(profile,session.user.email));
     setTeam([mapProfileRow(profile,session.user.email)]);
-    setAccess({admins:[receptionPole],grants:{}});
+    {const initAccess={admins:[receptionPole],grants:{}};setAccess(initAccess);setSavedAccess(initAccess);setAccessDirty(false);}
     setView("discover");toast("Votre page est en ligne");
     setProspectsUsed(0);
   };
-  const updateRole=(id,r)=>{setTeam((ts)=>ts.map((x)=>x.id===id?{...x,role:r}:x));setCurrentUser((u)=>u&&u.id===id?{...u,role:r}:u);logEvent(`Rôle modifié → ${r}`);};
+  const updateRole=(id,r)=>{
+    setTeam((ts)=>ts.map((x)=>x.id===id?{...x,role:r}:x));
+    setCurrentUser((u)=>u&&u.id===id?{...u,role:r}:u);
+    supabase.from("profiles").update({role:r}).eq("id",id).then(()=>{});
+    logEvent(`Rôle modifié → ${r}`);
+  };
   const logout=async()=>{if(currentUser)logEvent(`Déconnexion — ${currentUser.name}`);await supabase.auth.signOut();setLoginEmail("");setLoginPwd("");setView("discover");};
-  const sendInvite=(email,rl)=>{const e=(email||"").trim();if(!e||!/@/.test(e))return;const local=e.split("@")[0];const nm=local.split(/[._-]/).map((p)=>p?p[0].toUpperCase()+p.slice(1):p).join(" ");setTeam((ts)=>[...ts,{id:Date.now(),name:nm,email:e,role:rl,status:"invited"}]);logEvent(`Invitation envoyée à ${e} (${rl})`);toast(`Invitation envoyée à ${e}`);};
+  const inviteLink=(token)=>`${window.location.origin}${window.location.pathname}?invite=${token}`;
+  const sendInvite=async(email,rl)=>{
+    const e=(email||"").trim();if(!e||!/@/.test(e)||!me)return;
+    const {data,error}=await supabase.from("invites").insert({company_id:me.id,email:e,role:rl}).select().single();
+    if(error){toast("Erreur : "+error.message);return;}
+    setPendingInvites((p)=>[data,...p]);
+    logEvent(`Invitation créée pour ${e} (${rl})`);
+    navigator.clipboard&&navigator.clipboard.writeText(inviteLink(data.token)).catch(()=>{});
+    toast(`Lien d'invitation copié pour ${e}`);
+  };
+  const revokeInvite=(id)=>{
+    setPendingInvites((p)=>p.filter((x)=>x.id!==id));
+    supabase.from("invites").update({status:"revoked"}).eq("id",id).then(()=>{});
+  };
 
   const planCredits=()=>{const p=PLANS.find((x)=>x.id===(me&&me.planId));return p?p.credits:null;};
   const remaining=()=>{const c=planCredits();return c==null?null:Math.max(0,c-prospectsUsed);};
@@ -1241,7 +1502,7 @@ export default function Maillon(){
     setPmsg(`Bonjour ${c.name}, je suis ${(me&&me.name)||"une entreprise"} (${(me&&me.sector)||form.sector}). `+
       `On aimerait explorer une collaboration autour de ${(c.seek&&c.seek[0])||"nos activités"}. Ouvert à en discuter ?`);};
   const sendProspect=()=>{
-    const c=prospect;const target=c.receptionPole||"Direction";setProspectsUsed((n)=>n+1);update(c.id,{rel:"sent",sentTo:target});setProspect(null);logHist(`Demande de mise en relation envoyée à ${c.name} (pôle ${target})`,"send");toast(`Demande envoyée à ${c.name} · pôle ${target}`);
+    const c=prospect;const target=c.receptionPole||"Direction";setProspectsUsed((n)=>n+1);update(c.id,{rel:"sent",sentTo:target});setProspect(null);logHist(`Demande de mise en relation envoyée à ${c.name} (pôle ${target})`,"demande");toast(`Demande envoyée à ${c.name} · pôle ${target}`);
     if(isRealCompany(c)&&isRealCompany(me)){
       supabase.from("connections").insert({from_company_id:me.id,to_company_id:c.id,status:"pending",service:target,message:pmsg}).select().single()
         .then(({data,error})=>{if(!error&&data)update(c.id,{connectionId:data.id});});
@@ -1252,15 +1513,15 @@ export default function Maillon(){
       const emailingConsent=Math.random()<0.65;
       update(c.id,{rel:"connected",emailingConsent,channels:{[svc]:[{from:"sys",text:`${c.name} a accepté votre mise en relation · service ${svc}.`},
         {from:"them",text:REPLIES[Math.floor(Math.random()*REPLIES.length)]}]}});
-      logHist(`${c.name} a accepté votre mise en relation`,"accept");toast(`✓ ${c.name} a accepté la mise en relation`);
+      logHist(`${c.name} a accepté votre mise en relation`,"acceptation");toast(`✓ ${c.name} a accepté la mise en relation`);
       setTimeout(()=>{
-        if(emailingConsent){update(c.id,{emailingContacts:genContacts(c)});logHist(`${c.name} a accepté de recevoir vos campagnes d'emailing`,"info");toast(`✓ ${c.name} a accepté de recevoir vos campagnes d'emailing`);}
-        else{logHist(`${c.name} n'a pas souhaité recevoir vos campagnes d'emailing`,"info");}
+        if(emailingConsent){update(c.id,{emailingContacts:genContacts(c)});logHist(`${c.name} a accepté de recevoir vos campagnes d'emailing`,"emailing");toast(`✓ ${c.name} a accepté de recevoir vos campagnes d'emailing`);}
+        else{logHist(`${c.name} n'a pas souhaité recevoir vos campagnes d'emailing`,"emailing");}
       },1400);
     },2600);
   };
 
-  const accept=(c,emailingOptIn,emailingAddresses)=>{const pole=(me&&me.receptionPole)||"Direction";const common=commonServices(c);const svc=common.includes(pole)?pole:(common[0]||"Direction");const addrs=emailingOptIn?(emailingAddresses||[]).map((e)=>e.trim()).filter(Boolean):[];update(c.id,{rel:"connected",emailingOptIn:!!emailingOptIn,emailingAddresses:addrs,channels:{[svc]:[{from:"sys",text:`Vous avez accepté la demande de ${c.name} · service ${svc}.`},{from:"them",text:c.reqMsg}]}});setActiveConv(c.id);setActiveService(svc);logEvent(`Mise en relation acceptée — ${c.name}`);logHist(`Vous avez accepté la demande de ${c.name}${emailingOptIn?" · abonné à l'emailing":""}`,"accept");toast(`Connecté avec ${c.name}`);
+  const accept=(c,emailingOptIn,emailingAddresses)=>{const pole=(me&&me.receptionPole)||"Direction";const common=commonServices(c);const svc=common.includes(pole)?pole:(common[0]||"Direction");const addrs=emailingOptIn?(emailingAddresses||[]).map((e)=>e.trim()).filter(Boolean):[];update(c.id,{rel:"connected",emailingOptIn:!!emailingOptIn,emailingAddresses:addrs,channels:{[svc]:[{from:"sys",text:`Vous avez accepté la demande de ${c.name} · service ${svc}.`},{from:"them",text:c.reqMsg}]}});setActiveConv(c.id);setActiveService(svc);logEvent(`Mise en relation acceptée — ${c.name}`);logHist(`Vous avez accepté la demande de ${c.name}${emailingOptIn?" · abonné à l'emailing":""}`,"acceptation");toast(`Connecté avec ${c.name}`);
     if(isRealCompany(c)){
       if(c.connectionId)supabase.from("connections").update({status:"accepted",service:svc,emailing_opt_in:!!emailingOptIn,emailing_addresses:addrs,responded_at:new Date().toISOString()}).eq("id",c.connectionId).then(()=>{});
       return;
@@ -1268,11 +1529,11 @@ export default function Maillon(){
     setTimeout(()=>{
       const emailingConsent=Math.random()<0.65;
       update(c.id,{emailingConsent,emailingContacts:emailingConsent?genContacts(c):undefined});
-      if(emailingConsent){logHist(`${c.name} a accepté de recevoir vos campagnes d'emailing`,"info");toast(`✓ ${c.name} a accepté de recevoir vos campagnes d'emailing`);}
-      else{logHist(`${c.name} n'a pas souhaité recevoir vos campagnes d'emailing`,"info");}
+      if(emailingConsent){logHist(`${c.name} a accepté de recevoir vos campagnes d'emailing`,"emailing");toast(`✓ ${c.name} a accepté de recevoir vos campagnes d'emailing`);}
+      else{logHist(`${c.name} n'a pas souhaité recevoir vos campagnes d'emailing`,"emailing");}
     },1800);
   };
-  const decline=(c)=>{update(c.id,{rel:"declined"});logHist(`Demande de ${c.name} déclinée`,"info");toast(`Demande de ${c.name} déclinée`);
+  const decline=(c)=>{update(c.id,{rel:"declined"});logHist(`Demande de ${c.name} déclinée`,"refus");toast(`Demande de ${c.name} déclinée`);
     if(isRealCompany(c)&&c.connectionId)supabase.from("connections").update({status:"declined",responded_at:new Date().toISOString()}).eq("id",c.connectionId).then(()=>{});
   };
   const updateRsvp=(campId,companyId,status)=>{
@@ -1291,7 +1552,7 @@ export default function Maillon(){
     if(error){toast("Erreur : "+error.message);return;}
     const camp={id:data.id,name:data.name,subject:data.subject,body:data.body,html:data.html,list:campaignForm.list,date:"À l'instant",recipients:recipients.map((c)=>c.name),rsvp:data.rsvp};
     setCampaigns((cs)=>[camp,...cs]);setCampaignOpen(false);setCampaignForm({name:"",subject:"",body:"",list:"all",html:"",needsRsvp:false});
-    logHist(`Campagne d'emailing envoyée : « ${camp.name} » (${recipients.length} destinataire${recipients.length>1?"s":""})`,"info");
+    logHist(`Campagne d'emailing envoyée : « ${camp.name} » (${recipients.length} destinataire${recipients.length>1?"s":""})`,"emailing");
     toast(`Campagne envoyée à ${recipients.length} entreprise${recipients.length>1?"s":""}`);
     const mails=recipients.flatMap((c)=>(c.emailingContacts||[]).map((ct)=>({email:ct.email,name:ct.name})));
     if(mails.length){
@@ -1308,7 +1569,7 @@ export default function Maillon(){
         setTimeout(()=>{
           const status=Math.random()<0.7?"confirmed":"declined";
           updateRsvp(camp.id,c.id,status);
-          logHist(`${c.name} a ${status==="confirmed"?"confirmé sa présence":"décliné l'invitation"} pour « ${camp.name} »`,"info");
+          logHist(`${c.name} a ${status==="confirmed"?"confirmé sa présence":"décliné l'invitation"} pour « ${camp.name} »`,"emailing");
           toast(`${status==="confirmed"?"✓":"✗"} ${c.name} a ${status==="confirmed"?"confirmé sa présence":"décliné"}`);
         },2600+i*1700+Math.random()*1400);
       });
@@ -1322,7 +1583,7 @@ export default function Maillon(){
     if(error){toast("Erreur : "+error.message);return;}
     const list={id:data.id,name:data.name,companyIds:data.company_ids};
     setDistLists((ls)=>[list,...ls]);setListOpen(false);setListForm({name:"",companyIds:[]});
-    logHist(`Liste de diffusion créée : « ${list.name} » (${list.companyIds.length} entreprise${list.companyIds.length>1?"s":""})`,"info");
+    logHist(`Liste de diffusion créée : « ${list.name} » (${list.companyIds.length} entreprise${list.companyIds.length>1?"s":""})`,"liste");
     toast(`Liste « ${list.name} » créée`);
   };
   const deleteList=(id)=>{
@@ -1334,8 +1595,47 @@ export default function Maillon(){
   const getChan=(c,svc)=>(c.channels&&c.channels[svc])||[];
   const lastText=(c)=>{const ch=c.channels||{};let t=null;Object.keys(ch).forEach((k)=>{const arr=ch[k];for(let i=arr.length-1;i>=0;i--){if(arr[i].from!=="sys"){t=arr[i].text;break;}}});return t;};
   const canSee=(viewer,svc)=>{if(access.admins.includes(viewer))return true;if(viewer===svc)return true;return (access.grants[viewer]||[]).includes(svc);};
-  const toggleAdmin=(s)=>{setAccess((a)=>({...a,admins:a.admins.includes(s)?a.admins.filter((x)=>x!==s):[...a.admins,s]}));logEvent(`Droits admin modifiés — ${s}`);};
-  const toggleGrant=(s,o)=>{setAccess((a)=>{const cur=a.grants[s]||[];const next=cur.includes(o)?cur.filter((x)=>x!==o):[...cur,o];return {...a,grants:{...a.grants,[s]:next}};});logEvent(`Accès ${s} → ${o} modifié`);};
+  const toggleAdmin=(s)=>{
+    if(!isAdmin)return;
+    if(access.admins.includes(s)&&access.admins.length===1){
+      toast("Impossible de retirer le dernier administrateur — ajoutez d'abord un autre service en accès complet.");
+      return;
+    }
+    setAccess((a)=>({...a,admins:a.admins.includes(s)?a.admins.filter((x)=>x!==s):[...a.admins,s]}));
+    setAccessDirty(true);
+  };
+  const toggleGrant=(s,o)=>{
+    if(!isAdmin)return;
+    setAccess((a)=>{
+      const cur=a.grants[s]||[];
+      return{...a,grants:{...a.grants,[s]:cur.includes(o)?cur.filter((x)=>x!==o):[...cur,o]}};
+    });
+    setAccessDirty(true);
+  };
+  const saveAccess=async()=>{
+    if(!me||!isAdmin)return;
+    setAccessSaving(true);
+    const {error}=await supabase.from("companies").update({admin_services:access.admins,access_grants:access.grants}).eq("id",me.id);
+    setAccessSaving(false);
+    if(error){toast("Erreur : "+error.message);return;}
+    setSavedAccess(access);
+    setAccessDirty(false);
+    logEvent("Droits d'accès & cloisonnement mis à jour");
+    toast("Modifications enregistrées");
+  };
+  const resetAccessDraft=()=>{setAccess(savedAccess);setAccessDirty(false);};
+  const notifyByEmail=(subject,text)=>{
+    if(!notifEmail||!session||!session.user||!session.user.email)return;
+    fetch("/api/send-campaign",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({subject,text,fromName:"Maillon",recipients:[{email:session.user.email,name:currentUser?currentUser.name:""}]})}).catch(()=>{});
+  };
+  const toggleNotifEmail=()=>{
+    setNotifEmail((v)=>{
+      const next=!v;
+      if(currentUser)supabase.from("profiles").update({notify_email:next}).eq("id",currentUser.id).then(()=>{});
+      return next;
+    });
+  };
 
   const send=()=>{
     if(!draft.trim())return;const id=activeConv;const text=draft.trim();setDraft("");
@@ -1360,18 +1660,49 @@ export default function Maillon(){
   // blog central + adhésion (adhésion simulée dans la maquette)
   const tryPublish=()=>{if(me.membre)setComposeOpen(true);else setAdhesion(true);};
   const adhere=(billing)=>{setMe({...me,membre:true,plan:"Pro",planId:"pro",billing});setAdhesion(false);toast("✓ Passage à l'offre Pro");setComposeOpen(true);};
-  const publish=()=>{
-    if(!postForm.title.trim())return;
-    const post={id:Date.now(),author:{name:me.name,color:me.color,sector:me.sector,loc:me.loc,logo:me.logo,isMe:true},
-      title:postForm.title.trim(),body:postForm.body.trim(),tag:postForm.tag.trim()||"Actu",photo:postForm.photo||null,date:"À l'instant",likes:0,liked:false};
-    setPosts((p)=>[post,...p]);setComposeOpen(false);setPostForm({title:"",body:"",tag:"",photo:null});logHist("Actualité publiée","info");toast("Actualité publiée");
+  const relDate=(iso)=>{
+    const min=Math.floor((Date.now()-new Date(iso).getTime())/60000);
+    if(min<1)return"À l'instant";
+    if(min<60)return`Il y a ${min} min`;
+    const h=Math.floor(min/60);if(h<24)return`Il y a ${h} h`;
+    const d=Math.floor(h/24);if(d<7)return`Il y a ${d} j`;
+    return new Date(iso).toLocaleDateString("fr-FR");
   };
-  const toggleLike=(id)=>setPosts((ps)=>ps.map((p)=>p.id===id?{...p,liked:!p.liked,likes:p.likes+(p.liked?-1:1)}:p));
+  const authorFromId=(id)=>{
+    if(me&&id===me.id)return{name:me.name,color:me.color,sector:me.sector,loc:me.loc,logo:me.logo,isMe:true};
+    const c=companies.find((x)=>x.id===id);
+    return c?{name:c.name,color:c.color,sector:c.sector,loc:c.loc,logo:c.logo,isMe:false}:{name:"Entreprise",color:"#0F846B",sector:"",loc:"",logo:null,isMe:false};
+  };
+  const postAuthor=(p)=>p.author||authorFromId(p.companyId);
+  const postRepostOf=(p)=>p.repostOf||(p.repostOfCompanyId?authorFromId(p.repostOfCompanyId):null);
+  const publish=()=>{
+    if(!postForm.title.trim()||!me)return;
+    const tempId=Date.now();
+    const title=postForm.title.trim(),body=postForm.body.trim(),tag=postForm.tag.trim()||"Actu",photo=postForm.photo||null;
+    const post={id:tempId,companyId:me.id,title,body,tag,photo,date:"À l'instant",likes:0,liked:false};
+    setPosts((p)=>[post,...p]);setComposeOpen(false);setPostForm({title:"",body:"",tag:"",photo:null});logHist("Actualité publiée","actualite");toast("Actualité publiée");
+    supabase.from("posts").insert({company_id:me.id,title,body,tag,photo}).select().single().then(({data})=>{
+      if(data)setPosts((ps)=>ps.map((x)=>x.id===tempId?{...x,id:data.id}:x));
+    });
+  };
+  const toggleLike=(id)=>{
+    const p=posts.find((x)=>x.id===id);if(!p)return;
+    const nowLiked=!p.liked;
+    setPosts((ps)=>ps.map((x)=>x.id===id?{...x,liked:nowLiked,likes:x.likes+(nowLiked?1:-1)}:x));
+    if(typeof id!=="string"||!me)return;
+    if(nowLiked)supabase.from("post_likes").insert({post_id:id,company_id:me.id}).then(()=>{});
+    else supabase.from("post_likes").delete().eq("post_id",id).eq("company_id",me.id).then(()=>{});
+  };
   const repost=(p)=>{
-    const original=p.repostOf||p.author;
-    const clone={id:Date.now(),author:{name:me.name,color:me.color,sector:me.sector,loc:me.loc,logo:me.logo,isMe:true},
-      repostOf:original,title:p.title,body:p.body,tag:p.tag,photo:p.photo||null,date:"À l'instant",likes:0,liked:false};
-    setPosts((ps)=>[clone,...ps]);logHist(`Actualité de ${original.name} republiée`,"info");toast("Actualité republiée sur votre fil");
+    if(!me)return;
+    const original=postRepostOf(p)||postAuthor(p);
+    const originalId=p.repostOfCompanyId||p.companyId||null;
+    const tempId=Date.now();
+    const clone={id:tempId,companyId:me.id,repostOf:original,title:p.title,body:p.body,tag:p.tag,photo:p.photo||null,date:"À l'instant",likes:0,liked:false};
+    setPosts((ps)=>[clone,...ps]);logHist(`Actualité de ${original.name} republiée`,"actualite");toast("Actualité republiée sur votre fil");
+    supabase.from("posts").insert({company_id:me.id,repost_of_company_id:typeof originalId==="string"?originalId:null,title:clone.title,body:clone.body,tag:clone.tag,photo:clone.photo}).select().single().then(({data})=>{
+      if(data)setPosts((ps)=>ps.map((x)=>x.id===tempId?{...x,id:data.id}:x));
+    });
   };
   const onPhotoPick=(e)=>{const file=e.target.files&&e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>setPostForm((f)=>({...f,photo:reader.result}));reader.readAsDataURL(file);};
 
@@ -1387,8 +1718,8 @@ export default function Maillon(){
     return "Forte complémentarité";
   };
   const needAuthor=(n)=>n.mine?{name:me.name,color:me.color,sector:me.sector,loc:n.loc,logo:me.logo}:(companies.find((c)=>c.id===n.companyId)||{name:"—",color:"#ccc",sector:"",loc:""});
-  const respondToNeed=(n)=>{const c=companies.find((x)=>x.id===n.companyId);if(!c)return;if(!canProspect()){setLimitOpen(true);return;}setNeeds((ns)=>ns.map((x)=>x.id===n.id?{...x,responses:x.responses+1}:x));setProspect(c);setView("discover");logHist(`Réponse envoyée au besoin de ${c.name}`,"need");setPmsg(`Bonjour ${c.name}, en réponse à votre besoin « ${n.title} » : je suis ${me.name} (${me.sector}) et je pense pouvoir vous aider. Ouvert à en discuter ?`);};
-  const publishNeed=()=>{if(!needForm.title.trim())return;const ttl=needForm.title.trim();const n={id:Date.now(),mine:true,companyId:0,title:ttl,sought:needForm.sought,loc:needForm.loc||me.loc,date:"À l'instant",responses:0};setNeeds((ns)=>[n,...ns]);setNeedOpen(false);setNeedForm({title:"",sought:SECTORS[0],loc:""});logHist(`Besoin publié : « ${ttl} »`,"need");toast("Besoin publié");};
+  const respondToNeed=(n)=>{const c=companies.find((x)=>x.id===n.companyId);if(!c)return;if(!canProspect()){setLimitOpen(true);return;}setNeeds((ns)=>ns.map((x)=>x.id===n.id?{...x,responses:x.responses+1}:x));setProspect(c);setView("discover");logHist(`Réponse envoyée au besoin de ${c.name}`,"besoin");setPmsg(`Bonjour ${c.name}, en réponse à votre besoin « ${n.title} » : je suis ${me.name} (${me.sector}) et je pense pouvoir vous aider. Ouvert à en discuter ?`);};
+  const publishNeed=()=>{if(!needForm.title.trim())return;const ttl=needForm.title.trim();const n={id:Date.now(),mine:true,companyId:0,title:ttl,sought:needForm.sought,loc:needForm.loc||me.loc,date:"À l'instant",responses:0};setNeeds((ns)=>[n,...ns]);setNeedOpen(false);setNeedForm({title:"",sought:SECTORS[0],loc:""});logHist(`Besoin publié : « ${ttl} »`,"besoin");toast("Besoin publié");};
 
   const filtered=useMemo(()=>{
     let list=companies.filter((c)=>{
@@ -1437,6 +1768,28 @@ export default function Maillon(){
     );
   }
 
+  /* ============ VÉRIFICATION 2FA ============ */
+  if(mfaChallengeNeeded){
+    return(
+      <div className="mln"><style>{CSS}</style>
+        <div className="login">
+          <div className="loginbox">
+            <div className="brand" style={{marginBottom:22}}><Mark/><b className="disp" style={{fontSize:20}}>Maillon</b></div>
+            <h1 className="disp" style={{fontSize:20}}>Vérification en deux étapes</h1>
+            <p className="loginsub">Entrez le code à 6 chiffres généré par votre application d'authentification.</p>
+            <div className="field"><label>Code à 6 chiffres</label>
+              <input value={mfaLoginCode} onChange={(e)=>setMfaLoginCode(e.target.value)} placeholder="123456" maxLength={6} onKeyDown={(e)=>e.key==="Enter"&&submitMfaChallenge()}/></div>
+            {mfaLoginError&&<p style={{color:"var(--coral)",fontSize:13,margin:"0 0 12px"}}>{mfaLoginError}</p>}
+            <button className="btn block" disabled={mfaLoginBusy||!mfaLoginCode.trim()} onClick={submitMfaChallenge}>{mfaLoginBusy?"Vérification…":"Valider"}</button>
+            <div style={{textAlign:"center",marginTop:14}}>
+              <button className="linkbtn" onClick={async()=>{await supabase.auth.signOut();setMfaChallengeNeeded(false);}}>Se déconnecter</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   /* ============ AUTHENTIFICATION ============ */
   if(!session){
     const doAuth=async()=>{
@@ -1475,6 +1828,29 @@ export default function Maillon(){
     );
   }
 
+  /* ============ INVITATION ============ */
+  if(!me&&inviteToken&&inviteInfo){
+    return(
+      <div className="mln"><style>{CSS}</style>
+        <div className="login">
+          <div className="loginbox" style={{textAlign:"center"}}>
+            <div className="brand" style={{marginBottom:22,justifyContent:"center"}}><Mark/><b className="disp" style={{fontSize:20}}>Maillon</b></div>
+            <h1 className="disp" style={{fontSize:20}}>Vous êtes invité(e)</h1>
+            <p className="loginsub">Rejoindre <b>{inviteInfo.company_name}</b> en tant que <b>{inviteInfo.role}</b> ?</p>
+            <div className="field" style={{textAlign:"left"}}><label>Votre prénom et nom</label>
+              <input value={joinName} onChange={(e)=>setJoinName(e.target.value)} placeholder="ex : Camille Dubois" onKeyDown={(e)=>e.key==="Enter"&&joinViaInvite()}/></div>
+            <button className="btn block" disabled={authBusy||!joinName.trim()} onClick={joinViaInvite}>{authBusy?"Un instant…":"Rejoindre l'entreprise"}</button>
+            <div style={{textAlign:"center",marginTop:14}}>
+              <button className="linkbtn" onClick={()=>{setInviteToken(null);setInviteInfo(null);window.history.replaceState({},"",window.location.pathname);}}>
+                Non, créer ma propre entreprise
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   /* ============ ONBOARDING ============ */
   if(!me){
     const hints=["Identité","Activité","Détails","Abonnement"];
@@ -1490,6 +1866,8 @@ export default function Maillon(){
           <div className="stphint">Étape {obStep+1}/4 · {hints[obStep]}</div>
 
           {obStep===0&&(<>
+            <div className="field"><label>Votre prénom et nom</label>
+              <input value={form.ownerName} onChange={(e)=>setForm({...form,ownerName:e.target.value})} placeholder="ex : Camille Dubois"/></div>
             <div className="field"><label>Nom de l'entreprise</label>
               <input value={form.name} onChange={(e)=>setForm({...form,name:e.target.value})} placeholder="ex : Studio Kavan"/></div>
             <div className="grid2">
@@ -1511,7 +1889,7 @@ export default function Maillon(){
                 </div>
               </div></div>
             <div className="uphint" style={{marginTop:4}}>Tous les champs sont obligatoires.</div>
-            <button className="btn block" style={{marginTop:8}} disabled={!(form.name.trim()&&form.sector.trim()&&form.loc.trim())} onClick={()=>setObStep(1)}>Continuer</button>
+            <button className="btn block" style={{marginTop:8}} disabled={!(form.ownerName.trim()&&form.name.trim()&&form.sector.trim()&&form.loc.trim())} onClick={()=>setObStep(1)}>Continuer</button>
           </>)}
 
           {obStep===1&&(<>
@@ -1545,7 +1923,14 @@ export default function Maillon(){
               <div className="svcwrap">{SERVICES.map((s)=>(
                 <button key={s} type="button" className={"svcchip"+(form.services.includes(s)?" on":"")}
                   onClick={()=>setForm((f)=>({...f,services:f.services.includes(s)?f.services.filter((x)=>x!==s):[...f.services,s]}))}>{s}</button>
+              ))}
+              {form.services.filter((s)=>!SERVICES.includes(s)).map((s)=>(
+                <button key={s} type="button" className="svcchip on" onClick={()=>setForm((f)=>({...f,services:f.services.filter((x)=>x!==s)}))}>{s} ✕</button>
               ))}</div>
+              <div className="invrow" style={{marginTop:8}}>
+                <input value={customService} onChange={(e)=>setCustomService(e.target.value)} placeholder="Autre (précisez)…" onKeyDown={(e)=>{if(e.key==="Enter"){e.preventDefault();addCustomService();}}}/>
+                <button type="button" className="btn-ghost sm" onClick={addCustomService}>Ajouter</button>
+              </div>
               <div className="uphint">Chaque service pourra échanger avec le même service des entreprises connectées.</div></div>
             <div className="field"><label>Pôle qui reçoit les demandes</label>
               <select value={form.receptionPole} onChange={(e)=>setForm({...form,receptionPole:e.target.value})}>{(form.services.length?form.services:["Direction"]).map((s)=><option key={s} value={s}>{s}</option>)}</select>
@@ -1583,7 +1968,7 @@ export default function Maillon(){
           </>)}
 
           <div style={{textAlign:"center",marginTop:18}}>
-            <button className="linkbtn" onClick={()=>{setForm((f)=>({...f,name:"Studio Kavan",sector:"Tech & Dév",loc:"Rennes",emp:"1–10",color:"#0F846B",radius:100,desc:"Studio produit qui conçoit et développe des interfaces sur mesure pour les entreprises.",seek:"partenaires design, apporteurs d'affaires",offer:"développement web, applications métier",founded:"2020",ca:"< 500 k€",web:"studiokavan.fr",certifs:"RGPD",siret:"902 445 178 00021",plan:"pro",billing:"Mensuelle",services:["Direction","Commercial","Technique","RH"],receptionPole:"Commercial"}));setObStep(2);}}>
+            <button className="linkbtn" onClick={()=>{setForm((f)=>({...f,ownerName:f.ownerName||"Camille Dubois",name:"Studio Kavan",sector:"Tech & Dév",loc:"Rennes",emp:"1–10",color:"#0F846B",radius:100,desc:"Studio produit qui conçoit et développe des interfaces sur mesure pour les entreprises.",seek:"partenaires design, apporteurs d'affaires",offer:"développement web, applications métier",founded:"2020",ca:"< 500 k€",web:"studiokavan.fr",certifs:"RGPD",siret:"902 445 178 00021",plan:"pro",billing:"Mensuelle",services:["Direction","Commercial","Technique","RH"],receptionPole:"Commercial"}));setObStep(2);}}>
               Remplir avec un exemple
             </button>
           </div>
@@ -1595,7 +1980,7 @@ export default function Maillon(){
 
   const active=companies.find((c)=>c.id===activeConv&&c.rel==="connected")||connected[0];
   const role=currentUser?currentUser.role:((me&&me.services&&me.services[0])||"Direction");
-  const isAdmin=access.admins.includes(role);
+  const isAdmin=role==="Direction";
   const mServices=active?commonServices(active).filter((s)=>canSee(role,s)):[];
   const mSvc=active?((activeService&&mServices.includes(activeService))?activeService:mServices[0]):null;
   const mStream=(active&&mSvc)?getChan(active,mSvc):[];
@@ -1609,9 +1994,7 @@ export default function Maillon(){
   const visIncoming=canSee(role,(me&&me.receptionPole)||"Direction")?incoming:[];
   const recos=companies.filter((c)=>c.rel==="none").map((c)=>({...c,_aff:affinity(c)})).sort((a,b)=>b._aff-a._aff).slice(0,4);
   const matchingNeeds=needs.filter((n)=>!n.mine&&me&&n.sought===me.sector);
-  const notifs=[];
-  matchingNeeds.forEach((n)=>{const a=needAuthor(n);notifs.push({id:"need"+n.id,kind:"need",text:`${a.name} cherche ${n.sought} — ça correspond à votre activité`,onClick:()=>{setView("needs");setNotifOpen(false);}});});
-  if(recos[0])notifs.push({id:"reco",kind:"reco",text:`${recos[0].name} pourrait vous intéresser (${recos[0]._aff}% d'affinité)`,onClick:()=>{setOpenC(recos[0].id);setNotifOpen(false);}});
+  const totalChatUnread=Object.values(unreadChat).reduce((a,b)=>a+b,0);
   const eventsByDate={};roleEvents.forEach((e)=>{(eventsByDate[e.date]=eventsByDate[e.date]||[]).push(e);});
   const detail=openC?companies.find((c)=>c.id===openC):null;
   const dAff=detail?affinity(detail):0;
@@ -1634,39 +2017,13 @@ export default function Maillon(){
           <button className={"teamnav"+(chatOpen?" on":"")} onClick={()=>{setChatPane("list");setChatOpen(true);}}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 7V5a4 4 0 0 1 8 0v2M3 7h10v6H3z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/></svg>
             <span className="lbl">Chat</span>
+            {totalChatUnread>0&&<span className="badge">{totalChatUnread}</span>}
           </button>
-        </div>
-        <div ref={notifRef} style={{display:"contents"}}>
-          <button className="bell" title="Notifications" onClick={()=>setNotifOpen((v)=>!v)}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6M10 21h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            {notifs.length>0&&<span className="nb">{notifs.length}</span>}
-          </button>
-          {notifOpen&&(
-            <div className="notifpanel">
-              <div className="nh">Alertes</div>
-              {notifs.length===0?(<div className="notifempty">Rien de nouveau pour l'instant.</div>):notifs.map((n)=>(
-                <button key={n.id} className="notifitem" onClick={n.onClick}>
-                  <div className="ni">{n.kind==="need"?<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8"/><path d="M20 20l-4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>:<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.4 7.4H22l-6 4.4 2.3 7.2L12 17.6 5.7 22 8 14.8 2 10.4h7.6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>}</div>
-                  <p>{n.text}</p>
-                </button>
-              ))}
-              <div className="nh">Activité récente</div>
-              {history.length===0?(<div className="notifempty">Aucune activité pour l'instant.</div>):history.map((e)=>(
-                <div key={e.id} className="notifitem" style={{cursor:"default"}}>
-                  <div className="ni">{histIcon(e.kind)}</div>
-                  <div style={{minWidth:0}}><p>{e.text}</p><span className="nat">{e.at}</span></div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
         <div className="rolepick" title="Votre compte">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>
           <span className="rolename">{role}{isAdmin?" · admin":""}</span>
         </div>
-        {isAdmin&&<button className="gearbtn" title="Accès & cloisonnement" onClick={()=>setAccessOpen(true)}>
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.7"/><path d="M12 2v3M12 19v3M22 12h-3M5 12H2M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1M18.4 18.4l-2.1-2.1M7.7 7.7L5.6 5.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>
-        </button>}
         <button className="gearbtn" title="Se déconnecter" onClick={logout}>
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M15 17l5-5-5-5M20 12H9M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
@@ -1949,7 +2306,7 @@ export default function Maillon(){
         const activeMate=activeTeammateId!=null?team.find((m)=>m.id===activeTeammateId):null;
         const thread=activeTeammateId==null?internalChat:dmThread;
         const lastOf=(arr)=>arr.length?arr[arr.length-1]:null;
-        const openThread=(id)=>{setActiveTeammateId(id);setChatPane("thread");};
+        const openThread=(id)=>{if(currentUser){const ch=id==null?"general":dmKey(currentUser.id,id);setUnreadChat((u)=>({...u,[ch]:0}));}setActiveTeammateId(id);setChatPane("thread");};
         return(
           <div className="chatpanel">
             <div className="cphead">
@@ -2050,7 +2407,14 @@ export default function Maillon(){
               <input placeholder="Rechercher dans la bibliothèque…" value={libQuery} onChange={(e)=>setLibQuery(e.target.value)}/>
             </div>
           </div>
-          {(()=>{const filtered=libQuery.trim()?history.filter((e)=>e.text.toLowerCase().includes(libQuery.trim().toLowerCase())):history;
+          <div style={{display:"flex",flexWrap:"wrap",gap:8,margin:"2px 0 18px"}}>
+            {HIST_CATEGORIES.map((cat)=>{const count=history.filter((e)=>e.kind===cat.kind).length;if(!count)return null;return(
+              <button key={cat.kind} type="button" className={"fchip"+(libFilters.includes(cat.kind)?" on":"")} onClick={()=>toggleLibFilter(cat.kind)}>{cat.label} ({count})</button>
+            );})}
+            {libFilters.length>0&&<button type="button" className="linkbtn" style={{fontSize:12.5}} onClick={()=>setLibFilters([])}>Réinitialiser les filtres</button>}
+          </div>
+          {(()=>{const byCategory=libFilters.length?history.filter((e)=>libFilters.includes(e.kind)):history;
+            const filtered=libQuery.trim()?byCategory.filter((e)=>e.text.toLowerCase().includes(libQuery.trim().toLowerCase())):byCategory;
             if(history.length===0)return(
               <div className="empty">
                 <svg width="46" height="46" viewBox="0 0 24 24" fill="none"><path d="M4 5h16M4 12h16M4 19h10" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinecap="round"/></svg>
@@ -2060,7 +2424,7 @@ export default function Maillon(){
             if(filtered.length===0)return(
               <div className="empty">
                 <svg width="46" height="46" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6" stroke="var(--slate-soft)" strokeWidth="1.6"/><path d="M14 14l4 4" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinecap="round"/></svg>
-                <h3>Aucun résultat</h3><p>Aucune action ne correspond à « {libQuery} ».</p>
+                <h3>Aucun résultat</h3><p>{libQuery.trim()?`Aucune action ne correspond à « ${libQuery} ».`:"Aucune action ne correspond aux filtres sélectionnés."}</p>
               </div>
             );
             return(
@@ -2401,6 +2765,132 @@ export default function Maillon(){
               <div style={{marginTop:22}}><button className="btn-ghost sm" onClick={()=>{setMe(null);setObStep(0);}}>Recréer / modifier ma page</button></div>
             </div>
           </div>
+
+          <h2 className="ptitle disp" style={{marginTop:36}}>Accès &amp; cloisonnement</h2>
+          {isAdmin?(
+            <p className="psub">Vous êtes en Direction : vous seul(e) pouvez gérer les droits d'accès et le cloisonnement de votre entreprise.</p>
+          ):(
+            <p className="psub">Seule la Direction peut gérer les droits d'accès et le cloisonnement. Vous êtes connecté en tant que {role} — voici les règles en vigueur (lecture seule).</p>
+          )}
+
+          <div className="prof"><div className="profbody">
+            <div className="accsec">
+              <h5>Accès complet (administrateurs)</h5>
+              <p className="d">Ces services voient la messagerie de tous les pôles.</p>
+              <div className="svcwrap">
+                {(me.services||[]).map((s)=>(
+                  <button key={s} type="button" className={"svcchip"+(access.admins.includes(s)?" on":"")}
+                    onClick={()=>isAdmin&&toggleAdmin(s)} style={isAdmin?{}:{cursor:"default",opacity:.9}}>{s}</button>
+                ))}
+              </div>
+            </div>
+
+            <div className="accsec">
+              <h5>Autorisations supplémentaires</h5>
+              <p className="d">Par défaut, ce service ne voit que sa messagerie par pôle.</p>
+              {(me.services||[]).filter((s)=>!access.admins.includes(s)).map((s)=>(
+                <div key={s} className="accrow">
+                  <div className="rn">{s}<span style={{fontWeight:400,color:"var(--slate)",fontSize:12}}>peut aussi voir :</span></div>
+                  <div className="svcwrap">
+                    {(me.services||[]).filter((o)=>o!==s&&!access.admins.includes(o)).map((o)=>(
+                      <button key={o} type="button" className={"svcchip"+((access.grants[s]||[]).includes(o)?" on":"")}
+                        onClick={()=>isAdmin&&toggleGrant(s,o)} style={isAdmin?{}:{cursor:"default",opacity:.9}}>{o}</button>
+                    ))}
+                    {(me.services||[]).filter((o)=>o!==s&&!access.admins.includes(o)).length===0&&<span style={{fontSize:12.5,color:"var(--slate-soft)"}}>Aucun autre service à partager.</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="accsec">
+              <h5>Collaborateurs</h5>
+              <p className="d">Chaque collaborateur est rattaché à un rôle. Il ne voit que ce que ce rôle autorise — il ne peut pas le changer lui-même.</p>
+              {team.map((m)=>(
+                <div key={m.id} className="accrole">
+                  <div><b style={m.status==="disabled"?{color:"var(--slate-soft)"}:{}}>{m.name}</b><small> {m.status==="invited"?"invitation en attente":m.status==="disabled"?"compte désactivé":(access.admins.includes(m.role)?"administrateur":"accès cloisonné")}</small></div>
+                  <select value={m.role} onChange={(e)=>{
+                    if(!isAdmin)return;
+                    const r=e.target.value;
+                    if(r==="Autre"){
+                      setCustomRoleValue("");
+                      setCustomRolePrompt({id:m.id,name:m.name});
+                      return;
+                    }
+                    if(r==="Direction"&&m.role!=="Direction"){
+                      setDirectionConfirm({message:`Donner le rôle Direction à ${m.name} lui donnera aussi le contrôle total des droits d'accès et du cloisonnement de votre entreprise. Confirmer ?`,onConfirm:()=>updateRole(m.id,r)});
+                    }else{
+                      updateRole(m.id,r);
+                    }
+                  }} disabled={!isAdmin||m.status==="disabled"}>{[...(me.services||[]),...((me.services||[]).includes("Autre")?[]:["Autre"])].map((s)=><option key={s} value={s}>{s}</option>)}</select>
+                  {isAdmin&&m.status!=="invited"&&<button className="linkbtn" style={{fontSize:12,marginLeft:2}} onClick={()=>toggleAccount(m.id)}>{m.status==="disabled"?"Réactiver":"Désactiver"}</button>}
+                </div>
+              ))}
+            </div>
+
+            {isAdmin&&(
+              <div className="accsec">
+                <h5>Inviter un collaborateur</h5>
+                <p className="d">Un lien d'invitation est créé et copié dans votre presse-papiers. Envoyez-le vous-même à votre collègue (email, message…) : en l'ouvrant, il/elle rejoint directement votre entreprise avec le rôle choisi.</p>
+                <div className="invrow">
+                  <input placeholder="prenom.nom@entreprise.fr" value={inviteEmail} onChange={(e)=>setInviteEmail(e.target.value)}/>
+                  <select value={inviteRole||(me.services.find((s)=>!access.admins.includes(s))||me.services[0])} onChange={(e)=>setInviteRole(e.target.value)}>{[...(me.services||[]),...((me.services||[]).includes("Autre")?[]:["Autre"])].map((s)=><option key={s} value={s}>{s}</option>)}</select>
+                  {inviteRole==="Autre"&&<input value={inviteRoleCustom} onChange={(e)=>setInviteRoleCustom(e.target.value)} placeholder="Précisez le service…"/>}
+                  <button className="btn sm" onClick={()=>{
+                    const r=inviteRole||(me.services.find((s)=>!access.admins.includes(s))||me.services[0]);
+                    const finalRole=r==="Autre"?(inviteRoleCustom.trim()||"Autre"):r;
+                    const doInvite=()=>{sendInvite(inviteEmail,finalRole);setInviteEmail("");setInviteRoleCustom("");};
+                    if(finalRole==="Direction"){
+                      setDirectionConfirm({message:"La personne invitée avec le rôle Direction aura le contrôle total des droits d'accès et du cloisonnement de votre entreprise. Confirmer ?",onConfirm:doInvite});
+                    }else{
+                      doInvite();
+                    }
+                  }}>Inviter</button>
+                </div>
+                {pendingInvites.length>0&&(
+                  <div style={{marginTop:14,display:"flex",flexDirection:"column",gap:8}}>
+                    {pendingInvites.map((inv)=>(
+                      <div key={inv.id} className="accrole">
+                        <div><b>{inv.email}</b><small> invitation en attente · {inv.role}</small></div>
+                        <button className="linkbtn" style={{fontSize:12}} onClick={()=>{navigator.clipboard&&navigator.clipboard.writeText(inviteLink(inv.token)).catch(()=>{});toast("Lien copié !");}}>Copier le lien</button>
+                        <button className="linkbtn" style={{fontSize:12,marginLeft:8}} onClick={()=>revokeInvite(inv.id)}>Révoquer</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="accsec">
+              <h5>Pôle de réception des demandes</h5>
+              <p className="d">Le pôle qui reçoit toutes les demandes de mise en relation adressées à votre entreprise.</p>
+              <select value={me.receptionPole} onChange={(e)=>isAdmin&&setReceptionPole(e.target.value)} disabled={!isAdmin} style={{border:"1px solid var(--line)",borderRadius:10,padding:"8px 11px",fontSize:13.5,fontWeight:600,background:"#fff",color:"var(--ink)"}}>{(me.services||[]).map((s)=><option key={s} value={s}>{s}</option>)}</select>
+            </div>
+
+            <div className="accsec">
+              <h5>Sécurité &amp; notifications</h5>
+              <p className="d">La double authentification est propre à votre compte personnel (elle vous protège, vous — pas toute l'entreprise).</p>
+              <label className="setrow"><span>Double authentification (2FA)</span><input type="checkbox" checked={twofa} onChange={()=>{if(mfaBusy)return;twofa?disableMfa():startMfaEnroll();}} disabled={mfaBusy}/></label>
+              <label className="setrow"><span>Notifications par e-mail</span><input type="checkbox" checked={notifEmail} onChange={toggleNotifEmail}/></label>
+              <label className="setrow"><span>Notifications push</span><input type="checkbox" checked={notifPush} onChange={()=>setNotifPush(!notifPush)}/></label>
+              <p style={{fontSize:11.5,color:"var(--slate-soft)",marginTop:6}}>Les notifications push nécessitent une configuration supplémentaire côté navigateur — à venir.</p>
+            </div>
+
+            <div className="accsec">
+              <h5>Journal d'accès</h5>
+              <p className="d">Historique des actions sensibles sur votre espace.</p>
+              {auditLog.length===0?<p style={{fontSize:12.5,color:"var(--slate-soft)"}}>Aucune action enregistrée pour l'instant.</p>:
+                <div className="auditlist">{auditLog.slice(0,8).map((e)=><div key={e.id} className="auditrow"><span className="at">{e.at}</span>{e.text}</div>)}</div>}
+            </div>
+
+            <div className="accnote">Le cloisonnement s'applique à votre entreprise uniquement. L'autre entreprise gère ses propres règles de son côté.</div>
+
+            {isAdmin&&(
+              <div style={{marginTop:20,display:"flex",alignItems:"center",gap:12}}>
+                <button className="btn" disabled={!accessDirty||accessSaving} onClick={saveAccess}>{accessSaving?"Enregistrement…":"Sauvegarder"}</button>
+                {accessDirty&&<button className="linkbtn" onClick={resetAccessDraft}>Annuler les modifications</button>}
+              </div>
+            )}
+          </div></div>
         </div></div>
       )}
 
@@ -2423,12 +2913,12 @@ export default function Maillon(){
                 </div>
               )}
               <div className="feed">
-                {posts.map((p)=>{const orig=p.repostOf||p.author;return(
+                {posts.map((p)=>{const author=postAuthor(p);const reposted=postRepostOf(p);const orig=reposted||author;return(
                   <div key={p.id} className="post">
-                    {p.repostOf&&(
+                    {reposted&&(
                       <div className="repostmeta">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 2l4 4-4 4M3 12V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 12v3a3 3 0 0 1-3 3H3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        Republié par <b>{p.author.name}</b>
+                        Republié par <b>{author.name}</b>
                       </div>
                     )}
                     <div className="posthead">
@@ -2451,7 +2941,7 @@ export default function Maillon(){
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M17 2l4 4-4 4M3 12V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 12v3a3 3 0 0 1-3 3H3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         Republier
                       </button>
-                      {p.author.isMe&&<span className="postself">{p.repostOf?"Republié par vous":"Votre publication"}</span>}
+                      {author.isMe&&<span className="postself">{reposted?"Republié par vous":"Votre publication"}</span>}
                     </div>
                   </div>
                 );})}
@@ -2653,93 +3143,63 @@ export default function Maillon(){
       {/* VISIO ROOM */}
       {visio&&(()=>{const c=companies.find((x)=>x.id===visio.companyId);if(!c)return null;return <VisioRoom me={me} company={c} services={visio.services} onEnd={endVisio}/>;})()}
 
-      {/* ACCÈS & CLOISONNEMENT */}
-      {accessOpen&&(
+      {/* CONFIRMATION RÔLE DIRECTION */}
+      {directionConfirm&&(
         <>
-          <div className="scrim" onClick={()=>setAccessOpen(false)}/>
-          <div className="modal" onClick={()=>setAccessOpen(false)}>
+          <div className="scrim" onClick={()=>setDirectionConfirm(null)}/>
+          <div className="modal" onClick={()=>setDirectionConfirm(null)}>
             <div className="mbox" onClick={(e)=>e.stopPropagation()}>
-              <h3 className="disp">Accès &amp; cloisonnement</h3>
-              {isAdmin?(
-                <p className="mi" style={{marginBottom:16}}>Vous êtes administrateur ({role}). Définissez qui a l'accès complet, et ce que chaque service peut voir en plus du sien.</p>
-              ):(
-                <p className="mi" style={{marginBottom:16}}>Réservé aux administrateurs. Vous êtes connecté en tant que {role} — voici les règles en vigueur (lecture seule).</p>
-              )}
+              <h3 className="disp">Attention</h3>
+              <p className="mi" style={{marginBottom:16}}>{directionConfirm.message}</p>
+              <button className="btn block" onClick={()=>{directionConfirm.onConfirm();setDirectionConfirm(null);}}>Confirmer</button>
+              <div style={{textAlign:"center",marginTop:12}}><button className="linkbtn" onClick={()=>setDirectionConfirm(null)}>Annuler</button></div>
+            </div>
+          </div>
+        </>
+      )}
 
-              <div className="accsec">
-                <h5>Accès complet (administrateurs)</h5>
-                <p className="d">Ces services voient la messagerie de tous les autres.</p>
-                <div className="svcwrap">
-                  {(me.services||[]).map((s)=>(
-                    <button key={s} type="button" className={"svcchip"+(access.admins.includes(s)?" on":"")}
-                      onClick={()=>isAdmin&&toggleAdmin(s)} style={isAdmin?{}:{cursor:"default",opacity:.9}}>{s}</button>
-                  ))}
-                </div>
-              </div>
+      {/* RÔLE PERSONNALISÉ */}
+      {customRolePrompt&&(
+        <>
+          <div className="scrim" onClick={()=>setCustomRolePrompt(null)}/>
+          <div className="modal" onClick={()=>setCustomRolePrompt(null)}>
+            <div className="mbox" onClick={(e)=>e.stopPropagation()}>
+              <h3 className="disp">Préciser le service</h3>
+              <p className="mi" style={{marginBottom:16}}>Quel service pour {customRolePrompt.name} ?</p>
+              <div className="field"><label>Service</label>
+                <input value={customRoleValue} onChange={(e)=>setCustomRoleValue(e.target.value)} placeholder="ex : Support client" onKeyDown={(e)=>e.key==="Enter"&&customRoleValue.trim()&&(()=>{
+                  const r=customRoleValue.trim();const id=customRolePrompt.id;
+                  setCustomRolePrompt(null);
+                  if(r==="Direction")setDirectionConfirm({message:`Donner le rôle Direction à ${customRolePrompt.name} lui donnera aussi le contrôle total des droits d'accès et du cloisonnement de votre entreprise. Confirmer ?`,onConfirm:()=>updateRole(id,r)});
+                  else updateRole(id,r);
+                })()}/></div>
+              <button className="btn block" disabled={!customRoleValue.trim()} onClick={()=>{
+                const r=customRoleValue.trim();const id=customRolePrompt.id;
+                setCustomRolePrompt(null);
+                if(r==="Direction")setDirectionConfirm({message:`Donner le rôle Direction à ${customRolePrompt.name} lui donnera aussi le contrôle total des droits d'accès et du cloisonnement de votre entreprise. Confirmer ?`,onConfirm:()=>updateRole(id,r)});
+                else updateRole(id,r);
+              }}>Confirmer</button>
+              <div style={{textAlign:"center",marginTop:12}}><button className="linkbtn" onClick={()=>setCustomRolePrompt(null)}>Annuler</button></div>
+            </div>
+          </div>
+        </>
+      )}
 
-              <div className="accsec">
-                <h5>Autorisations supplémentaires</h5>
-                <p className="d">Par défaut, chaque service ne voit que le sien. Accordez ici des accès en plus.</p>
-                {(me.services||[]).filter((s)=>!access.admins.includes(s)).map((s)=>(
-                  <div key={s} className="accrow">
-                    <div className="rn">{s}<span style={{fontWeight:400,color:"var(--slate)",fontSize:12}}>peut aussi voir :</span></div>
-                    <div className="svcwrap">
-                      {(me.services||[]).filter((o)=>o!==s&&!access.admins.includes(o)).map((o)=>(
-                        <button key={o} type="button" className={"svcchip"+((access.grants[s]||[]).includes(o)?" on":"")}
-                          onClick={()=>isAdmin&&toggleGrant(s,o)} style={isAdmin?{}:{cursor:"default",opacity:.9}}>{o}</button>
-                      ))}
-                      {(me.services||[]).filter((o)=>o!==s&&!access.admins.includes(o)).length===0&&<span style={{fontSize:12.5,color:"var(--slate-soft)"}}>Aucun autre service à partager.</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="accsec">
-                <h5>Collaborateurs</h5>
-                <p className="d">Chaque collaborateur est rattaché à un rôle. Il ne voit que ce que ce rôle autorise — il ne peut pas le changer lui-même.</p>
-                {team.map((m)=>(
-                  <div key={m.id} className="accrole">
-                    <div><b style={m.status==="disabled"?{color:"var(--slate-soft)"}:{}}>{m.name}</b><small> {m.status==="invited"?"invitation en attente":m.status==="disabled"?"compte désactivé":(access.admins.includes(m.role)?"administrateur":"accès cloisonné")}</small></div>
-                    <select value={m.role} onChange={(e)=>isAdmin&&updateRole(m.id,e.target.value)} disabled={!isAdmin||m.status==="disabled"}>{(me.services||[]).map((s)=><option key={s} value={s}>{s}</option>)}</select>
-                    {isAdmin&&m.status!=="invited"&&<button className="linkbtn" style={{fontSize:12,marginLeft:2}} onClick={()=>toggleAccount(m.id)}>{m.status==="disabled"?"Réactiver":"Désactiver"}</button>}
-                  </div>
-                ))}
-              </div>
-
-              {isAdmin&&(
-                <div className="accsec">
-                  <h5>Inviter un collaborateur</h5>
-                  <p className="d">Envoyez une invitation par e-mail. La personne crée son compte et rejoint avec le rôle choisi.</p>
-                  <div className="invrow">
-                    <input placeholder="prenom.nom@entreprise.fr" value={inviteEmail} onChange={(e)=>setInviteEmail(e.target.value)}/>
-                    <select value={inviteRole||(me.services.find((s)=>!access.admins.includes(s))||me.services[0])} onChange={(e)=>setInviteRole(e.target.value)}>{(me.services||[]).map((s)=><option key={s} value={s}>{s}</option>)}</select>
-                    <button className="btn sm" onClick={()=>{sendInvite(inviteEmail,inviteRole||(me.services.find((s)=>!access.admins.includes(s))||me.services[0]));setInviteEmail("");}}>Inviter</button>
-                  </div>
-                </div>
-              )}
-
-              <div className="accsec">
-                <h5>Pôle de réception des demandes</h5>
-                <p className="d">Le pôle qui reçoit toutes les demandes de mise en relation adressées à votre entreprise.</p>
-                <select value={me.receptionPole} onChange={(e)=>isAdmin&&setReceptionPole(e.target.value)} disabled={!isAdmin} style={{border:"1px solid var(--line)",borderRadius:10,padding:"8px 11px",fontSize:13.5,fontWeight:600,background:"#fff",color:"var(--ink)"}}>{(me.services||[]).map((s)=><option key={s} value={s}>{s}</option>)}</select>
-              </div>
-
-              <div className="accsec">
-                <h5>Sécurité &amp; notifications</h5>
-                <label className="setrow"><span>Double authentification (2FA)</span><input type="checkbox" checked={twofa} onChange={()=>{if(!isAdmin)return;setTwofa(!twofa);logEvent(`2FA ${!twofa?"activée":"désactivée"}`);}} disabled={!isAdmin}/></label>
-                <label className="setrow"><span>Notifications par e-mail</span><input type="checkbox" checked={notifEmail} onChange={()=>setNotifEmail(!notifEmail)}/></label>
-                <label className="setrow"><span>Notifications push</span><input type="checkbox" checked={notifPush} onChange={()=>setNotifPush(!notifPush)}/></label>
-              </div>
-
-              <div className="accsec">
-                <h5>Journal d'accès</h5>
-                <p className="d">Historique des actions sensibles sur votre espace.</p>
-                {auditLog.length===0?<p style={{fontSize:12.5,color:"var(--slate-soft)"}}>Aucune action enregistrée pour l'instant.</p>:
-                  <div className="auditlist">{auditLog.slice(0,8).map((e)=><div key={e.id} className="auditrow"><span className="at">{e.at}</span>{e.text}</div>)}</div>}
-              </div>
-
-              <div className="accnote">Le cloisonnement s'applique à votre entreprise uniquement. L'autre entreprise gère ses propres règles de son côté.</div>
-              <button className="btn block" style={{marginTop:16}} onClick={()=>setAccessOpen(false)}>Fermer</button>
+      {/* ACTIVATION 2FA */}
+      {mfaEnrollOpen&&(
+        <>
+          <div className="scrim" onClick={cancelMfaEnroll}/>
+          <div className="modal" onClick={cancelMfaEnroll}>
+            <div className="mbox" onClick={(e)=>e.stopPropagation()}>
+              <h3 className="disp">Activer la double authentification</h3>
+              <p className="mi" style={{marginBottom:16}}>Scannez ce code avec votre application d'authentification (Google Authenticator, Authy…), puis entrez le code à 6 chiffres généré.</p>
+              {mfaQr&&<div style={{textAlign:"center",margin:"0 0 14px"}}><div style={{display:"inline-block"}} dangerouslySetInnerHTML={{__html:mfaQr}}/></div>}
+              {mfaSecret&&<p style={{fontSize:12,color:"var(--slate)",textAlign:"center",wordBreak:"break-all",marginBottom:14}}>Ou entrez la clé manuellement : <b>{mfaSecret}</b></p>}
+              <div className="field"><label>Code à 6 chiffres</label>
+                <input value={mfaCode} onChange={(e)=>setMfaCode(e.target.value)} placeholder="123456" maxLength={6} onKeyDown={(e)=>e.key==="Enter"&&confirmMfaEnroll()}/></div>
+              {mfaError&&<p style={{color:"var(--coral)",fontSize:13,margin:"0 0 12px"}}>{mfaError}</p>}
+              <button className="btn block" disabled={mfaBusy||!mfaCode.trim()} onClick={confirmMfaEnroll}>{mfaBusy?"Vérification…":"Confirmer et activer"}</button>
+              <div style={{textAlign:"center",marginTop:12}}><button className="linkbtn" onClick={cancelMfaEnroll}>Annuler</button></div>
             </div>
           </div>
         </>
