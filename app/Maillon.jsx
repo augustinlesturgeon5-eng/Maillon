@@ -1099,6 +1099,11 @@ export default function Maillon(){
           else if(row.status==="declined"){patch={rel:"declined"};}
           if(patch)update(otherId,{...patch,connectionId:row.id});
         });
+        conns.forEach((row)=>{
+          if(row.status==="accepted"&&row.from_company_id===me.id&&row.emailing_opt_in){
+            update(row.to_company_id,{emailingConsent:true,emailingContacts:(row.emailing_addresses||[]).map((addr)=>({name:addr.split("@")[0],email:addr}))});
+          }
+        });
         const accepted=conns.filter((c)=>c.status==="accepted");
         if(!accepted.length)return;
         const otherOf={};accepted.forEach((row)=>{otherOf[row.id]=row.from_company_id===me.id?row.to_company_id:row.from_company_id;});
@@ -1132,6 +1137,20 @@ export default function Maillon(){
       })
       .subscribe();
     return ()=>{supabase.removeChannel(channel);};
+  },[me&&me.id]);
+
+  useEffect(()=>{
+    if(!me)return;
+    let active=true;
+    supabase.from("campaigns").select("*").eq("company_id",me.id).order("created_at",{ascending:false}).then(({data})=>{
+      if(!active||!data)return;
+      setCampaigns(data.map((row)=>({id:row.id,name:row.name,subject:row.subject,body:row.body,html:row.html,date:"—",recipients:(row.recipients||[]).map((r)=>r.name),rsvp:row.rsvp})));
+    });
+    supabase.from("distribution_lists").select("*").eq("company_id",me.id).order("created_at",{ascending:false}).then(({data})=>{
+      if(!active||!data)return;
+      setDistLists(data.map((row)=>({id:row.id,name:row.name,companyIds:row.company_ids||[]})));
+    });
+    return ()=>{active=false;};
   },[me&&me.id]);
 
   const update=(id,patch)=>setCompanies((cs)=>cs.map((c)=>c.id===id?{...c,...patch}:c));
@@ -1249,13 +1268,20 @@ export default function Maillon(){
     if(isRealCompany(c)&&c.connectionId)supabase.from("connections").update({status:"declined",responded_at:new Date().toISOString()}).eq("id",c.connectionId).then(()=>{});
   };
   const updateRsvp=(campId,companyId,status)=>{
-    setCampaigns((cs)=>cs.map((c)=>c.id===campId?{...c,rsvp:c.rsvp.map((r)=>r.companyId===companyId?{...r,status}:r)}:c));
+    setCampaigns((cs)=>{
+      const next=cs.map((c)=>c.id===campId?{...c,rsvp:c.rsvp.map((r)=>r.companyId===companyId?{...r,status}:r)}:c);
+      if(isRealCompany(me)){const camp=next.find((c)=>c.id===campId);if(camp&&isRealCompany(camp.id))supabase.from("campaigns").update({rsvp:camp.rsvp}).eq("id",camp.id).then(()=>{});}
+      return next;
+    });
   };
-  const sendCampaign=(recipients)=>{
+  const sendCampaign=async(recipients)=>{
     if(!campaignForm.name.trim()||!campaignForm.subject.trim()||recipients.length===0)return;
     const needsRsvp=campaignForm.needsRsvp;
-    const camp={id:Date.now(),name:campaignForm.name.trim(),subject:campaignForm.subject.trim(),body:campaignForm.body.trim(),html:campaignForm.html,list:campaignForm.list,date:"À l'instant",recipients:recipients.map((c)=>c.name),
-      rsvp:needsRsvp?recipients.map((c)=>({companyId:c.id,name:c.name,status:"pending"})):null};
+    const rsvpInit=needsRsvp?recipients.map((c)=>({companyId:c.id,name:c.name,status:"pending"})):null;
+    const row={company_id:me.id,name:campaignForm.name.trim(),subject:campaignForm.subject.trim(),body:campaignForm.body.trim(),html:campaignForm.html,needs_rsvp:needsRsvp,recipients:recipients.map((c)=>({id:c.id,name:c.name})),rsvp:rsvpInit};
+    const {data,error}=await supabase.from("campaigns").insert(row).select().single();
+    if(error){toast("Erreur : "+error.message);return;}
+    const camp={id:data.id,name:data.name,subject:data.subject,body:data.body,html:data.html,list:campaignForm.list,date:"À l'instant",recipients:recipients.map((c)=>c.name),rsvp:data.rsvp};
     setCampaigns((cs)=>[camp,...cs]);setCampaignOpen(false);setCampaignForm({name:"",subject:"",body:"",list:"all",html:"",needsRsvp:false});
     logHist(`Campagne d'emailing envoyée : « ${camp.name} » (${recipients.length} destinataire${recipients.length>1?"s":""})`,"info");
     toast(`Campagne envoyée à ${recipients.length} entreprise${recipients.length>1?"s":""}`);
@@ -1272,14 +1298,19 @@ export default function Maillon(){
   };
   const toggleRecipient=(id)=>setSelectedIds((ids)=>ids.includes(id)?ids.filter((x)=>x!==id):[...ids,id]);
   const toggleListMember=(id)=>setListForm((f)=>({...f,companyIds:f.companyIds.includes(id)?f.companyIds.filter((x)=>x!==id):[...f.companyIds,id]}));
-  const createList=()=>{
+  const createList=async()=>{
     if(!listForm.name.trim()||listForm.companyIds.length===0)return;
-    const list={id:Date.now(),name:listForm.name.trim(),companyIds:[...listForm.companyIds]};
+    const {data,error}=await supabase.from("distribution_lists").insert({company_id:me.id,name:listForm.name.trim(),company_ids:listForm.companyIds}).select().single();
+    if(error){toast("Erreur : "+error.message);return;}
+    const list={id:data.id,name:data.name,companyIds:data.company_ids};
     setDistLists((ls)=>[list,...ls]);setListOpen(false);setListForm({name:"",companyIds:[]});
     logHist(`Liste de diffusion créée : « ${list.name} » (${list.companyIds.length} entreprise${list.companyIds.length>1?"s":""})`,"info");
     toast(`Liste « ${list.name} » créée`);
   };
-  const deleteList=(id)=>{const l=distLists.find((x)=>x.id===id);setDistLists((ls)=>ls.filter((x)=>x.id!==id));if(l)toast(`Liste « ${l.name} » supprimée`);};
+  const deleteList=(id)=>{
+    const l=distLists.find((x)=>x.id===id);setDistLists((ls)=>ls.filter((x)=>x.id!==id));if(l)toast(`Liste « ${l.name} » supprimée`);
+    if(isRealCompany(me))supabase.from("distribution_lists").delete().eq("id",id).then(()=>{});
+  };
 
   const commonServices=(c)=>((me&&me.services)||[]).filter((s)=>(c.services||[]).includes(s));
   const getChan=(c,svc)=>(c.channels&&c.channels[svc])||[];
@@ -2196,7 +2227,7 @@ export default function Maillon(){
             </div>
           ):(
             <div className="libcard" style={{marginTop:26}}>
-              {distLists.map((l)=>{const members=eligible.filter((c)=>l.companyIds.includes(c.id));const open=expandedListId===l.id;return(
+              {distLists.map((l)=>{const members=companies.filter((c)=>l.companyIds.includes(c.id));const open=expandedListId===l.id;return(
                 <div key={l.id}>
                   <div className="libitem" style={{cursor:"pointer",borderBottom:"1px solid var(--line-soft)"}} onClick={()=>setExpandedListId(open?null:l.id)}>
                     <div className="ni"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h10M4 18h7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg></div>
