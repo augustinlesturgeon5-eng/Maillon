@@ -907,14 +907,6 @@ const REPLIES = [
   "Parfait, merci du message ! Je transmets à l'équipe.",
   "Tout à fait aligné avec ce qu'on cherche. On avance ?",
 ];
-const INTERNAL_REPLIES = [
-  "Reçu, je regarde ça et je reviens vers toi.",
-  "Top, je m'en occupe cet après-midi.",
-  "On en parle au point d'équipe ?",
-  "Noté, merci pour l'info !",
-  "Je valide de mon côté, ça me va.",
-];
-
 export default function Maillon(){
   const [me,setMe]=useState(null);
   const [session,setSession]=useState(null);
@@ -993,7 +985,7 @@ export default function Maillon(){
   const [activeTeammateId,setActiveTeammateId]=useState(null);
   const [chatOpen,setChatOpen]=useState(false);
   const [chatPane,setChatPane]=useState("list");
-  const dmKey=(a,b)=>[a,b].sort((x,y)=>x-y).join("-");
+  const dmKey=(a,b)=>[String(a),String(b)].sort().join("_");
 
   const toast=(t)=>{const id=Math.random();setToasts((x)=>[...x,{id,t}]);setTimeout(()=>setToasts((x)=>x.filter((y)=>y.id!==id)),3200);};
   const logEvent=(text)=>setAuditLog((l)=>[{id:Date.now()+Math.random(),text,at:new Date().toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})},...l].slice(0,60));
@@ -1018,34 +1010,14 @@ export default function Maillon(){
   useEffect(()=>{if(streamRef.current)streamRef.current.scrollTop=streamRef.current.scrollHeight;},[activeConv,activeService,companies]);
   useEffect(()=>{if(teamStreamRef.current)teamStreamRef.current.scrollTop=teamStreamRef.current.scrollHeight;},[internalChat,internalDMs,activeTeammateId]);
   const sendInternalMsg=()=>{
-    if(!internalMsg.trim()||!currentUser)return;
+    if(!internalMsg.trim()||!currentUser||!me)return;
     const text=internalMsg.trim();const ts=Date.now();
-    if(activeTeammateId==null){
-      const msg={id:ts,authorId:currentUser.id,authorName:currentUser.name,text};
-      setInternalChat((c)=>[...c,msg]);
-      const others=team.filter((m)=>m.status==="active"&&m.id!==currentUser.id);
-      if(others.length&&Math.random()<0.5){
-        const replier=others[Math.floor(Math.random()*others.length)];
-        setTimeout(()=>{
-          const reply={id:ts+1,authorId:replier.id,authorName:replier.name,text:INTERNAL_REPLIES[Math.floor(Math.random()*INTERNAL_REPLIES.length)]};
-          setInternalChat((c)=>[...c,reply]);
-          toast(`💬 Nouveau message de ${replier.name} (Général)`);
-        },1800+Math.random()*2200);
-      }
-    }else{
-      const other=team.find((m)=>m.id===activeTeammateId);
-      const key=dmKey(currentUser.id,activeTeammateId);
-      const msg={id:ts,authorId:currentUser.id,authorName:currentUser.name,text};
-      setInternalDMs((d)=>({...d,[key]:[...(d[key]||[]),msg]}));
-      if(other&&other.status==="active"&&Math.random()<0.6){
-        setTimeout(()=>{
-          const reply={id:ts+1,authorId:other.id,authorName:other.name,text:INTERNAL_REPLIES[Math.floor(Math.random()*INTERNAL_REPLIES.length)]};
-          setInternalDMs((d)=>({...d,[key]:[...(d[key]||[]),reply]}));
-          toast(`💬 Nouveau message de ${other.name}`);
-        },1800+Math.random()*2200);
-      }
-    }
+    const channel=activeTeammateId==null?"general":dmKey(currentUser.id,activeTeammateId);
+    const msg={id:ts,authorId:currentUser.id,text};
+    if(activeTeammateId==null)setInternalChat((c)=>[...c,msg]);
+    else setInternalDMs((d)=>({...d,[channel]:[...(d[channel]||[]),msg]}));
     setInternalMsg("");
+    supabase.from("team_messages").insert({company_id:me.id,sender_id:currentUser.id,channel,body:text}).then(()=>{});
   };
   useEffect(()=>{const k=(e)=>{if(e.key==="Escape"){setProspect(null);setOpenC(null);}};window.addEventListener("keydown",k);return()=>window.removeEventListener("keydown",k);},[]);
 
@@ -1138,6 +1110,42 @@ export default function Maillon(){
       .subscribe();
     return ()=>{supabase.removeChannel(channel);};
   },[me&&me.id]);
+
+  useEffect(()=>{
+    if(!me)return;
+    let active=true;
+    supabase.from("team_messages").select("*").eq("company_id",me.id).order("created_at",{ascending:true}).then(({data})=>{
+      if(!active||!data)return;
+      const general=[];const dms={};
+      data.forEach((row)=>{
+        const msg={id:row.id,authorId:row.sender_id,text:row.body};
+        if(row.channel==="general")general.push(msg);
+        else (dms[row.channel]=dms[row.channel]||[]).push(msg);
+      });
+      setInternalChat(general);
+      setInternalDMs(dms);
+    });
+    return ()=>{active=false;};
+  },[me&&me.id]);
+
+  useEffect(()=>{
+    if(!me||!currentUser)return;
+    const channel=supabase.channel("team-messages-"+me.id)
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"team_messages",filter:`company_id=eq.${me.id}`},(payload)=>{
+        const row=payload.new;
+        if(row.sender_id===currentUser.id)return;
+        const msg={id:row.id,authorId:row.sender_id,text:row.body};
+        if(row.channel==="general"){
+          setInternalChat((c)=>[...c,msg]);
+          toast("💬 Nouveau message (Général)");
+        }else{
+          setInternalDMs((d)=>({...d,[row.channel]:[...(d[row.channel]||[]),msg]}));
+          if(row.channel===dmKey(currentUser.id,row.sender_id))toast("💬 Nouveau message reçu");
+        }
+      })
+      .subscribe();
+    return ()=>{supabase.removeChannel(channel);};
+  },[me&&me.id,currentUser&&currentUser.id]);
 
   useEffect(()=>{
     if(!me)return;
@@ -1983,7 +1991,7 @@ export default function Maillon(){
                     <div className="bub sys">Aucun message pour l'instant — lancez la discussion.</div>
                   ):thread.map((m)=>{const mine=currentUser&&m.authorId===currentUser.id;return(
                     <div key={m.id} className={"bub "+(mine?"me":"them")}>
-                      {!mine&&activeTeammateId==null&&<b style={{display:"block",fontSize:11.5,marginBottom:3,opacity:.75}}>{m.authorName}</b>}
+                      {!mine&&activeTeammateId==null&&<b style={{display:"block",fontSize:11.5,marginBottom:3,opacity:.75}}>{(team.find((t)=>t.id===m.authorId)||{}).name||"—"}</b>}
                       {m.text}
                     </div>
                   );})}
