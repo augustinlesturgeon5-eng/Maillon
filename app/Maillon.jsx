@@ -1285,6 +1285,16 @@ export default function Maillon(){
     setCampaigns((cs)=>[camp,...cs]);setCampaignOpen(false);setCampaignForm({name:"",subject:"",body:"",list:"all",html:"",needsRsvp:false});
     logHist(`Campagne d'emailing envoyée : « ${camp.name} » (${recipients.length} destinataire${recipients.length>1?"s":""})`,"info");
     toast(`Campagne envoyée à ${recipients.length} entreprise${recipients.length>1?"s":""}`);
+    const mails=recipients.flatMap((c)=>(c.emailingContacts||[]).map((ct)=>({email:ct.email,name:ct.name})));
+    if(mails.length){
+      fetch("/api/send-campaign",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({subject:camp.subject,html:camp.html,text:camp.body,fromName:me.name,recipients:mails})})
+        .then((r)=>r.json()).then(({results,error})=>{
+          if(error){toast("Erreur d'envoi : "+error);return;}
+          const ok=(results||[]).filter((r)=>r.ok).length;const fail=(results||[]).length-ok;
+          toast(fail?`✉️ ${ok} email(s) envoyé(s), ${fail} échec(s)`:`✉️ ${ok} email(s) réellement envoyé(s)`);
+        }).catch(()=>toast("Erreur d'envoi des emails"));
+    }
     if(needsRsvp){
       recipients.forEach((c,i)=>{
         setTimeout(()=>{
