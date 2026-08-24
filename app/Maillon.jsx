@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabaseClient";
+
+const RealFranceMap = dynamic(() => import("./RealFranceMap"), { ssr: false });
 
 /* =========================================================================
    MAILLON v4 — Prototype cliquable
@@ -37,21 +40,6 @@ const CITIES = {
 };
 const distKm=(a,b)=>{if(!CITIES[a]||!CITIES[b])return null;const[la1,lo1]=CITIES[a],[la2,lo2]=CITIES[b];const R=6371,dLat=(la2-la1)*Math.PI/180,dLon=(lo2-lo1)*Math.PI/180;const x=Math.sin(dLat/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLon/2)**2;return Math.round(2*R*Math.asin(Math.sqrt(x)));};
 
-/* ---- Projection carte de France ---- */
-const FR = { lngMin:-5.2, lngMax:8.4, latMin:41.3, latMax:51.2 };
-const MAPW = 500, MAPH = 520, PAD = 26;
-const project = (lat,lng) => [
-  PAD + ((lng-FR.lngMin)/(FR.lngMax-FR.lngMin))*(MAPW-2*PAD),
-  PAD + ((FR.latMax-lat)/(FR.latMax-FR.latMin))*(MAPH-2*PAD),
-];
-const FRANCE_PTS = [
-  [51.03,2.37],[49.95,4.20],[49.54,5.90],[48.58,7.75],[47.55,7.55],[46.20,6.14],[45.90,6.80],
-  [45.10,6.90],[44.10,7.00],[43.70,7.27],[43.29,5.37],[43.35,3.30],[42.85,3.03],[42.50,3.05],
-  [42.60,1.45],[43.00,-0.30],[43.35,-1.45],[44.20,-1.20],[45.60,-1.10],[46.16,-1.15],[46.80,-2.10],
-  [47.25,-2.25],[47.65,-3.40],[48.10,-4.30],[48.40,-4.49],[48.70,-3.50],[48.65,-1.60],[49.30,-1.30],
-  [49.70,-1.60],[49.40,-0.20],[49.50,0.10],[50.05,1.35],[50.75,1.60],
-];
-const FRANCE_PATH = FRANCE_PTS.map((p,i)=>{const[x,y]=project(p[0],p[1]);return`${i?"L":"M"}${x.toFixed(1)} ${y.toFixed(1)}`;}).join(" ")+" Z";
 
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;450;500;600;700&display=swap');
@@ -72,8 +60,6 @@ const CSS = `
 
 .mln .bar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:rgba(251,250,247,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
 .mln .brand{display:flex;align-items:center;gap:9px;cursor:pointer;}
-.mln .brand b{font-family:'Bricolage Grotesque';font-weight:800;font-size:19px;letter-spacing:-.03em;}
-.mln .mark{width:25px;height:25px;}
 .mln .nav{display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);padding:4px;border-radius:999px;}
 .mln .nav button{font-size:13px;font-weight:600;padding:7px 14px;border-radius:999px;color:var(--slate);display:flex;align-items:center;gap:6px;transition:.12s;}
 .mln .nav button.on{background:var(--ink);color:#fff;}
@@ -89,7 +75,7 @@ const CSS = `
 .mln .ptitle{font-family:'Bricolage Grotesque';font-weight:700;font-size:26px;margin:0 0 4px;}
 .mln .psub{font-size:14.5px;color:var(--slate);margin:0 0 24px;}
 
-.mln .onb{max-width:560px;margin:0 auto;padding:48px 24px;}
+.mln .onb{position:relative;max-width:560px;margin:0 auto;padding:48px 24px;}
 .mln .onb .eyebrow{font-family:'Inter';font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--emerald);font-weight:700;}
 .mln .onb h1{font-family:'Bricolage Grotesque';font-weight:800;font-size:clamp(28px,5vw,42px);margin:14px 0 10px;letter-spacing:-.02em;}
 .mln .onb p.lead{font-size:16px;color:var(--slate);margin:0 0 26px;}
@@ -97,6 +83,27 @@ const CSS = `
 .mln .stp{flex:1;height:4px;border-radius:2px;background:var(--line);}
 .mln .stp.on{background:var(--emerald);}
 .mln .stphint{font-family:'Inter';font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate-soft);margin-bottom:16px;}
+
+.mln .landing{min-height:100vh;background:var(--paper);}
+.mln .landbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:20px 28px;background:rgba(251,250,247,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+.mln .landbar .actions{display:flex;align-items:center;gap:14px;}
+.mln .landhero{max-width:760px;margin:0 auto;padding:72px 24px 56px;text-align:center;}
+.mln .landhero .eyebrow{font-family:'Inter';font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--emerald);font-weight:700;margin-bottom:16px;}
+.mln .landhero h1{font-family:'Bricolage Grotesque';font-weight:800;font-size:clamp(32px,5.5vw,52px);line-height:1.08;letter-spacing:-.02em;margin:0 0 18px;}
+.mln .landhero p.lead{font-size:17px;color:var(--slate);max-width:560px;margin:0 auto 30px;line-height:1.55;}
+.mln .landcta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:14px;}
+.mln .landcta .btn,.mln .landcta .btn-ghost{padding:14px 26px;font-size:15.5px;}
+.mln .landsub{font-size:12.5px;color:var(--slate-soft);}
+.mln .landfeats{max-width:1040px;margin:0 auto;padding:10px 24px 64px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;}
+.mln .featcard{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px 22px;text-align:left;}
+.mln .featcard .fi{width:38px;height:38px;border-radius:10px;background:var(--emerald-wash);color:var(--emerald);display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
+.mln .featcard h4{font-family:'Bricolage Grotesque';font-weight:700;font-size:16px;margin:0 0 8px;}
+.mln .featcard p{font-size:13.5px;color:var(--slate);line-height:1.5;margin:0;}
+.mln .landbanner{max-width:760px;margin:0 auto 72px;padding:40px 32px;border-radius:20px;background:var(--ink);text-align:center;}
+.mln .landbanner h3{font-family:'Bricolage Grotesque';color:#fff;font-weight:800;font-size:clamp(20px,3vw,26px);margin:0 0 10px;}
+.mln .landbanner p{color:#c7ccd4;font-size:14px;margin:0 0 22px;}
+.mln .landbanner .btn{background:var(--emerald);}
+.mln .landbanner .btn:hover{background:var(--emerald-bright);}
 
 .mln .field{margin-bottom:16px;}
 .mln .field>label{display:block;font-family:'Inter';font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-bottom:6px;}
@@ -160,23 +167,8 @@ const CSS = `
 
 /* map */
 .mln .mapbox{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;gap:22px;flex-wrap:wrap;}
-.mln .mapsvg{flex:1;min-width:280px;position:relative;overflow:hidden;border-radius:14px;background:var(--sea);}
-.mln .mapsvg svg{width:100%;height:auto;display:block;touch-action:none;cursor:grab;}
-.mln .mapsvg svg:active{cursor:grabbing;}
-.mln .mapctrls{position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:6px;z-index:3;}
-.mln .mapctrls button{width:34px;height:34px;border-radius:9px;background:#fff;border:1px solid var(--line);font-size:17px;font-weight:700;color:var(--ink);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -6px rgba(15,24,38,.35);}
-.mln .mapctrls button:hover{background:var(--paper);}
-.mln .mapop{position:absolute;z-index:4;width:236px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 22px 55px -20px rgba(15,24,38,.5);padding:14px;}
-.mln .mapop .oph{display:flex;gap:10px;align-items:center;margin-bottom:9px;}
-.mln .mapop .oph .logo{width:40px;height:40px;font-size:17px;border-radius:11px;overflow:hidden;}
-.mln .mapop b{font-size:14px;display:flex;align-items:center;gap:5px;}
-.mln .mapop small{font-size:11.5px;color:var(--slate);}
-.mln .mapop .opaff{font-family:'Inter';font-size:11.5px;color:var(--emerald);font-weight:700;margin-bottom:11px;}
-.mln .mapop .opact{display:flex;gap:8px;}
-.mln .mapop .opclose{position:absolute;top:9px;right:9px;width:22px;height:22px;border-radius:50%;background:var(--paper);display:flex;align-items:center;justify-content:center;color:var(--slate);}
-.mln .maparrow{position:absolute;width:12px;height:12px;background:#fff;border-right:1px solid var(--line);border-bottom:1px solid var(--line);left:50%;bottom:-7px;transform:translateX(-50%) rotate(45deg);}
-.mln .maplabel rect{fill:#fff;stroke:var(--line);}
-.mln .maplabel text{fill:var(--ink);}
+.mln .mapview{flex:1;min-width:280px;height:520px;border-radius:14px;overflow:hidden;}
+.mln .mapview .leaflet-popup-content-wrapper{border-radius:10px;}
 
 /* import logo */
 .mln .logoup{display:flex;gap:14px;align-items:center;}
@@ -242,19 +234,6 @@ const CSS = `
 .mln .vishead{padding:16px 22px;color:#e8eaee;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;}
 .mln .vistimer{margin-left:auto;font-family:'Inter';font-size:14px;background:rgba(255,255,255,.12);padding:5px 12px;border-radius:999px;display:flex;align-items:center;gap:7px;}
 .mln .vistimer .rec{width:8px;height:8px;border-radius:50%;background:var(--coral);}
-.mln .vistiles{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 22px;min-height:0;}
-.mln .vistile{position:relative;border-radius:18px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
-.mln .vistile .vav{width:96px;height:96px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque';font-weight:800;font-size:40px;color:#fff;overflow:hidden;}
-.mln .vistile .vav img{width:100%;height:100%;object-fit:cover;}
-.mln .vistile .vname{position:absolute;bottom:14px;left:16px;color:#fff;font-weight:600;font-size:13.5px;background:rgba(0,0,0,.42);padding:5px 12px;border-radius:999px;}
-.mln .vistile .voff{position:absolute;top:12px;right:14px;font-size:11px;color:#e6eaef;background:rgba(0,0,0,.45);padding:4px 10px;border-radius:999px;}
-.mln .visctrls{display:flex;gap:12px;justify-content:center;align-items:center;padding:20px;}
-.mln .visctrls button{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;display:flex;align-items:center;justify-content:center;transition:.12s;}
-.mln .visctrls button:hover{background:rgba(255,255,255,.24);}
-.mln .visctrls button.off{background:#fff;color:var(--ink);}
-.mln .visctrls button.hang{background:var(--coral);width:62px;}
-.mln .visctrls button.hang:hover{background:#c94d34;}
-.mln .vissim{text-align:center;color:#6b7686;font-size:12px;padding-bottom:16px;}
 .mln .agenda{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:18px;}
 .mln .agtitle{font-family:'Inter';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate-soft);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
 .mln .aggroup{margin-bottom:10px;}
@@ -289,7 +268,7 @@ const CSS = `
 .mln .accrow .rn .adm{font-family:'Inter';font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;background:var(--emerald);color:#fff;padding:2px 7px;border-radius:999px;}
 .mln .accnote{font-size:12px;color:var(--slate-soft);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-top:6px;}
 .mln .rolepick span.rolename{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;}
-.mln .login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 20px;background:radial-gradient(120% 120% at 50% 0%, #fff 0%, var(--paper) 60%);}
+.mln .login{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 20px;background:radial-gradient(120% 120% at 50% 0%, #fff 0%, var(--paper) 60%);}
 .mln .loginbox{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:32px;box-shadow:0 40px 100px -50px rgba(15,24,38,.5);}
 .mln .logco{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--paper);border:1px solid var(--line);border-radius:14px;margin-bottom:22px;}
 .mln .logologo{width:44px;height:44px;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Bricolage Grotesque';font-weight:800;font-size:19px;flex:0 0 auto;}
@@ -470,34 +449,35 @@ const CSS = `
 .mln .memok{background:var(--emerald-wash);border:1px solid #bfe0d6;border-radius:18px;padding:20px;}
 .mln .memok h4{font-family:'Bricolage Grotesque';font-weight:700;font-size:16px;margin:0 0 6px;color:#0c5f4d;display:flex;align-items:center;gap:8px;}
 .mln .memok p{font-size:13px;color:#0c5f4d;margin:0 0 14px;line-height:1.5;}
-.mln .plan{border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;cursor:pointer;transition:.14s;background:#fff;}
-.mln .plan:hover{border-color:var(--emerald);box-shadow:0 12px 30px -20px rgba(15,132,107,.5);}
-.mln .plan .pn{font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;}
-.mln .plan .pp{font-family:'Bricolage Grotesque';font-weight:800;font-size:26px;margin-top:4px;}
-.mln .plan .pp small{font-size:13px;font-weight:500;color:var(--slate);}
-.mln .plan .best{font-family:'Inter';font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;background:var(--emerald);color:#fff;padding:3px 8px;border-radius:999px;}
+.mln .best{font-family:'Inter';font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;background:var(--emerald);color:#fff;padding:3px 8px;border-radius:999px;animation:bestPulse 2.4s ease-in-out infinite;}
+@keyframes bestPulse{0%,100%{box-shadow:0 0 0 0 rgba(15,132,107,.35);}50%{box-shadow:0 0 0 5px rgba(15,132,107,0);}}
 .mln .simnote{font-size:11.5px;color:var(--slate-soft);text-align:center;margin-top:6px;}
 
 /* onboarding : choix d'abonnement */
-.mln .billtoggle{display:inline-flex;background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:3px;gap:2px;margin-bottom:16px;}
-.mln .billtoggle button{font-size:13px;font-weight:600;padding:8px 16px;border-radius:9px;color:var(--slate);display:flex;align-items:center;gap:5px;}
-.mln .billtoggle button.on{background:var(--ink);color:#fff;}
+.mln .billtoggle{position:relative;display:inline-flex;background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:3px;gap:2px;margin-bottom:16px;}
+.mln .billtoggle .slide{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);background:var(--ink);border-radius:9px;transition:transform .32s cubic-bezier(.22,1,.36,1);z-index:0;}
+.mln .billtoggle button{position:relative;z-index:1;font-size:13px;font-weight:600;padding:8px 16px;border-radius:9px;color:var(--slate);display:flex;align-items:center;gap:5px;transition:color .25s;}
+.mln .billtoggle button.on{color:#fff;}
 .mln .billtoggle .save{font-family:'Inter';font-size:10px;color:var(--emerald-bright);}
 .mln .billtoggle button.on .save{color:#7fe6cf;}
-.mln .planpick{border:1.5px solid var(--line);border-radius:16px;padding:18px;margin-bottom:12px;cursor:pointer;transition:.14s;background:#fff;}
-.mln .planpick:hover{border-color:var(--slate);}
-.mln .planpick.on{border-color:var(--emerald);box-shadow:0 0 0 3px var(--emerald-wash);}
-.mln .planpick .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
-.mln .planpick .pnm{font-family:'Bricolage Grotesque';font-weight:700;font-size:18px;display:flex;align-items:center;gap:8px;}
-.mln .planpick .radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
-.mln .planpick.on .radio{border-color:var(--emerald);background:var(--emerald);}
-.mln .planpick .prc{font-family:'Bricolage Grotesque';font-weight:800;font-size:23px;}
-.mln .planpick .prc small{font-size:12px;font-weight:500;color:var(--slate);}
-.mln .planpick .tg2{font-size:13px;color:var(--slate);margin:2px 0 12px;}
-.mln .planpick ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;}
-.mln .planpick li{font-size:13px;display:flex;align-items:center;gap:8px;color:var(--ink);}
-.mln .planpick li.no{color:var(--slate-soft);}
-.mln .planpick li svg{flex:0 0 auto;}
+.mln .compwrap{overflow-x:auto;margin:4px 0 6px;border:1px solid var(--line);border-radius:16px;}
+.mln .comptable{width:100%;border-collapse:collapse;font-size:14px;min-width:620px;}
+.mln .comptable th,.mln .comptable td{padding:13px 14px;text-align:center;border-bottom:1px solid var(--line-soft);}
+.mln .comptable .fname{text-align:left;color:var(--slate);white-space:nowrap;}
+.mln .comptable td.on{background:var(--emerald-wash);}
+.mln .comptable tbody tr:last-child td{border-bottom:none;}
+.mln .comptable svg{display:inline-block;vertical-align:middle;}
+.mln .compval{font-size:12.5px;font-weight:600;color:var(--ink);}
+.mln .comptable thead .rowsel th{padding:22px 16px 18px;border-bottom:1.5px solid var(--line);cursor:pointer;background:var(--paper);transition:background .18s ease;vertical-align:top;}
+.mln .comptable thead .rowsel th:hover{background:var(--line-soft);}
+.mln .comptable thead .rowsel th.on{background:var(--emerald-wash);}
+.mln .comptable thead .rowsel th .best{display:inline-block;margin-bottom:8px;}
+.mln .comptable .planname{font-family:'Bricolage Grotesque';font-weight:700;font-size:18px;color:var(--ink);}
+.mln .comptable thead .radio{width:20px;height:20px;margin:9px auto;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;transition:transform .28s cubic-bezier(.34,1.56,.64,1),border-color .2s,background .2s;}
+.mln .comptable thead th.on .radio{border-color:var(--emerald);background:var(--emerald);transform:scale(1.12);}
+.mln .comptable .prc{font-family:'Bricolage Grotesque';font-weight:800;font-size:24px;}
+.mln .comptable .prc small{font-size:12.5px;font-weight:500;color:var(--slate);}
+.mln .comptable .prcalt{font-size:11px;color:var(--slate-soft);margin-top:1px;}
 
 @media (max-width:820px){
   .mln .grid{grid-template-columns:1fr;}
@@ -514,7 +494,6 @@ const CSS = `
   .mln .convlist{max-height:180px;}
   .mln .grid2{grid-template-columns:1fr;}
   .mln .maplegend{width:100%;}
-  .mln .vistiles{grid-template-columns:1fr;}
   .mln .dash{grid-template-columns:repeat(2,1fr);}
 }
 `;
@@ -659,20 +638,45 @@ const SEED_NEEDS=[
   {id:2005,companyId:16,title:"Organisme de formation cherche des entreprises pour leurs plans de formation",sought:"RH",loc:"Rennes",date:"Il y a 5 jours",responses:4},
 ];
 
+const priceFmt=(n)=>n.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const urlBase64ToUint8Array=(base64String)=>{
+  const padding="=".repeat((4-(base64String.length%4))%4);
+  const base64=(base64String+padding).replace(/-/g,"+").replace(/_/g,"/");
+  const rawData=atob(base64);
+  const outputArray=new Uint8Array(rawData.length);
+  for(let i=0;i<rawData.length;i++)outputArray[i]=rawData.charCodeAt(i);
+  return outputArray;
+};
 /* ---- Offres d'abonnement (tarifs fictifs) ---- */
 const PLANS=[
-  {id:"gratuit",name:"Découverte",monthly:0,annual:0,credits:5,tagline:"Pour tester et rejoindre le réseau, sans carte bancaire.",
-   features:[{t:"Fiche entreprise + badge SIREN",ok:true},{t:"Annuaire, carte & score d'affinité",ok:true},{t:"5 démarchages (non renouvelables)",ok:true},{t:"Messagerie de base + Bibliothèque",ok:true},
-     {t:"Mur de besoins (publication)",ok:false},{t:"Chat interne, Emailing & actualités",ok:false}]},
-  {id:"essentiel",name:"Pro",monthly:19,annual:182,credits:null,tagline:"Pour prospecter activement et être trouvé.",
-   features:[{t:"Tout Découverte",ok:true},{t:"Démarchages illimités",ok:true},{t:"Mur de besoins + recommandations",ok:true},{t:"Messagerie cloisonnée, visio & chat interne",ok:true},
-     {t:"Collaboration (devis & documents)",ok:true},{t:"Publication d'actualités (blog)",ok:false}]},
-  {id:"pro",name:"Business",monthly:39,annual:374,credits:null,tagline:"Pour la visibilité et les équipes.",best:true,
-   features:[{t:"Tout Pro",ok:true},{t:"Emailing illimité + listes de diffusion sur-mesure",ok:true},{t:"Actualités avec photos, republication & mise en avant",ok:true},{t:"Visio de groupe multi-services + tableau de bord avancé",ok:true},
-     {t:"Badge « Entreprise vérifiée » + priorité dans l'annuaire",ok:true},{t:"Accès illimités + journal, 2FA & support prioritaire",ok:true}]},
+  {id:"gratuit",name:"Premier Maillon",monthly:0,annual:0,credits:5,tagline:"Pour tester et rejoindre le réseau, sans carte bancaire."},
+  {id:"essentiel",name:"Maillon Central",monthly:19.99,annual:199.9,noCommit:29.99,credits:null,tagline:"Pour prospecter activement et être trouvé."},
+  {id:"pro",name:"Maillon Fort",monthly:39.99,annual:399.9,noCommit:49.99,credits:null,tagline:"Pour la visibilité et les équipes.",best:true},
+];
+/* Comparatif des offres : une ligne par fonctionnalité, une valeur par offre (Découverte, Pro, Business) */
+const FEATURE_MATRIX=[
+  {label:"Fiche entreprise + badge SIREN",vals:[true,true,true]},
+  {label:"Annuaire, carte & score d'affinité",vals:[true,true,true]},
+  {label:"Démarchages",vals:["5 (non renouvelables)","Illimités","Illimités"]},
+  {label:"Messagerie cloisonnée par service",vals:[false,true,true]},
+  {label:"Bibliothèque (historique)",vals:[true,true,true]},
+  {label:"Mur de besoins",vals:[false,"Avec recommandations","Avec recommandations"]},
+  {label:"Chat interne",vals:[false,true,true]},
+  {label:"Visioconférence",vals:[false,true,"Groupe multi-services"]},
+  {label:"Collaboration (devis & documents)",vals:[false,true,true]},
+  {label:"Emailing & listes de diffusion",vals:[false,false,"Illimité, sur-mesure"]},
+  {label:"Publication d'actualités",vals:[false,false,"Photos, republication, mise en avant"]},
+  {label:"Badge « Entreprise vérifiée » + priorité annuaire",vals:[false,false,true]},
 ];
 
-function Mark(){return(<svg className="mark" viewBox="0 0 32 32" fill="none"><rect x="1" y="1" width="30" height="30" rx="9" fill="#0F1826"/><path d="M11 20.5a4.5 4.5 0 0 1 0-9h2.2M21 11.5a4.5 4.5 0 0 1 0 9h-2.2M13 16h6" stroke="#16A886" strokeWidth="2.1" strokeLinecap="round"/></svg>);}
+function Mark({height=26}){return(<img src="/logo-maillon-ink.png" alt="Maillon" style={{height,display:"block"}}/>);}
+function Tagline({size=10.5,align="center",dashes=true,text="Transformer vos connexions en opportunités."}){return(
+  <div style={{display:"flex",alignItems:"center",justifyContent:align,gap:10}}>
+    {dashes&&<span style={{width:18,height:1,background:"var(--slate-soft)",flex:"0 0 auto"}}/>}
+    <span style={{fontSize:size,letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--slate)",fontWeight:600,textAlign:"center"}}>{text}</span>
+    {dashes&&<span style={{width:18,height:1,background:"var(--slate-soft)",flex:"0 0 auto"}}/>}
+  </div>
+);}
 const Check=(p)=><svg viewBox="0 0 16 16" width="14" height="14" {...p}><path d="M13 4L6 12L3 8.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/></svg>;
 const XI=(p)=><svg viewBox="0 0 16 16" width="14" height="14" {...p}><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
 
@@ -721,7 +725,500 @@ const mapCompanyRow=(c)=>{
     adminServices:c.admin_services&&c.admin_services.length?c.admin_services:null,accessGrants:c.access_grants||{},
   };
 };
-const mapProfileRow=(p,email)=>({id:p.id,name:p.full_name||"Vous",role:p.role||"Direction",status:p.status||"active",email:email||"",notifyEmail:p.notify_email!==false});
+const mapProfileRow=(p,email)=>({id:p.id,name:p.full_name||"Vous",role:p.role||"Direction",status:p.status||"active",email:email||"",notifyEmail:p.notify_email!==false,language:p.language||"fr"});
+const LANGUAGES=[{code:"fr",name:"Français"},{code:"en",name:"English"}];
+const TRANSLATIONS={en:{
+  "2 mois offerts":"2 months free",
+  "Abonnement":"Plan",
+  "Abonnement & facturation":"Plan & billing",
+  "Accepter":"Accept",
+  "Acceptez une demande ou démarchez une entreprise pour débloquer la messagerie.":"Accept a request or reach out to a company to unlock messaging.",
+  "Accès & cloisonnement":"Access & segmentation",
+  "Accès administrateur":"Administrator access",
+  "Accès complet (administrateurs)":"Full access (administrators)",
+  "Achats":"Purchasing",
+  "Activer la double authentification":"Enable two-factor authentication",
+  "Activité":"Business",
+  "Actualités":"News",
+  "Administrateur":"Administrator",
+  "Adresse(s) email de réception":"Receiving email address(es)",
+  "Affinité":"Affinity",
+  "Ajouter":"Add",
+  "Ajouter un autre email":"Add another email",
+  "Ajouter une photo":"Add a photo",
+  "Ajoutez des services à votre page pour ouvrir des canaux.":"Add departments to your page to open channels.",
+  "Annuler":"Cancel",
+  "Annuler les modifications":"Discard changes",
+  "Année de création":"Year founded",
+  "Attention":"Warning",
+  "Aucun abonnement payant à gérer pour le moment.":"No paid plan to manage right now.",
+  "Aucun autre service à partager.":"No other department to share with.",
+  "Aucun contact enregistré":"No contact saved",
+  "Aucun message pour l'instant — lancez la discussion.":"No messages yet — start the conversation.",
+  "Aucun résultat":"No results",
+  "Aucun service en commun avec":"No department in common with",
+  "Aucune action enregistrée pour l'instant.":"No action recorded yet.",
+  "Aucune action ne correspond aux filtres sélectionnés.":"No action matches the selected filters.",
+  "Aucune action ne correspond à":"No action matches",
+  "Aucune activité pour l'instant":"No activity yet",
+  "Aucune campagne envoyée":"No campaign sent yet",
+  "Aucune conversation":"No conversation",
+  "Aucune demande en attente":"No pending request",
+  "Aucune demande envoyée en attente. Allez dans « Découvrir » pour démarcher une entreprise.":"No pending sent request. Go to \"Discover\" to reach out to a company.",
+  "Aucune entreprise (retirée depuis)":"No company (removed since)",
+  "Aucune entreprise dans cette liste.":"No company in this list.",
+  "Aucune entreprise n'a encore accepté de recevoir vos campagnes. Le consentement se donne dans l'onglet « Demandes » au moment d'accepter une mise en relation.":"No company has agreed to receive your campaigns yet. Consent is given in the \"Requests\" tab when accepting a connection.",
+  "Aucune entreprise sur ces critères":"No company matches these criteria",
+  "Aucune liste pour l'instant":"No list yet",
+  "Aucune visio planifiée":"No video call scheduled",
+  "Autorisations supplémentaires":"Additional permissions",
+  "Autre":"Other",
+  "Autre (précisez)…":"Other (specify)…",
+  "Badge Maillon Fort sur votre page":"Maillon Fort badge on your page",
+  "Besoin publié":"Need posted",
+  "Besoins":"Needs",
+  "Besoins publiés":"Needs posted",
+  "Bibliothèque":"Library",
+  "Blog inclus":"Blog included",
+  "Budget indicatif (optionnel)":"Indicative budget (optional)",
+  "C'est ce pôle qui recevra les demandes de mise en relation adressées à votre entreprise.":"This department will receive the connection requests addressed to your company.",
+  "Campagnes envoyées":"Sent campaigns",
+  "Canal":"Channel",
+  "Carte":"Map",
+  "Catégorie":"Category",
+  "Ce qu'elle propose":"What they offer",
+  "Ce qu'elle recherche":"What they're looking for",
+  "Ce que nous proposons":"What we offer",
+  "Ce que nous recherchons":"What we're looking for",
+  "Ce que vous proposez":"What you offer",
+  "Ce que vous recherchez":"What you're looking for",
+  "Certifications":"Certifications",
+  "Certifications & labels":"Certifications & labels",
+  "Certifications / labels":"Certifications / labels",
+  "Ces services voient la messagerie de tous les pôles.":"These departments can see the messaging of every department.",
+  "Cette campagne demande une confirmation (ex : présence à un événement)":"This campaign requires confirmation (e.g. attendance at an event)",
+  "Changer le mot de passe":"Change password",
+  "Chaque action que vous effectuez apparaîtra ici, avec la date et l'heure.":"Every action you take will appear here, with the date and time.",
+  "Chaque collaborateur est rattaché à un rôle. Il ne voit que ce que ce rôle autorise — il ne peut pas le changer lui-même.":"Each team member is assigned a role. They only see what that role allows — they can't change it themselves.",
+  "Chaque service pourra échanger avec le même service des entreprises connectées.":"Each department will be able to exchange with the matching department at connected companies.",
+  "Chargement…":"Loading…",
+  "Chat":"Chat",
+  "Cherche ce que vous proposez":"Looking for what you offer",
+  "Chiffre d'affaires":"Revenue",
+  "Choisissez un ou plusieurs services — vous pouvez inviter plusieurs services à la même visio.":"Choose one or more departments — you can invite several departments to the same call.",
+  "Code à 6 chiffres":"6-digit code",
+  "Collaborateurs":"Team members",
+  "Commenter":"Comment",
+  "Commercial":"Sales",
+  "Comptabilité":"Accounting",
+  "Compte créé !":"Account created!",
+  "Confirmer":"Confirm",
+  "Confirmer et activer":"Confirm and enable",
+  "Confirmer le nouveau mot de passe":"Confirm new password",
+  "Confirmé":"Confirmed",
+  "Connecter Google Agenda":"Connect Google Calendar",
+  "Connecter Outlook":"Connect Outlook",
+  "Connectez-vous pour accéder à votre espace.":"Log in to access your workspace.",
+  "Connexion":"Log in",
+  "Connexion réussie":"Logged in successfully",
+  "Connexion à Google Agenda — démo":"Google Calendar connection — demo",
+  "Connexion à Outlook — démo":"Outlook connection — demo",
+  "Connexion à la visio…":"Connecting to the call…",
+  "Continuer":"Continue",
+  "Conversation d'équipe":"Team conversation",
+  "Copier le lien":"Copy link",
+  "Correspond à votre activité":"Matches your business",
+  "Création":"Founded",
+  "Créer la liste":"Create list",
+  "Créer mon compte":"Create my account",
+  "Créer une liste":"Create a list",
+  "Créer votre compte":"Create your account",
+  "Créez votre compte, vous publierez ensuite la page de votre entreprise.":"Create your account, then publish your company page.",
+  "Créez votre page entreprise":"Create your company page",
+  "Créez votre première campagne d'emailing ci-dessus.":"Create your first email campaign above.",
+  "Créez votre première liste de diffusion ci-dessus.":"Create your first mailing list above.",
+  "Créée":"Founded",
+  "Dans votre ville":"In your city",
+  "Date":"Date",
+  "Demande de devis":"Quote request",
+  "Demande déclinée":"Request declined",
+  "Demande en attente":"Request pending",
+  "Demande envoyée":"Request sent",
+  "Demander un devis":"Request a quote",
+  "Demandes":"Requests",
+  "Demandes de mise en relation":"Connection requests",
+  "Demandes reçues":"Requests received",
+  "Dernière connexion":"Last login",
+  "Destinataires":"Recipients",
+  "Destinataires éligibles":"Eligible recipients",
+  "Devis":"Quote",
+  "Direction":"Management",
+  "Disponibilité":"Availability",
+  "Document":"Document",
+  "Document partagé":"Document shared",
+  "Donner le rôle Direction à":"Giving the Management role to",
+  "Double authentification (2FA)":"Two-factor authentication (2FA)",
+  "Décliner":"Decline",
+  "Décliné":"Declined",
+  "Découvrir":"Discover",
+  "Découvrir Maillon":"Discover Maillon",
+  "Découvrir des entreprises":"Discover companies",
+  "Décrivez ce que vous cherchez. Les entreprises concernées pourront vous proposer leurs services.":"Describe what you're looking for. Relevant companies will be able to offer their services.",
+  "Démarchages envoyés":"Outreach sent",
+  "Démarchages illimités + mur de besoins & visio":"Unlimited outreach + needs board & video calls",
+  "Démarcher":"Reach out",
+  "Démarrer la visio maintenant":"Start the call now",
+  "Désactiver":"Disable",
+  "Détails":"Details",
+  "E-mail":"Email",
+  "Effectif":"Headcount",
+  "Elle apparaîtra sur le fil commun au nom de":"It will appear on the shared feed under the name of",
+  "Email":"Email",
+  "Emailing":"Emailing",
+  "En attente":"Pending",
+  "En attente de réponse":"Awaiting response",
+  "En tant que":"As",
+  "En une ou deux phrases, ce que fait votre entreprise.":"In one or two sentences, what your company does.",
+  "Engagement 1 an":"1-year commitment",
+  "Enregistrement…":"Saving…",
+  "Enregistrer":"Save",
+  "Entreprises":"Companies",
+  "Entrez le code à 6 chiffres généré par votre application d'authentification.":"Enter the 6-digit code generated by your authenticator app.",
+  "Envoyer":"Send",
+  "Envoyer la campagne":"Send campaign",
+  "Envoyer la demande":"Send request",
+  "Envoyez des campagnes uniquement aux entreprises qui ont accepté de les recevoir, au moment de la mise en relation.":"Send campaigns only to companies who agreed to receive them when the connection was made.",
+  "Envoyée":"Sent",
+  "Envoyées · en attente":"Sent · pending",
+  "Espace de collaboration — dans la vraie application, devis et fichiers seraient réellement transmis et stockés.":"Collaboration space — in the real application, quotes and files would actually be sent and stored.",
+  "Estimée sur la complémentarité de vos activités, ce que vous cherchez de part et d'autre, et la proximité.":"Estimated from how your businesses complement each other, what you're each looking for, and proximity.",
+  "Exporter (.ics)":"Export (.ics)",
+  "Exprimez ce que vous cherchez, ou proposez vos services aux entreprises qui cherchent. La mise en relation vient à vous.":"Say what you're looking for, or offer your services to companies who are searching. The connection comes to you.",
+  "Filtrez par secteur, rayon d'action et effectif. Basculez en carte pour situer les sociétés en France. Le score d'affinité estime la complémentarité avec":"Filter by sector, reach and headcount. Switch to map view to locate companies across France. The affinity score estimates how well you'd complement",
+  "Forte complémentarité":"Strong complementarity",
+  "Glissez pour vous déplacer, molette pour zoomer. Cliquez un point pour voir la fiche de l'entreprise.":"Drag to move around, scroll to zoom. Click a point to view the company's profile.",
+  "Gratuit":"Free",
+  "Général":"General",
+  "Activation de votre abonnement…":"Activating your subscription…",
+  "Le réseau des entreprises qui se choisissent.":"The network where companies choose each other.",
+  "Repérez les partenaires les plus complémentaires à votre activité, partout en France, et n'échangez qu'avec ceux qui vous ont dit oui.":"Spot the partners most complementary to your business, anywhere in France, and only talk to the ones who said yes to you.",
+  "Mensuel":"Monthly",
+  "Comptant (1 an)":"Upfront (1 year)",
+  "soit":"i.e.",
+  "Continuer vers le paiement":"Continue to payment",
+  "Emailing & listes de diffusion":"Emailing & mailing lists",
+  "Envoyez des campagnes aux entreprises qui ont accepté de les recevoir, et regroupez-les dans vos propres listes.":"Send campaigns to companies who agreed to receive them, and group them into your own lists.",
+  "Gratuit pour commencer, sans carte bancaire.":"Free to start, no credit card required.",
+  "Maillon connecte les entreprises qui se complètent, sur la base d'un double consentement : vous démarchez qui vous intéresse, elles décident si elles répondent.":"Maillon connects companies that complement each other, based on double consent: you reach out to whoever interests you, they decide whether to respond.",
+  "Prêt à trouver vos prochains partenaires ?":"Ready to find your next partners?",
+  "Publiez votre page en quelques minutes et commencez à explorer le réseau.":"Publish your page in minutes and start exploring the network.",
+  "Générer le squelette email":"Generate email skeleton",
+  "Gérer mon abonnement / facturation":"Manage my plan / billing",
+  "Gérez ici votre offre et vos informations de paiement, séparément du reste de votre compte.":"Manage your plan and payment details here, separately from the rest of your account.",
+  "HTML de l'email (facultatif)":"Email HTML (optional)",
+  "Heure":"Time",
+  "Historique des actions sensibles sur votre espace.":"History of sensitive actions on your workspace.",
+  "Identique":"Same as above",
+  "Identité":"Identity",
+  "Identité de la campagne":"Campaign identity",
+  "Ignorer":"Dismiss",
+  "Importer votre logo":"Upload your logo",
+  "Informations personnelles":"Personal information",
+  "Inviter":"Invite",
+  "Inviter un collaborateur":"Invite a team member",
+  "J'accepte de recevoir les campagnes d'emailing de":"I agree to receive email campaigns from",
+  "Journal d'accès":"Access log",
+  "L'adresse email ne peut pas être modifiée ici.":"The email address cannot be changed here.",
+  "L'offre":"The",
+  "L'offre Premier Maillon est limitée à 5 démarchages, non renouvelables":"The Premier Maillon plan is limited to 5 outreach credits, non-renewable",
+  "La double authentification est propre à votre compte personnel (elle vous protège, vous — pas toute l'entreprise).":"Two-factor authentication is specific to your personal account (it protects you, not the whole company).",
+  "La langue utilisée pour vos communications et, à terme, l'interface de Maillon.":"The language used for your communications and, eventually, the Maillon interface.",
+  "La personne invitée avec le rôle Direction aura le contrôle total des droits d'accès et du cloisonnement de votre entreprise. Confirmer ?":"The person invited with the Management role will have full control over your company's access rights and segmentation. Confirm?",
+  "La publication d'actualités est incluse dans l'offre Maillon Fort. Choisissez votre facturation :":"Posting news is included in the Maillon Fort plan. Choose your billing:",
+  "La publication est réservée à l'offre Maillon Fort.":"Posting is reserved for the Maillon Fort plan.",
+  "Langue":"Language",
+  "Langue enregistrée":"Language saved",
+  "Langues":"Languages",
+  "Le cloisonnement s'applique à votre entreprise uniquement. L'autre entreprise gère ses propres règles de son côté.":"Segmentation applies to your company only. The other company manages its own rules on its side.",
+  "Le fil commun des entreprises de Maillon. La lecture est ouverte à tous ; publier demande une adhésion.":"The shared feed for Maillon companies. Reading is open to everyone; posting requires membership.",
+  "Le pixel d'ouverture est injecté automatiquement.":"The open-tracking pixel is injected automatically.",
+  "Le pôle qui reçoit toutes les demandes de mise en relation adressées à votre entreprise.":"The department that receives every connection request addressed to your company.",
+  "Le registre de toutes les actions effectuées sur votre espace : demandes envoyées, mises en relation, visios, publications…":"The log of every action on your workspace: requests sent, connections made, video calls, posts…",
+  "Les autres services restent cloisonnés.":"Other departments remain restricted.",
+  "Les demandes de mise en relation adressées à votre entreprise arrivent au pôle":"Connection requests to your company are routed to the",
+  "Les demandes de mise en relation arrivent au pôle":"Connection requests are routed to the",
+  "Lien copié !":"Link copied!",
+  "Liste":"List",
+  "Liste de diffusion":"Mailing list",
+  "Listes":"Lists",
+  "Listes de diffusion":"Mailing lists",
+  "Localisation":"Location",
+  "Logistique":"Logistics",
+  "Logo de l'entreprise":"Company logo",
+  "Ma page entreprise":"My company page",
+  "Maillon Central":"Maillon Central",
+  "Maillon Fort":"Maillon Fort",
+  "Maillon Fort — engagement 1 an":"Maillon Fort — 1-year commitment",
+  "Maillon Fort — sans engagement":"Maillon Fort — no commitment",
+  "Marketing & Com":"Marketing & Comms",
+  "Message":"Message",
+  "Message (texte simple)":"Message (plain text)",
+  "Messages":"Messages",
+  "Min. 8 caractères":"Min. 8 characters",
+  "Mise en avant de vos news":"Featured placement for your news",
+  "Modifier le mot de passe":"Change password",
+  "Mon compte":"My account",
+  "Mot de passe":"Password",
+  "Mot de passe actuel":"Current password",
+  "Mur de besoins":"Needs board",
+  "Ne soyez plus le maillon faible : devenez un maillon fort de votre écosystème.":"Stop being the weak link: become a strong link in your ecosystem.",
+  "Nom A–Z":"Name A–Z",
+  "Nom de l'entreprise":"Company name",
+  "Nom de la campagne":"Campaign name",
+  "Nom de la liste":"List name",
+  "Nom du document":"Document name",
+  "Non, créer ma propre entreprise":"No, create my own company",
+  "Note":"Rating",
+  "Note moyenne":"Average rating",
+  "Notifications par e-mail":"Email notifications",
+  "Notifications push":"Push notifications",
+  "Nouveau mot de passe":"New password",
+  "Nouvelle campagne":"New campaign",
+  "Nouvelle campagne d'emailing":"New email campaign",
+  "Nouvelle conversation":"New conversation",
+  "Nouvelle liste de diffusion":"New mailing list",
+  "Objet de la demande":"Request subject",
+  "Offre":"Plan",
+  "Offre Pro active":"Pro plan active",
+  "Offre actuelle":"Current plan",
+  "Ou entrez la clé manuellement":"Or enter the key manually",
+  "Ouvrir":"Open",
+  "Ouvrir la discussion":"Open the conversation",
+  "PNG, JPG ou SVG — carré de préférence.":"PNG, JPG or SVG — square preferred.",
+  "Paiement sécurisé via Stripe.":"Secure payment via Stripe.",
+  "Par défaut, ce service ne voit que sa messagerie par pôle.":"By default, this department only sees its own department's messaging.",
+  "Partager":"Share",
+  "Partager un document":"Share a document",
+  "Pas encore de compte ? En créer un":"No account yet? Create one",
+  "Passer au payant":"Upgrade to a paid plan",
+  "Passer à Maillon Fort":"Switch to Maillon Fort",
+  "Passer à l'offre Maillon Fort":"Switch to the Maillon Fort plan",
+  "Passez à Maillon Fort":"Switch to Maillon Fort",
+  "Passez à l'offre Maillon Fort":"Switch to the Maillon Fort plan",
+  "Passez à la vitesse supérieure":"Step up a gear",
+  "Photo (facultative)":"Photo (optional)",
+  "Placeholders":"Placeholders",
+  "Planifier la visio":"Schedule the call",
+  "Planifiez une visio depuis une conversation pour la retrouver ici.":"Schedule a call from a conversation to find it here.",
+  "Plus récentes":"Most recent",
+  "Pour continuer à démarcher, passez à une offre payante (démarchages illimités).":"To keep reaching out, switch to a paid plan (unlimited outreach).",
+  "Propose ce que vous cherchez":"Offers what you're looking for",
+  "Proposer mes services":"Offer my services",
+  "Prototype":"Prototype",
+  "Préciser le service":"Specify the department",
+  "Précisez le service…":"Specify the department…",
+  "Prénom et nom":"First and last name",
+  "Présentation":"About",
+  "Présélectionne les destinataires ci-dessous ; vous pouvez encore ajuster la sélection à la main. Créez vos propres listes dans l'onglet « Listes ».":"Pre-selects the recipients below; you can still adjust the selection manually. Create your own lists in the \"Lists\" tab.",
+  "Publier":"Publish",
+  "Publier ma page":"Publish my page",
+  "Publier sur le fil commun":"Post to the shared feed",
+  "Publier un besoin":"Post a need",
+  "Publier une actualité":"Publish a post",
+  "Publiez une page complète, démarchez les sociétés qui vous intéressent. Si elles acceptent, vous communiquez directement. Rien sans double accord.":"Publish a complete page, reach out to the companies you're interested in. If they accept, you communicate directly. Nothing happens without mutual consent.",
+  "Pôle de réception des demandes":"Request-receiving department",
+  "Pôle qui reçoit les demandes":"Request-receiving department",
+  "Quel service pour":"Which department for",
+  "Qui me correspondent":"That match me",
+  "RH":"HR",
+  "Raccrocher":"Hang up",
+  "Rayon autour de vous":"Radius around you",
+  "Recherche":"Looking for",
+  "Rechercher dans la bibliothèque…":"Search the library…",
+  "Rechercher une entreprise, un métier, un service…":"Search a company, a trade, a department…",
+  "Recommandé":"Recommended",
+  "Recommandé pour vous":"Recommended for you",
+  "Recréer / modifier ma page":"Recreate / edit my page",
+  "Regroupez vos entreprises abonnées dans des listes réutilisables (ex : « Mail du jeudi matin ») pour ne plus avoir à tout recocher à chaque campagne.":"Group your subscribed companies into reusable lists (e.g. \"Thursday morning email\") so you don't have to recheck everything for every campaign.",
+  "Rejoindre":"Join",
+  "Rejoindre l'entreprise":"Join the company",
+  "Rejoindre la visio":"Join the call",
+  "Relations actives":"Active connections",
+  "Remplir avec un exemple":"Fill with an example",
+  "Renseignez son identité, choisissez les destinataires, puis le contenu.":"Fill in its identity, choose the recipients, then the content.",
+  "Republier":"Repost",
+  "Republié par":"Reposted by",
+  "Republié par vous":"Reposted by you",
+  "Retirer":"Remove",
+  "Retirer la photo":"Remove photo",
+  "Retour":"Back",
+  "Reçue":"Received",
+  "Reçues · à traiter":"Received · to handle",
+  "Réactiver":"Reactivate",
+  "Réception des demandes":"Request receiving",
+  "Références":"References",
+  "Réinitialiser":"Reset",
+  "Réinitialiser les filtres":"Reset filters",
+  "Répondre à sa demande":"Respond to their request",
+  "Révoquer":"Revoke",
+  "SIRET":"Business ID",
+  "Sans engagement":"No commitment",
+  "Sauvegarder":"Save",
+  "Scannez ce code avec votre application d'authentification (Google Authenticator, Authy…), puis entrez le code à 6 chiffres généré.":"Scan this code with your authenticator app (Google Authenticator, Authy…), then enter the generated 6-digit code.",
+  "Se connecter":"Log in",
+  "Se déconnecter":"Log out",
+  "Secteur d'activité":"Business sector",
+  "Secteur recherché":"Sector sought",
+  "Secteurs affichés":"Sectors shown",
+  "Service":"Department",
+  "Services / départements":"Departments",
+  "Services concernés":"Departments involved",
+  "Seule la Direction peut gérer les droits d'accès et le cloisonnement. Vous êtes connecté en tant que":"Only Management can manage access rights and segmentation. You're logged in as",
+  "Signaler cette entreprise":"Report this company",
+  "Site web":"Website",
+  "Son message":"Their message",
+  "Statistiques de visibilité":"Visibility statistics",
+  "Sujet":"Subject",
+  "Sujet de l'email":"Email subject",
+  "Supprimer":"Delete",
+  "Sécurité & notifications":"Security & notifications",
+  "Sélection":"Selection",
+  "Sélectionnez un ou plusieurs services":"Select one or more departments",
+  "Sélectionnez une conversation":"Select a conversation",
+  "Tableau de bord":"Dashboard",
+  "Technique":"Technical",
+  "Template & tracking":"Template & tracking",
+  "Titre":"Title",
+  "Tous":"All",
+  "Tous les besoins":"All needs",
+  "Tous les champs sont obligatoires.":"All fields are required.",
+  "Tous les secteurs":"All sectors",
+  "Tout Maillon Central + actualités, mise en avant & visio de groupe":"Everything in Maillon Central + news posts, featured placement & group video calls",
+  "Toute la France":"All of France",
+  "Toutes les listes de diffusion":"All mailing lists",
+  "Toutes vos visios à venir avec les entreprises connectées, classées par date. Une visio de groupe apparaît avec tous ses services.":"All your upcoming video calls with connected companies, sorted by date. A group call appears with all of its departments.",
+  "Transformer vos connexions en opportunités.":"Turn your connections into opportunities.",
+  "Trier par":"Sort by",
+  "Téléchargement (démo)":"Download (demo)",
+  "Un instant…":"One moment…",
+  "Un lien d'invitation est créé et copié dans votre presse-papiers. Envoyez-le vous-même à votre collègue (email, message…) : en l'ouvrant, il/elle rejoint directement votre entreprise avec le rôle choisi.":"An invite link is created and copied to your clipboard. Send it yourself to your colleague (email, message…): opening it lets them join your company directly with the chosen role.",
+  "Valider":"Confirm",
+  "Visio":"Video call",
+  "Visio avec":"Video call with",
+  "Visio de groupe":"Group video call",
+  "Visio entrante":"Incoming video call",
+  "Visio planifiée":"Video call scheduled",
+  "Visio simulée — aucune vidéo réelle n'est établie dans la maquette.":"Simulated video call — no real video connection is made in this prototype.",
+  "Visios à venir · par service":"Upcoming video calls · by department",
+  "Voir l'offre Maillon Fort":"View the Maillon Fort plan",
+  "Voir la fiche":"View profile",
+  "Vos identifiants sont gérés de façon sécurisée par Supabase.":"Your credentials are securely managed by Supabase.",
+  "Vos listes":"Your lists",
+  "Vos services / départements":"Your departments",
+  "Votre actualité en quelques lignes.":"Your news in a few lines.",
+  "Votre besoin":"Your need",
+  "Votre compte":"Your account",
+  "Votre demande part avec votre message.":"Your request is sent along with your message.",
+  "Votre demande sera reçue par le pôle":"Your request will be received by the",
+  "Votre entreprise,":"Your company,",
+  "Votre message aux entreprises abonnées.":"Your message to subscribed companies.",
+  "Votre message d'introduction":"Your introduction message",
+  "Votre navigateur vous demandera l'autorisation. Fonctionne même si Maillon est en arrière-plan, tant que ce navigateur reste ouvert.":"Your browser will ask for permission. Works even if Maillon is in the background, as long as this browser stays open.",
+  "Votre offre":"Your plan",
+  "Votre page est en ligne. Découvrez les entreprises du réseau et commencez à transformer vos connexions en opportunités.":"Your page is live. Discover the companies in the network and start turning your connections into opportunities.",
+  "Votre prénom et nom":"Your first and last name",
+  "Votre publication":"Your post",
+  "Votre tableau de bord et la fiche que voient les autres entreprises.":"Your dashboard and the profile other companies see.",
+  "Vous":"You",
+  "Vous avez déjà un compte ? Se connecter":"Already have an account? Log in",
+  "Vous décidez. Accepter ouvre la messagerie ; décliner clôt la demande.":"You decide. Accepting opens the messaging thread; declining closes the request.",
+  "Vous pouvez publier vos actualités sur le fil commun.":"You can post your news on the shared feed.",
+  "Vous échangez uniquement avec les entreprises connectées — et service par service : chaque département discute avec son homologue de l'autre entreprise.":"You only exchange messages with connected companies — department by department: each team talks to its counterpart at the other company.",
+  "Vous êtes en Direction : vous seul(e) pouvez gérer les droits d'accès et le cloisonnement de votre entreprise.":"You're in Management: you're the only one who can manage access rights and segmentation for your company.",
+  "Vous êtes invité(e)":"You're invited",
+  "Vous êtes sur l'offre":"You're on the",
+  "Vues de la fiche (30 j)":"Profile views (30d)",
+  "Vérification automatique via le répertoire SIREN — affiche un badge « entreprise vérifiée ».":"Automatic check via the SIREN registry — displays a \"verified company\" badge.",
+  "Vérification en deux étapes":"Two-step verification",
+  "Vérification…":"Checking…",
+  "Vérifiées":"Verified",
+  "accepte ou refuse la mise en relation.":"accepts or declines the connection.",
+  "accès cloisonné":"restricted access",
+  "admin":"admin",
+  "administrateur":"administrator",
+  "affinité":"affinity",
+  "an":"year",
+  "budget":"budget",
+  "choisissez un canal":"choose a channel",
+  "clients":"clients",
+  "compte désactivé":"account disabled",
+  "confirmé":"confirmed",
+  "confirmés":"confirmed",
+  "d'affinité avec":"affinity with",
+  "de":"with",
+  "destinataire":"recipient",
+  "destinataires":"recipients",
+  "décliné":"declined",
+  "déclinés":"declined",
+  "en attente":"pending",
+  "en tant que":"as",
+  "entreprise":"company",
+  "entreprises":"companies",
+  "est activée immédiatement ; les offres payantes vous redirigent vers une page de paiement.":"is activated immediately; paid plans redirect you to a payment page.",
+  "footer + désabo":"footer + unsubscribe",
+  "header expéditeur":"sender header",
+  "invitation en attente":"invitation pending",
+  "km de vous":"km from you",
+  "lien bouton tracké":"tracked button link",
+  "lui donnera aussi le contrôle total des droits d'accès et du cloisonnement de votre entreprise. Confirmer ?":"will also give them full control over your company's access rights and segmentation. Confirm?",
+  "maquette cliquable · données fictives":"clickable mockup · fictional data",
+  "mois":"month",
+  "n'est disponible qu'avec un engagement d'un an.":"is only available with a 1-year commitment.",
+  "n'inclut pas la publication. Passez à Maillon Fort pour publier vos news et gagner en visibilité.":"does not include posting. Switch to Maillon Fort to post your news and gain visibility.",
+  "optionnel":"optional",
+  "optionnel, séparez par des virgules":"optional, comma-separated",
+  "ou":"or",
+  "ou planifier":"or schedule",
+  "peut aussi voir :":"can also see:",
+  "pour le service":"for the",
+  "pour partager vos news.":"to share your news.",
+  "qui décidera de l'accepter.":"who will decide whether to accept it.",
+  "reliée aux bonnes.":"connected to the right ones.",
+  "reçue par votre pôle":"received by your",
+  "réponse":"response",
+  "réponses":"responses",
+  "service":"department",
+  "service en commun":"shared department",
+  "services":"departments",
+  "services en commun":"shared departments",
+  "signalée — notre équipe va examiner":"reported — our team will review it",
+  "tous secteurs · carte · affinité · double consentement · messagerie par service · visio · blog & adhésion · données fictives":"all sectors · map · affinity · double consent · department messaging · video calls · blog & membership · fictional data",
+  "virgules":"comma-separated",
+  "visio de groupe":"group call",
+  "voici les règles en vigueur (lecture seule).":"here are the current rules (read-only).",
+  "vos 5 démarchages sont épuisés":"your 5 outreach credits are used up",
+  "votre":"your",
+  "vous":"you",
+  "vous invite à une visio":"invites you to a video call",
+  "vous les avez tous utilisés":"you've used them all",
+  "vous ne pouvez lancer une visio que pour votre service.":"you can only start a video call for your department.",
+  "vous ne voyez que les visios de votre service.":"you only see video calls for your department.",
+  "vous voyez":"you see",
+  "vous voyez la messagerie de tous les services.":"you see the messaging of every department.",
+  "À l'instant":"Just now",
+  "À propos":"About",
+  "À ~":"About ~",
+  "Écrire au canal Général…":"Write to the General channel…",
+  "Écrire au service":"Write to the",
+  "Écrire à":"Write to",
+  "Écrivez librement votre secteur, ou choisissez une suggestion.":"Write your sector freely, or pick a suggestion.",
+  "Écrivez ou choisissez…":"Type or choose…",
+  "Élargissez les filtres ou réinitialisez.":"Widen the filters or reset them.",
+  "Étape":"Step",
+  "Événements":"Events",
+  "Événements exportés (.ics) — démo":"Events exported (.ics) — demo",
+  "à":"at",
+}};
 const mapDirectoryCompany=(row)=>{const base=mapCompanyRow(row);return {...base,tag:base.desc,rel:"none",channels:{}};};
 const isRealCompany=(c)=>!!c&&typeof c.id==="string";
 
@@ -741,155 +1238,30 @@ const genContacts=(c)=>{
   return out;
 };
 
-function FranceMap({companies,onOpen,onProspect,aff}){
-  const [scale,setScale]=useState(1);
-  const [tx,setTx]=useState(0);
-  const [ty,setTy]=useState(0);
-  const [sel,setSel]=useState(null);
-  const svgRef=useRef(null);
-  const drag=useRef(null);
-
-  const pts=useMemo(()=>{
-    const byCity={};companies.forEach((c)=>{if(CITIES[c.loc])(byCity[c.loc]=byCity[c.loc]||[]).push(c);});
-    const arr=[];Object.keys(byCity).forEach((city)=>{const g=byCity[city];const[lat,lng]=CITIES[city];const[bx,by]=project(lat,lng);
-      g.forEach((c,i)=>{let ox=0,oy=0;if(g.length>1){const a=(i/g.length)*2*Math.PI;ox=Math.cos(a)*9;oy=Math.sin(a)*9;}arr.push({c,x:bx+ox,y:by+oy});});});
-    return arr;
-  },[companies]);
-
-  const clusters=useMemo(()=>{
-    const thr=30/scale;const used=new Array(pts.length).fill(false);const out=[];
-    for(let i=0;i<pts.length;i++){if(used[i])continue;const grp=[pts[i]];used[i]=true;
-      for(let j=i+1;j<pts.length;j++){if(used[j])continue;if(Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y)<thr){grp.push(pts[j]);used[j]=true;}}
-      const cx=grp.reduce((s,p)=>s+p.x,0)/grp.length,cy=grp.reduce((s,p)=>s+p.y,0)/grp.length;
-      out.push({x:cx,y:cy,items:grp});}
-    return out;
-  },[pts,scale]);
-
-  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-  const applyZoom=(f,cx,cy)=>{const ns=clamp(scale*f,1,6.5);const k=ns/scale;setTx(cx-(cx-tx)*k);setTy(cy-(cy-ty)*k);setScale(ns);};
-
-  useEffect(()=>{const el=svgRef.current;if(!el)return;
-    const onWheel=(e)=>{e.preventDefault();const r=el.getBoundingClientRect();const mx=(e.clientX-r.left)/r.width*MAPW;const my=(e.clientY-r.top)/r.height*MAPH;applyZoom(e.deltaY<0?1.16:1/1.16,mx,my);};
-    el.addEventListener("wheel",onWheel,{passive:false});return ()=>el.removeEventListener("wheel",onWheel);
-  });
-
-  const moveDrag=(cx,cy)=>{if(!drag.current)return;const el=svgRef.current;const r=el.getBoundingClientRect();
-    setTx(drag.current.tx+(cx-drag.current.x)/r.width*MAPW);setTy(drag.current.ty+(cy-drag.current.y)/r.height*MAPH);};
-  useEffect(()=>{const mm=(e)=>moveDrag(e.clientX,e.clientY);const mu=()=>{drag.current=null;};
-    window.addEventListener("mousemove",mm);window.addEventListener("mouseup",mu);
-    return ()=>{window.removeEventListener("mousemove",mm);window.removeEventListener("mouseup",mu);};});
-
-  const selPt=sel?pts.find((p)=>p.c.id===sel):null;
-  const selC=selPt?selPt.c:null;
-  const leftPct=selPt?((selPt.x*scale+tx)/MAPW)*100:0;
-  const topPct=selPt?((selPt.y*scale+ty)/MAPH)*100:0;
-  const below=topPct<32;
-
-  return(
-    <div className="mapsvg">
-      <svg ref={svgRef} viewBox={`0 0 ${MAPW} ${MAPH}`}
-        onMouseDown={(e)=>{drag.current={x:e.clientX,y:e.clientY,tx,ty};}}
-        onTouchStart={(e)=>{if(e.touches[0])drag.current={x:e.touches[0].clientX,y:e.touches[0].clientY,tx,ty};}}
-        onTouchMove={(e)=>{if(e.touches[0])moveDrag(e.touches[0].clientX,e.touches[0].clientY);}}
-        onTouchEnd={()=>{drag.current=null;}}>
-        <rect x="0" y="0" width={MAPW} height={MAPH} fill="var(--sea)"/>
-        <g transform={`translate(${tx},${ty}) scale(${scale})`}>
-          <path d={FRANCE_PATH} fill="#fff" stroke="#d9d5cb" strokeWidth={1.4/scale} strokeLinejoin="round"/>
-          {clusters.map((cl,idx)=>{
-            if(cl.items.length>1){
-              return(
-                <g key={"cl"+idx} transform={`translate(${cl.x},${cl.y}) scale(${1/scale})`} style={{cursor:"pointer"}}
-                   onMouseDown={(e)=>e.stopPropagation()} onClick={()=>applyZoom(1.9,cl.x*scale+tx,cl.y*scale+ty)}>
-                  <circle r="18" fill="#0F1826" opacity="0.9"/>
-                  <circle r="18" fill="none" stroke="#fff" strokeWidth="2.5"/>
-                  <text textAnchor="middle" dominantBaseline="central" fill="#fff" fontFamily="Inter" fontWeight="700" fontSize="14">{cl.items.length}</text>
-                </g>
-              );
-            }
-            const m=cl.items[0];
-            return(
-              <g key={m.c.id} transform={`translate(${cl.x},${cl.y}) scale(${1/scale})`} style={{cursor:"pointer"}}
-                 onMouseDown={(e)=>e.stopPropagation()} onClick={()=>setSel(m.c.id)}>
-                <circle r="14" fill="transparent"/>
-                <circle r={sel===m.c.id?9:8} fill={m.c.color} stroke="#fff" strokeWidth="2.4"/>
-                {scale>1.9&&(
-                  <g className="maplabel" transform="translate(12,-9)">
-                    <rect width={m.c.name.length*6.4+14} height="19" rx="5"/>
-                    <text x="7" y="13.5" fontSize="11.5" fontWeight="600" fontFamily="Inter">{m.c.name}</text>
-                  </g>
-                )}
-              </g>
-            );
-          })}
-        </g>
-      </svg>
-
-      <div className="mapctrls">
-        <button onClick={()=>applyZoom(1.4,MAPW/2,MAPH/2)} aria-label="Zoom avant">+</button>
-        <button onClick={()=>applyZoom(1/1.4,MAPW/2,MAPH/2)} aria-label="Zoom arrière">−</button>
-        <button onClick={()=>{setScale(1);setTx(0);setTy(0);}} aria-label="Réinitialiser" style={{fontSize:14}}>⤾</button>
-      </div>
-
-      {selC&&(
-        <div className="mapop" style={{left:leftPct+"%",top:topPct+"%",transform:below?"translate(-50%,18px)":"translate(-50%,calc(-100% - 18px))"}}>
-          <button className="opclose" onClick={()=>setSel(null)}><XI/></button>
-          <div className="oph">
-            <div className="logo" style={{background:selC.color,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Bricolage Grotesque",fontWeight:800,color:"#fff"}}>{logoImg(selC)}</div>
-            <div><b>{selC.name}{selC.verified&&<Check className="verif"/>}</b><small>{selC.sector} · {selC.loc}</small></div>
-          </div>
-          <div className="opaff">{aff(selC)}% d'affinité</div>
-          <div className="opact">
-            <button className="btn sm" onClick={()=>{onOpen(selC.id);setSel(null);}}>Voir la fiche</button>
-            {selC.rel==="none"&&<button className="btn-ghost sm" onClick={()=>{onProspect(selC);setSel(null);}}>Démarcher</button>}
-          </div>
-          {!below&&<div className="maparrow"/>}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function VisioRoom({me,company,services,onEnd}){
+function VisioRoom({me,company,services,url,onEnd,lang}){
+  const t=(s)=>(TRANSLATIONS[lang]&&TRANSLATIONS[lang][s])||s;
   const [sec,setSec]=useState(0);
-  const [mic,setMic]=useState(true);
-  const [cam,setCam]=useState(true);
-  const [screen,setScreen]=useState(false);
-  useEffect(()=>{const t=setInterval(()=>setSec((s)=>s+1),1000);return ()=>clearInterval(t);},[]);
+  useEffect(()=>{const id=setInterval(()=>setSec((s)=>s+1),1000);return ()=>clearInterval(id);},[]);
   const mm=String(Math.floor(sec/60)).padStart(2,"0");const ss=String(sec%60).padStart(2,"0");
   const svcs=services||[];
-  const parts=[...svcs.map((s)=>({name:company.name,color:company.color,logo:company.logo,label:s})),{name:me.name,color:me.color,logo:me.logo,label:"Vous",isMe:true}];
-  const cols=parts.length<=1?1:parts.length<=4?2:3;
-  const ic={
-    mic:<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="9" y="3" width="6" height="11" rx="3" stroke="currentColor" strokeWidth="1.8"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
-    micoff:<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M9 9V6a3 3 0 0 1 5.6-1.5M15 12V9M6 11a6 6 0 0 0 9.5 4.9M12 17v4M4 4l16 16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
-    cam:<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="12" height="12" rx="2.5" stroke="currentColor" strokeWidth="1.8"/><path d="M15 10l6-3v10l-6-3" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>,
-    camoff:<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 6h9a2 2 0 0 1 2 2v3m0 3v.5A1.5 1.5 0 0 1 12.5 16H5a2 2 0 0 1-2-2V8M15 10l6-3v10l-4-2M4 4l16 16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-    screen:<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.8"/><path d="M9 20h6M12 16v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
-    hang:<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 14c4-3 12-3 16 0 .6.5 1 .2 1.2-.4l.6-2c.2-.7-.1-1.3-.8-1.7C18 7.5 6 7.5 3 9.9c-.7.4-1 1-.8 1.7l.6 2c.2.6.6.9 1.2.4z" fill="currentColor"/></svg>,
-  };
+  const hang=<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 14c4-3 12-3 16 0 .6.5 1 .2 1.2-.4l.6-2c.2-.7-.1-1.3-.8-1.7C18 7.5 6 7.5 3 9.9c-.7.4-1 1-.8 1.7l.6 2c.2.6.6.9 1.2.4z" fill="currentColor"/></svg>;
   return(
     <div className="visio">
       <div className="vishead">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="12" height="12" rx="2.5" stroke="#e8eaee" strokeWidth="1.8"/><path d="M15 10l6-3v10l-6-3" stroke="#e8eaee" strokeWidth="1.8" strokeLinejoin="round"/></svg>
-        Visio · {svcs.join(", ")} · {me.name} ↔ {company.name}
+        {t("Visio")} · {svcs.map((s)=>t(s)).join(", ")} · {me.name} ↔ {company.name}
         <div className="vistimer"><span className="rec"/>{mm}:{ss}</div>
       </div>
-      <div className="vistiles" style={{gridTemplateColumns:`repeat(${cols},1fr)`}}>
-        {parts.map((p,i)=>(
-          <div key={i} className="vistile" style={{background:`linear-gradient(140deg, ${p.color}, ${p.color}99)`}}>
-            <div className="vav" style={{background:p.color}}>{logoImg(p)}</div>
-            <div className="vname">{p.name} · {p.label}</div>
-            {p.isMe&&!cam&&<div className="voff">Caméra désactivée</div>}
-          </div>
-        ))}
+      <div style={{flex:1,minHeight:0,padding:"0 22px"}}>
+        {url?(
+          <iframe title="Visio" src={url} allow="camera; microphone; fullscreen; display-capture; autoplay" style={{width:"100%",height:"100%",border:0,borderRadius:12}}/>
+        ):(
+          <div style={{color:"#e8eaee",textAlign:"center",paddingTop:60}}>{t("Connexion à la visio…")}</div>
+        )}
       </div>
-      <div className="visctrls">
-        <button className={mic?"":"off"} onClick={()=>setMic(!mic)} aria-label="Micro">{mic?ic.mic:ic.micoff}</button>
-        <button className={cam?"":"off"} onClick={()=>setCam(!cam)} aria-label="Caméra">{cam?ic.cam:ic.camoff}</button>
-        <button className={screen?"off":""} onClick={()=>setScreen(!screen)} aria-label="Partage d'écran">{ic.screen}</button>
-        <button className="hang" onClick={()=>onEnd(sec)} aria-label="Raccrocher">{ic.hang}</button>
+      <div style={{display:"flex",justifyContent:"center",padding:20}}>
+        <button className="hang" onClick={()=>onEnd(sec)} aria-label={t("Raccrocher")} style={{width:62,height:52,borderRadius:26,background:"var(--coral)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center"}}>{hang}</button>
       </div>
-      <div className="vissim">Visio simulée — maquette. Dans la vraie application, la vidéo passerait par un service temps réel (WebRTC, Whereby, Daily…).</div>
     </div>
   );
 }
@@ -901,6 +1273,10 @@ const REPLIES = [
   "Tout à fait aligné avec ce qu'on cherche. On avance ?",
 ];
 export default function Maillon(){
+  const [uiLang,setUiLang]=useState(()=>(typeof window!=="undefined"&&window.localStorage.getItem("maillon_lang"))||"fr");
+  const t=(s)=>(TRANSLATIONS[uiLang]&&TRANSLATIONS[uiLang][s])||s;
+  const toggleGuestLang=()=>{const next=uiLang==="fr"?"en":"fr";setUiLang(next);if(typeof window!=="undefined")window.localStorage.setItem("maillon_lang",next);};
+  const [preAuthView,setPreAuthView]=useState(()=>(typeof window!=="undefined"&&new URLSearchParams(window.location.search).get("invite"))?"auth":"landing");
   const [me,setMe]=useState(null);
   const [session,setSession]=useState(null);
   const [authReady,setAuthReady]=useState(false);
@@ -908,6 +1284,10 @@ export default function Maillon(){
   const [authError,setAuthError]=useState("");
   const [authBusy,setAuthBusy]=useState(false);
   const [obStep,setObStep]=useState(0);
+  const [justOnboarded,setJustOnboarded]=useState(false);
+  const [checkoutJustSucceeded,setCheckoutJustSucceeded]=useState(false);
+  const [pendingBillingSync,setPendingBillingSync]=useState(false);
+  const [checkoutPending,setCheckoutPending]=useState(()=>typeof window!=="undefined"&&new URLSearchParams(window.location.search).get("checkout")==="success");
   const [customService,setCustomService]=useState("");
   const [form,setForm]=useState({name:"",ownerName:"",sector:"",loc:"",emp:EMP[0],color:COLORS[0],radius:50,
     desc:"",seek:"",offer:"",founded:"",ca:CA[0],dispo:DISPO[0],web:"",certifs:"",langues:"",plan:"gratuit",billing:"Mensuelle",logo:null,services:["Direction","Commercial","Marketing & Com","RH","Comptabilité"],receptionPole:"Direction",siret:""});
@@ -923,17 +1303,26 @@ export default function Maillon(){
   const [prospect,setProspect]=useState(null);
   const [prospectsUsed,setProspectsUsed]=useState(0);
   const [limitOpen,setLimitOpen]=useState(false);
+  const [upgradePlan,setUpgradePlan]=useState("essentiel");
+  const [upgradeBilling,setUpgradeBilling]=useState("Mensuelle");
   const [pmsg,setPmsg]=useState("");
   const [openC,setOpenC]=useState(null);
-  const [hoverM,setHoverM]=useState(null);
   const [activeConv,setActiveConv]=useState(5);
   const [activeService,setActiveService]=useState("Direction");
   const [visio,setVisio]=useState(null);
   const [visioSetup,setVisioSetup]=useState(false);
+  const [incomingVisio,setIncomingVisio]=useState(null);
   const [visioSvcs,setVisioSvcs]=useState([]);
   const [team,setTeam]=useState([]);
   const [currentUser,setCurrentUser]=useState(null);
   const [loginEmail,setLoginEmail]=useState("");
+  const [profileName,setProfileName]=useState("");
+  const [profileNameSaving,setProfileNameSaving]=useState(false);
+  const [pwdCurrent,setPwdCurrent]=useState("");
+  const [pwdNew,setPwdNew]=useState("");
+  const [pwdConfirm,setPwdConfirm]=useState("");
+  const [pwdError,setPwdError]=useState("");
+  const [pwdBusy,setPwdBusy]=useState(false);
   const [loginPwd,setLoginPwd]=useState("");
   const [inviteEmail,setInviteEmail]=useState("");
   const [inviteRole,setInviteRole]=useState("");
@@ -1099,6 +1488,7 @@ export default function Maillon(){
     setTeam((teammates||[]).map((p)=>mapProfileRow(p,p.id===sess.user.id?sess.user.email:"")));
     {const loadedAccess={admins:mappedCompany.adminServices||[mappedCompany.receptionPole],grants:mappedCompany.accessGrants||{}};setAccess(loadedAccess);setSavedAccess(loadedAccess);setAccessDirty(false);}
     setNotifEmail(mappedProfile.notifyEmail);
+    setUiLang(mappedProfile.language||"fr");
     refreshMfaFactors();
     setAuthReady(true);
   };
@@ -1169,6 +1559,45 @@ export default function Maillon(){
       setInviteChecked(true);
     });
   },[]);
+  useEffect(()=>{
+    const params=new URLSearchParams(window.location.search);
+    const checkout=params.get("checkout");
+    const billingReturn=params.get("billing");
+    if(!checkout&&!billingReturn)return;
+    window.history.replaceState({},"",window.location.pathname);
+    if(checkout==="success"){toast("✓ Paiement confirmé — activation en cours…");setPendingBillingSync(true);setCheckoutJustSucceeded(true);}
+    else if(checkout==="cancel")toast("Paiement annulé.");
+    else if(billingReturn==="return")setPendingBillingSync(true);
+  },[]);
+  useEffect(()=>{
+    if(!pendingBillingSync||!session||!me)return;
+    setPendingBillingSync(false);
+    const wasCheckout=checkoutJustSucceeded;
+    setCheckoutJustSucceeded(false);
+    fetch("/api/sync-subscription",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({companyId:me.id,accessToken:session.access_token})})
+      .then((r)=>r.json()).then((data)=>{
+        if(!data.planId)return;
+        const plan=PLANS.find((p)=>p.id===data.planId)||PLANS[0];
+        setMe((m)=>m&&({...m,planId:data.planId,plan:plan.name,billing:data.billing,membre:data.planId==="pro"}));
+        if(wasCheckout&&data.planId!=="gratuit"){setJustOnboarded(true);}
+        else toast(`Abonnement à jour : ${plan.name}`);
+      }).catch(()=>{}).finally(()=>setCheckoutPending(false));
+  },[pendingBillingSync,session,me]);
+  useEffect(()=>{
+    if(!checkoutPending)return;
+    const id=setTimeout(()=>setCheckoutPending(false),8000);
+    return ()=>clearTimeout(id);
+  },[checkoutPending]);
+  useEffect(()=>{if(currentUser)setProfileName(currentUser.name);},[currentUser&&currentUser.id]);
+  useEffect(()=>{
+    if(!currentUser||!("serviceWorker" in navigator))return;
+    let active=true;
+    navigator.serviceWorker.getRegistration().then((reg)=>reg&&reg.pushManager.getSubscription()).then((sub)=>{
+      if(active&&sub)setNotifPush(true);
+    }).catch(()=>{});
+    return ()=>{active=false;};
+  },[currentUser&&currentUser.id]);
 
   useEffect(()=>{
     if(!me)return;
@@ -1228,10 +1657,25 @@ export default function Maillon(){
         }));
         toast("💬 Nouveau message reçu");
         notifyByEmail("Nouveau message sur Maillon","Vous avez reçu un nouveau message sur votre messagerie Maillon.");
+        notifyByPush("Nouveau message sur Maillon","Vous avez reçu un nouveau message sur votre messagerie.");
       })
       .subscribe();
     return ()=>{supabase.removeChannel(channel);};
   },[me&&me.id]);
+
+  useEffect(()=>{
+    if(!me)return;
+    const channel=supabase.channel("visio-calls-"+me.id)
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"visio_calls",filter:`to_company_id=eq.${me.id}`},(payload)=>{
+        const row=payload.new;
+        const c=companies.find((x)=>x.id===row.from_company_id);
+        setIncomingVisio({fromName:c?c.name:"Une entreprise",fromCompanyId:row.from_company_id,services:row.services,room:row.room});
+        toast(`🎥 Visio entrante de ${c?c.name:"une entreprise"}`);
+        notifyByPush("Visio entrante",`${c?c.name:"Une entreprise"} vous invite à une visio.`);
+      })
+      .subscribe();
+    return ()=>{supabase.removeChannel(channel);};
+  },[me&&me.id,companies]);
 
   useEffect(()=>{
     if(!me)return;
@@ -1262,11 +1706,13 @@ export default function Maillon(){
           setInternalChat((c)=>[...c,msg]);
           toast("💬 Nouveau message (Général)");
           notifyByEmail("Nouveau message sur Maillon","Vous avez reçu un nouveau message dans le canal Général de votre équipe.");
+          notifyByPush("Nouveau message · Général","Vous avez reçu un nouveau message dans le canal Général.");
         }else{
           setInternalDMs((d)=>({...d,[row.channel]:[...(d[row.channel]||[]),msg]}));
           if(row.channel===dmKey(currentUser.id,row.sender_id)){
             toast("💬 Nouveau message reçu");
             notifyByEmail("Nouveau message sur Maillon","Vous avez reçu un nouveau message privé sur votre chat interne Maillon.");
+            notifyByPush("Nouveau message privé","Vous avez reçu un nouveau message privé sur le chat interne.");
           }
         }
       })
@@ -1346,6 +1792,50 @@ export default function Maillon(){
         if(row.company_id===me.id)return;
         const post={id:row.id,companyId:row.company_id,repostOfCompanyId:row.repost_of_company_id||null,title:row.title,body:row.body||"",tag:row.tag||"Actu",photo:row.photo||null,date:relDate(row.created_at),likes:0,liked:false};
         setPosts((ps)=>[post,...ps]);
+      })
+      .subscribe();
+    return ()=>{supabase.removeChannel(channel);};
+  },[me&&me.id]);
+
+  useEffect(()=>{
+    if(!me)return;
+    let active=true;
+    supabase.from("needs").select("*").order("created_at",{ascending:false}).limit(60).then(async({data})=>{
+      if(!active||!data)return;
+      const ids=data.map((r)=>r.id);
+      const {data:respRows}=ids.length?await supabase.from("need_responses").select("need_id").in("need_id",ids):{data:[]};
+      const countOf={};(respRows||[]).forEach((r)=>{countOf[r.need_id]=(countOf[r.need_id]||0)+1;});
+      if(!active)return;
+      const real=data.map((row)=>({id:row.id,companyId:row.company_id,mine:row.company_id===me.id,title:row.title,sought:row.sought,loc:row.loc,date:relDate(row.created_at),responses:countOf[row.id]||0}));
+      setNeeds((ns)=>{
+        const existing=new Set(ns.map((n)=>n.id));
+        const fresh=real.filter((n)=>!existing.has(n.id));
+        return fresh.length?[...fresh,...ns]:ns;
+      });
+    });
+    return ()=>{active=false;};
+  },[me&&me.id]);
+
+  useEffect(()=>{
+    if(!me)return;
+    const channel=supabase.channel("needs-feed")
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"needs"},(payload)=>{
+        const row=payload.new;
+        if(row.company_id===me.id)return;
+        const n={id:row.id,companyId:row.company_id,mine:false,title:row.title,sought:row.sought,loc:row.loc,date:relDate(row.created_at),responses:0};
+        setNeeds((ns)=>[n,...ns]);
+      })
+      .subscribe();
+    return ()=>{supabase.removeChannel(channel);};
+  },[me&&me.id]);
+
+  useEffect(()=>{
+    if(!me)return;
+    const channel=supabase.channel("need-responses-feed")
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"need_responses"},(payload)=>{
+        const row=payload.new;
+        if(row.company_id===me.id)return;
+        setNeeds((ns)=>ns.map((n)=>n.id===row.need_id?{...n,responses:n.responses+1}:n));
       })
       .subscribe();
     return ()=>{supabase.removeChannel(channel);};
@@ -1443,33 +1933,66 @@ export default function Maillon(){
     setForm((f)=>f.services.includes(v)?f:{...f,services:[...f.services,v]});
     setCustomService("");
   };
+  const manageBilling=async()=>{
+    if(!session||!me)return;
+    const res=await fetch("/api/create-portal-session",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({companyId:me.id,accessToken:session.access_token})});
+    const data=await res.json();
+    if(!res.ok||!data.url){toast("Erreur : "+(data.error||"aucun abonnement à gérer"));return;}
+    window.location.href=data.url;
+  };
+  const startCheckout=async(companyId,planId,billing)=>{
+    if(!session)return;
+    try{
+      const res=await fetch("/api/create-checkout-session",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({companyId,planId,billing,email:session.user.email,accessToken:session.access_token})});
+      const data=await res.json();
+      if(!res.ok||!data.url){toast("Erreur : "+(data.error||"impossible de lancer le paiement"));return;}
+      window.location.href=data.url;
+    }catch(e){
+      toast("Erreur réseau : "+(e&&e.message?e.message:String(e)));
+    }
+  };
   const finishOnboarding=async()=>{
+    if(authBusy)return;
+    toast("Publication en cours…");
     if(!session){toast("Session expirée, reconnectez-vous.");return;}
-    const chosen=PLANS.find((p)=>p.id===form.plan)||PLANS[0];
-    const services=(form.services&&form.services.length)?form.services:["Direction","Commercial"];
-    const receptionPole=services.includes(form.receptionPole)?form.receptionPole:(services.includes("Direction")?"Direction":(services[0]||"Direction"));
-    const splitList=(s)=>s?s.split(",").map((x)=>x.trim()).filter(Boolean):[];
     setAuthBusy(true);
-    const {data:company,error}=await supabase.from("companies").insert({
-      name:form.name||"Mon Entreprise",sector:form.sector||"Non précisé",loc:form.loc||"France",emp:form.emp,
-      founded:form.founded||null,ca:form.ca,dispo:form.dispo,web:form.web||null,siret:form.siret||null,
-      verified_siren:!!form.siret.trim(),color:form.color,logo_url:form.logo||null,
-      description:form.desc||"Présentation à compléter.",seek:splitList(form.seek),offer:splitList(form.offer),
-      certifs:splitList(form.certifs),langues:form.langues?splitList(form.langues):["Français"],
-      services,reception_pole:receptionPole,plan_id:chosen.id,billing:form.billing,
-    }).select().single();
-    if(error){setAuthBusy(false);toast("Erreur : "+error.message);return;}
-    const {data:profile,error:profErr}=await supabase.from("profiles").update({
-      company_id:company.id,full_name:form.ownerName.trim()||form.name,role:receptionPole,status:"active",
-    }).eq("id",session.user.id).select().single();
-    setAuthBusy(false);
-    if(profErr){toast("Erreur : "+profErr.message);return;}
-    setMe(mapCompanyRow(company));
-    setCurrentUser(mapProfileRow(profile,session.user.email));
-    setTeam([mapProfileRow(profile,session.user.email)]);
-    {const initAccess={admins:[receptionPole],grants:{}};setAccess(initAccess);setSavedAccess(initAccess);setAccessDirty(false);}
-    setView("discover");toast("Votre page est en ligne");
-    setProspectsUsed(0);
+    try{
+      const chosen=PLANS.find((p)=>p.id===form.plan)||PLANS[0];
+      const services=(form.services&&form.services.length)?form.services:["Direction","Commercial"];
+      const receptionPole=services.includes(form.receptionPole)?form.receptionPole:(services.includes("Direction")?"Direction":(services[0]||"Direction"));
+      const splitList=(s)=>s?s.split(",").map((x)=>x.trim()).filter(Boolean):[];
+      const {data:company,error}=await supabase.from("companies").insert({
+        name:form.name||"Mon Entreprise",sector:form.sector||"Non précisé",loc:form.loc||"France",emp:form.emp,
+        founded:form.founded||null,ca:form.ca,dispo:form.dispo,web:form.web||null,siret:form.siret||null,
+        verified_siren:!!form.siret.trim(),color:form.color,logo_url:form.logo||null,
+        description:form.desc||"Présentation à compléter.",seek:splitList(form.seek),offer:splitList(form.offer),
+        certifs:splitList(form.certifs),langues:form.langues?splitList(form.langues):["Français"],
+        services,reception_pole:receptionPole,plan_id:"gratuit",billing:null,
+      }).select().single();
+      if(error){toast("Erreur : "+error.message);return;}
+      const {data:profile,error:profErr}=await supabase.from("profiles").update({
+        company_id:company.id,full_name:form.ownerName.trim()||form.name,role:receptionPole,status:"active",
+      }).eq("id",session.user.id).select().single();
+      if(profErr){toast("Erreur : "+profErr.message);return;}
+      if(chosen.id!=="gratuit"){
+        toast("Redirection vers le paiement…");
+        await startCheckout(company.id,chosen.id,form.billing);
+        return;
+      }
+      setMe(mapCompanyRow(company));
+      setCurrentUser(mapProfileRow(profile,session.user.email));
+      setTeam([mapProfileRow(profile,session.user.email)]);
+      {const initAccess={admins:[receptionPole],grants:{}};setAccess(initAccess);setSavedAccess(initAccess);setAccessDirty(false);}
+      setView("discover");
+      setProspectsUsed(0);
+      setJustOnboarded(true);
+    }catch(e){
+      toast("Erreur inattendue : "+(e&&e.message?e.message:String(e)));
+    }finally{
+      setAuthBusy(false);
+    }
   };
   const updateRole=(id,r)=>{
     setTeam((ts)=>ts.map((x)=>x.id===id?{...x,role:r}:x));
@@ -1477,7 +2000,34 @@ export default function Maillon(){
     supabase.from("profiles").update({role:r}).eq("id",id).then(()=>{});
     logEvent(`Rôle modifié → ${r}`);
   };
-  const logout=async()=>{if(currentUser)logEvent(`Déconnexion — ${currentUser.name}`);await supabase.auth.signOut();setLoginEmail("");setLoginPwd("");setView("discover");};
+  const logout=async()=>{if(currentUser)logEvent(`Déconnexion — ${currentUser.name}`);await supabase.auth.signOut();setLoginEmail("");setLoginPwd("");setView("discover");setPreAuthView("landing");};
+  const saveProfileName=async()=>{
+    const v=profileName.trim();
+    if(!v||!currentUser)return;
+    setProfileNameSaving(true);
+    const {error}=await supabase.from("profiles").update({full_name:v}).eq("id",currentUser.id);
+    setProfileNameSaving(false);
+    if(error){toast("Erreur : "+error.message);return;}
+    setCurrentUser((u)=>u&&({...u,name:v}));
+    setTeam((ts)=>ts.map((x)=>x.id===currentUser.id?{...x,name:v}:x));
+    logEvent("Nom du compte modifié");
+    toast("Informations enregistrées");
+  };
+  const changePassword=async()=>{
+    setPwdError("");
+    if(!pwdCurrent||!pwdNew||!pwdConfirm){setPwdError("Renseignez les trois champs.");return;}
+    if(pwdNew.length<8){setPwdError("Le nouveau mot de passe doit faire au moins 8 caractères.");return;}
+    if(pwdNew!==pwdConfirm){setPwdError("Les deux mots de passe ne correspondent pas.");return;}
+    setPwdBusy(true);
+    const {error:checkErr}=await supabase.auth.signInWithPassword({email:session.user.email,password:pwdCurrent});
+    if(checkErr){setPwdBusy(false);setPwdError("Mot de passe actuel incorrect.");return;}
+    const {error}=await supabase.auth.updateUser({password:pwdNew});
+    setPwdBusy(false);
+    if(error){setPwdError(error.message);return;}
+    setPwdCurrent("");setPwdNew("");setPwdConfirm("");
+    logEvent("Mot de passe modifié");
+    toast("Mot de passe modifié");
+  };
   const inviteLink=(token)=>`${window.location.origin}${window.location.pathname}?invite=${token}`;
   const sendInvite=async(email,rl)=>{
     const e=(email||"").trim();if(!e||!/@/.test(e)||!me)return;
@@ -1496,9 +2046,11 @@ export default function Maillon(){
   const planCredits=()=>{const p=PLANS.find((x)=>x.id===(me&&me.planId));return p?p.credits:null;};
   const remaining=()=>{const c=planCredits();return c==null?null:Math.max(0,c-prospectsUsed);};
   const canProspect=()=>{const c=planCredits();return c==null||prospectsUsed<c;};
-  const upgradeTo=(planId,billing)=>{const p=PLANS.find((x)=>x.id===planId);if(!p)return;setMe((m)=>({...m,plan:p.name,planId:p.id,billing:billing||(m&&m.billing)||"Mensuelle",membre:p.id==="pro"}));setLimitOpen(false);setAdhesion(false);toast(`Passage à l'offre ${p.name}`);};
+  const upgradeTo=(planId,billing)=>{setLimitOpen(false);setAdhesion(false);if(me)startCheckout(me.id,planId,billing||"Mensuelle");};
+  const openLimitUpgrade=()=>{setUpgradePlan("essentiel");setUpgradeBilling("Mensuelle");setLimitOpen(true);};
+  const openAdhesionUpgrade=()=>{setUpgradePlan("pro");setUpgradeBilling("Mensuelle");setAdhesion(true);};
 
-  const openProspect=(c)=>{if(!canProspect()){setOpenC(null);setLimitOpen(true);return;}setProspect(c);setOpenC(null);
+  const openProspect=(c)=>{if(!canProspect()){setOpenC(null);openLimitUpgrade();return;}setProspect(c);setOpenC(null);
     setPmsg(`Bonjour ${c.name}, je suis ${(me&&me.name)||"une entreprise"} (${(me&&me.sector)||form.sector}). `+
       `On aimerait explorer une collaboration autour de ${(c.seek&&c.seek[0])||"nos activités"}. Ouvert à en discuter ?`);};
   const sendProspect=()=>{
@@ -1629,12 +2181,52 @@ export default function Maillon(){
     fetch("/api/send-campaign",{method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({subject,text,fromName:"Maillon",recipients:[{email:session.user.email,name:currentUser?currentUser.name:""}]})}).catch(()=>{});
   };
+  const notifyByPush=(title,body)=>{
+    if(!notifPush||!currentUser||!session)return;
+    fetch("/api/send-push",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({profileId:currentUser.id,title,body,accessToken:session.access_token})}).catch(()=>{});
+  };
+  const enablePush=async()=>{
+    if(!currentUser)return;
+    if(!("serviceWorker" in navigator)||!("PushManager" in window)){toast("Votre navigateur ne supporte pas les notifications push.");return;}
+    try{
+      const perm=await Notification.requestPermission();
+      if(perm!=="granted"){toast("Notifications refusées dans le navigateur.");return;}
+      const reg=await navigator.serviceWorker.register("/sw.js");
+      const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY)});
+      const json=sub.toJSON();
+      const {error}=await supabase.from("push_subscriptions").insert({profile_id:currentUser.id,endpoint:json.endpoint,p256dh:json.keys.p256dh,auth:json.keys.auth});
+      if(error&&!error.message.includes("duplicate")){toast("Erreur : "+error.message);return;}
+      setNotifPush(true);
+      toast("Notifications push activées");
+    }catch(e){
+      toast("Erreur d'activation des notifications push");
+    }
+  };
+  const disablePush=async()=>{
+    try{
+      const reg=await navigator.serviceWorker.getRegistration();
+      const sub=reg&&await reg.pushManager.getSubscription();
+      if(sub){await supabase.from("push_subscriptions").delete().eq("endpoint",sub.endpoint);await sub.unsubscribe();}
+    }catch(e){}
+    setNotifPush(false);
+    toast("Notifications push désactivées");
+  };
   const toggleNotifEmail=()=>{
     setNotifEmail((v)=>{
       const next=!v;
       if(currentUser)supabase.from("profiles").update({notify_email:next}).eq("id",currentUser.id).then(()=>{});
       return next;
     });
+  };
+  const setLanguage=(code)=>{
+    if(!currentUser)return;
+    setCurrentUser((u)=>u&&({...u,language:code}));
+    setUiLang(code);
+    if(typeof window!=="undefined")window.localStorage.setItem("maillon_lang",code);
+    supabase.from("profiles").update({language:code}).eq("id",currentUser.id).then(()=>{});
+    logEvent(`Langue modifiée → ${(LANGUAGES.find((l)=>l.code===code)||{}).name||code}`);
+    toast(t("Langue enregistrée"));
   };
 
   const send=()=>{
@@ -1651,15 +2243,36 @@ export default function Maillon(){
   };
 
   const pushCh=(id,svc,obj)=>setCompanies((cs)=>cs.map((x)=>x.id===id?{...x,channels:{...(x.channels||{}),[svc]:[...((x.channels&&x.channels[svc])||[]),obj]}}:x));
-  const startVisio=(c,svcs)=>{const arr=(Array.isArray(svcs)?svcs:[svcs]).filter(Boolean);if(!arr.length)return;setVisio({companyId:c.id,services:arr});setVisioSetup(false);logHist(`Visio démarrée avec ${c.name} · ${arr.join(", ")}`,"visio");};
+  const startVisio=async(c,svcs)=>{
+    const arr=(Array.isArray(svcs)?svcs:[svcs]).filter(Boolean);if(!arr.length)return;
+    setVisioSetup(false);
+    setVisio({companyId:c.id,services:arr,url:null});
+    try{
+      const res=await fetch("/api/create-room",{method:"POST"});
+      const data=await res.json();
+      if(!res.ok||!data.url){toast("Erreur : "+(data.error||"impossible de créer la visio"));setVisio(null);return;}
+      setVisio({companyId:c.id,services:arr,url:data.url});
+      logHist(`Visio démarrée avec ${c.name} · ${arr.join(", ")}`,"visio");
+      if(isRealCompany(c)&&c.connectionId&&me){
+        supabase.from("visio_calls").insert({connection_id:c.connectionId,from_company_id:me.id,to_company_id:c.id,services:arr,room:data.url}).then(()=>{});
+      }
+    }catch(e){
+      toast("Erreur de connexion à la visio");setVisio(null);
+    }
+  };
   const endVisio=(secs)=>{if(visio){const mm=String(Math.floor(secs/60)).padStart(2,"0"),ss=String(secs%60).padStart(2,"0");const cc=companies.find((x)=>x.id===visio.companyId);(visio.services||[]).forEach((svc)=>pushCh(visio.companyId,svc,{from:"sys",text:`Visio terminée · durée ${mm}:${ss}`}));logHist(`Visio terminée avec ${cc?cc.name:""} · durée ${mm}:${ss}`,"visio");}setVisio(null);toast("Visio terminée");};
+  const joinIncomingVisio=()=>{
+    if(!incomingVisio)return;
+    setVisio({companyId:incomingVisio.fromCompanyId,services:incomingVisio.services,url:incomingVisio.room});
+    logHist(`Visio rejointe avec ${incomingVisio.fromName} · ${(incomingVisio.services||[]).join(", ")}`,"visio");
+    setIncomingVisio(null);
+  };
   const scheduleVisio=()=>{if(!schedForm.date||!schedForm.time||!active||!visioSvcs.length)return;const d=schedForm.date,t=schedForm.time;visioSvcs.forEach((svc)=>pushCh(active.id,svc,{from:"sys",kind:"meeting",date:d,time:t,services:visioSvcs}));logHist(`Visio planifiée avec ${active.name} le ${d} à ${t}`,"visio");setVisioSetup(false);setSchedForm({date:"",time:""});setActiveService(visioSvcs[0]);toast("Visio planifiée");};
 
   const clearFilters=()=>{setFSector("");setFRadius(0);setFEmp("");setFVerif(false);setQ("");};
 
   // blog central + adhésion (adhésion simulée dans la maquette)
-  const tryPublish=()=>{if(me.membre)setComposeOpen(true);else setAdhesion(true);};
-  const adhere=(billing)=>{setMe({...me,membre:true,plan:"Pro",planId:"pro",billing});setAdhesion(false);toast("✓ Passage à l'offre Pro");setComposeOpen(true);};
+  const tryPublish=()=>{if(me.membre)setComposeOpen(true);else openAdhesionUpgrade();};
   const relDate=(iso)=>{
     const min=Math.floor((Date.now()-new Date(iso).getTime())/60000);
     if(min<1)return"À l'instant";
@@ -1711,15 +2324,31 @@ export default function Maillon(){
     const myOffer=((me&&me.offer)||[]).join(" ").toLowerCase();
     const myNeed=((me&&me.seek)||[]).join(" ").toLowerCase();
     const theirOffer=(c.offer||[]).join(" ").toLowerCase();
-    if((c.seek||[]).some((k)=>{const w=k.toLowerCase().split(" ")[0];return w.length>2&&myOffer.includes(w);}))return "Cherche ce que vous proposez";
-    if((c.offer||[]).some((k)=>{const w=k.toLowerCase().split(" ")[0];return w.length>2&&myNeed.includes(w);}))return "Propose ce que vous cherchez";
-    if(me&&c.loc===me.loc)return "Dans votre ville";
-    {const d=me?distKm(me.loc,c.loc):null;if(d!=null&&d<=150)return `À ~${d} km de vous`;}
-    return "Forte complémentarité";
+    if((c.seek||[]).some((k)=>{const w=k.toLowerCase().split(" ")[0];return w.length>2&&myOffer.includes(w);}))return t("Cherche ce que vous proposez");
+    if((c.offer||[]).some((k)=>{const w=k.toLowerCase().split(" ")[0];return w.length>2&&myNeed.includes(w);}))return t("Propose ce que vous cherchez");
+    if(me&&c.loc===me.loc)return t("Dans votre ville");
+    {const d=me?distKm(me.loc,c.loc):null;if(d!=null&&d<=150)return `${t("À ~")}${d} ${t("km de vous")}`;}
+    return t("Forte complémentarité");
   };
   const needAuthor=(n)=>n.mine?{name:me.name,color:me.color,sector:me.sector,loc:n.loc,logo:me.logo}:(companies.find((c)=>c.id===n.companyId)||{name:"—",color:"#ccc",sector:"",loc:""});
-  const respondToNeed=(n)=>{const c=companies.find((x)=>x.id===n.companyId);if(!c)return;if(!canProspect()){setLimitOpen(true);return;}setNeeds((ns)=>ns.map((x)=>x.id===n.id?{...x,responses:x.responses+1}:x));setProspect(c);setView("discover");logHist(`Réponse envoyée au besoin de ${c.name}`,"besoin");setPmsg(`Bonjour ${c.name}, en réponse à votre besoin « ${n.title} » : je suis ${me.name} (${me.sector}) et je pense pouvoir vous aider. Ouvert à en discuter ?`);};
-  const publishNeed=()=>{if(!needForm.title.trim())return;const ttl=needForm.title.trim();const n={id:Date.now(),mine:true,companyId:0,title:ttl,sought:needForm.sought,loc:needForm.loc||me.loc,date:"À l'instant",responses:0};setNeeds((ns)=>[n,...ns]);setNeedOpen(false);setNeedForm({title:"",sought:SECTORS[0],loc:""});logHist(`Besoin publié : « ${ttl} »`,"besoin");toast("Besoin publié");};
+  const respondToNeed=(n)=>{
+    const c=companies.find((x)=>x.id===n.companyId);if(!c)return;
+    if(!canProspect()){openLimitUpgrade();return;}
+    setNeeds((ns)=>ns.map((x)=>x.id===n.id?{...x,responses:x.responses+1}:x));
+    setProspect(c);setView("discover");logHist(`Réponse envoyée au besoin de ${c.name}`,"besoin");
+    setPmsg(`Bonjour ${c.name}, en réponse à votre besoin « ${n.title} » : je suis ${me.name} (${me.sector}) et je pense pouvoir vous aider. Ouvert à en discuter ?`);
+    if(typeof n.id==="string"&&me)supabase.from("need_responses").insert({need_id:n.id,company_id:me.id}).then(()=>{});
+  };
+  const publishNeed=()=>{
+    if(!needForm.title.trim()||!me)return;
+    const ttl=needForm.title.trim();const sought=needForm.sought;const loc=needForm.loc||me.loc;
+    const tempId=Date.now();
+    const n={id:tempId,mine:true,companyId:me.id,title:ttl,sought,loc,date:t("À l'instant"),responses:0};
+    setNeeds((ns)=>[n,...ns]);setNeedOpen(false);setNeedForm({title:"",sought:SECTORS[0],loc:""});logHist(`Besoin publié : « ${ttl} »`,"besoin");toast(t("Besoin publié"));
+    supabase.from("needs").insert({company_id:me.id,title:ttl,sought,loc}).select().single().then(({data})=>{
+      if(data)setNeeds((ns)=>ns.map((x)=>x.id===tempId?{...x,id:data.id}:x));
+    });
+  };
 
   const filtered=useMemo(()=>{
     let list=companies.filter((c)=>{
@@ -1734,34 +2363,19 @@ export default function Maillon(){
     return list;
   },[companies,fSector,fRadius,fEmp,fVerif,q,sort,me]);
 
-  // marqueurs carte (regroupés par ville avec léger décalage)
-  const markers=useMemo(()=>{
-    const byCity={};
-    filtered.forEach((c)=>{if(CITIES[c.loc]){(byCity[c.loc]=byCity[c.loc]||[]).push(c);}});
-    const out=[];
-    Object.keys(byCity).forEach((city)=>{
-      const grp=byCity[city];const[lat,lng]=CITIES[city];const[bx,by]=project(lat,lng);
-      grp.forEach((c,i)=>{
-        let ox=0,oy=0;
-        if(grp.length>1){const a=(i/grp.length)*2*Math.PI;ox=Math.cos(a)*12;oy=Math.sin(a)*12;}
-        out.push({c,x:bx+ox,y:by+oy});
-      });
-    });
-    return out;
-  },[filtered]);
 
   const legendSectors=useMemo(()=>[...new Set(filtered.map((c)=>c.sector))],[filtered]);
 
-  const relLabel=(rel)=>({sent:["En attente","var(--amber)"],incoming:["Vous a démarché","var(--blue)"],declined:["Décliné","var(--slate-soft)"]}[rel]);
+  const relLabel=(rel)=>{const m={sent:["En attente","var(--amber)"],incoming:["Vous a démarché","var(--blue)"],declined:["Décliné","var(--slate-soft)"]}[rel];return m&&[t(m[0]),m[1]];};
 
   /* ============ CHARGEMENT ============ */
-  if(!authReady){
+  if(!authReady||checkoutPending){
     return(
       <div className="mln"><style>{CSS}</style>
         <div className="login">
           <div className="loginbox" style={{textAlign:"center"}}>
-            <div className="brand" style={{marginBottom:22,justifyContent:"center"}}><Mark/><b className="disp" style={{fontSize:20}}>Maillon</b></div>
-            <p className="loginsub">Chargement…</p>
+            <div className="brand" style={{marginBottom:22,justifyContent:"center"}}><Mark height={26}/></div>
+            <p className="loginsub">{checkoutPending?t("Activation de votre abonnement…"):t("Chargement…")}</p>
           </div>
         </div>
       </div>
@@ -1774,17 +2388,70 @@ export default function Maillon(){
       <div className="mln"><style>{CSS}</style>
         <div className="login">
           <div className="loginbox">
-            <div className="brand" style={{marginBottom:22}}><Mark/><b className="disp" style={{fontSize:20}}>Maillon</b></div>
-            <h1 className="disp" style={{fontSize:20}}>Vérification en deux étapes</h1>
-            <p className="loginsub">Entrez le code à 6 chiffres généré par votre application d'authentification.</p>
-            <div className="field"><label>Code à 6 chiffres</label>
+            <div className="brand" style={{marginBottom:22}}><Mark height={26}/></div>
+            <h1 className="disp" style={{fontSize:20}}>{t("Vérification en deux étapes")}</h1>
+            <p className="loginsub">{t("Entrez le code à 6 chiffres généré par votre application d'authentification.")}</p>
+            <div className="field"><label>{t("Code à 6 chiffres")}</label>
               <input value={mfaLoginCode} onChange={(e)=>setMfaLoginCode(e.target.value)} placeholder="123456" maxLength={6} onKeyDown={(e)=>e.key==="Enter"&&submitMfaChallenge()}/></div>
             {mfaLoginError&&<p style={{color:"var(--coral)",fontSize:13,margin:"0 0 12px"}}>{mfaLoginError}</p>}
-            <button className="btn block" disabled={mfaLoginBusy||!mfaLoginCode.trim()} onClick={submitMfaChallenge}>{mfaLoginBusy?"Vérification…":"Valider"}</button>
+            <button className="btn block" disabled={mfaLoginBusy||!mfaLoginCode.trim()} onClick={submitMfaChallenge}>{mfaLoginBusy?t("Vérification…"):t("Valider")}</button>
             <div style={{textAlign:"center",marginTop:14}}>
-              <button className="linkbtn" onClick={async()=>{await supabase.auth.signOut();setMfaChallengeNeeded(false);}}>Se déconnecter</button>
+              <button className="linkbtn" onClick={async()=>{await supabase.auth.signOut();setMfaChallengeNeeded(false);}}>{t("Se déconnecter")}</button>
             </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ============ PAGE D'ACCUEIL ============ */
+  if(!session&&preAuthView==="landing"){
+    const goAuth=(mode)=>{setAuthMode(mode);setAuthError("");setPreAuthView("auth");};
+    const FEATS=[
+      {icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>,
+        title:"Double consentement",body:"Vous démarchez, l'entreprise décide. Aucune messagerie ne s'ouvre sans accord des deux côtés."},
+      {icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H8l-4 3V5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>,
+        title:"Messagerie cloisonnée",body:"Chaque service échange avec son homologue chez l'autre entreprise, en toute confidentialité."},
+      {icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2-6.3-4.6-6.3 4.6L8 13.8 2 9.4h7.6z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/></svg>,
+        title:"Carte & score d'affinité",body:"Repérez partout en France les entreprises les plus complémentaires à la vôtre."},
+      {icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><path d="M4 7l8 6 8-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+        title:"Emailing & listes de diffusion",body:"Envoyez des campagnes aux entreprises qui ont accepté de les recevoir, et regroupez-les dans vos propres listes."},
+    ];
+    return(
+      <div className="mln"><style>{CSS}</style>
+        <div className="landing">
+          <div className="landbar">
+            <div className="brand"><Mark height={24}/></div>
+            <div className="actions">
+              <button className="linkbtn" onClick={toggleGuestLang}>{uiLang==="fr"?"EN":"FR"}</button>
+              <button className="btn-ghost sm" onClick={()=>goAuth("signin")}>{t("Se connecter")}</button>
+            </div>
+          </div>
+          <div className="landhero">
+            <div className="eyebrow">{t("Créez votre page entreprise")}</div>
+            <h1>{t("Le réseau des entreprises qui se choisissent.")}</h1>
+            <p className="lead">{t("Repérez les partenaires les plus complémentaires à votre activité, partout en France, et n'échangez qu'avec ceux qui vous ont dit oui.")}</p>
+            <div className="landcta">
+              <button className="btn" onClick={()=>goAuth("signup")}>{t("Créer mon compte")}</button>
+              <button className="btn-ghost" onClick={()=>goAuth("signin")}>{t("Se connecter")}</button>
+            </div>
+            <div className="landsub">{t("Gratuit pour commencer, sans carte bancaire.")}</div>
+          </div>
+          <div className="landfeats">
+            {FEATS.map((f)=>(
+              <div key={f.title} className="featcard">
+                <div className="fi">{f.icon}</div>
+                <h4>{t(f.title)}</h4>
+                <p>{t(f.body)}</p>
+              </div>
+            ))}
+          </div>
+          <div className="landbanner">
+            <h3>{t("Prêt à trouver vos prochains partenaires ?")}</h3>
+            <p>{t("Publiez votre page en quelques minutes et commencez à explorer le réseau.")}</p>
+            <button className="btn" onClick={()=>goAuth("signup")}>{t("Créer mon compte")}</button>
+          </div>
+          <div className="foot">{t("Prototype")} <b>Maillon</b> — {t("maquette cliquable · données fictives")}</div>
         </div>
       </div>
     );
@@ -1801,27 +2468,32 @@ export default function Maillon(){
         :await supabase.auth.signInWithPassword({email:loginEmail.trim(),password:loginPwd});
       setAuthBusy(false);
       if(error){setAuthError(error.message);return;}
-      toast(authMode==="signup"?"Compte créé !":"Connexion réussie");
+      toast(authMode==="signup"?t("Compte créé !"):t("Connexion réussie"));
     };
     return(
       <div className="mln"><style>{CSS}</style>
         <div className="login">
+          <button className="linkbtn" onClick={()=>setPreAuthView("landing")} style={{position:"absolute",top:18,left:18,fontSize:12}}>← {t("Retour")}</button>
+          <button className="linkbtn" onClick={toggleGuestLang} style={{position:"absolute",top:18,right:18,fontSize:12}}>{uiLang==="fr"?"EN":"FR"}</button>
           <div className="loginbox">
-            <div className="brand" style={{marginBottom:22}}><Mark/><b className="disp" style={{fontSize:20}}>Maillon</b></div>
-            <h1 className="disp">{authMode==="signup"?"Créer votre compte":"Connexion"}</h1>
-            <p className="loginsub">{authMode==="signup"?"Créez votre compte, vous publierez ensuite la page de votre entreprise.":"Connectez-vous pour accéder à votre espace."}</p>
-            <div className="field"><label>E-mail</label>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,marginBottom:22}}>
+              <Mark height={30}/>
+              <Tagline size={9.5} dashes={false} text={t("Transformer vos connexions en opportunités.")}/>
+            </div>
+            <h1 className="disp">{authMode==="signup"?t("Créer votre compte"):t("Connexion")}</h1>
+            <p className="loginsub">{authMode==="signup"?t("Créez votre compte, vous publierez ensuite la page de votre entreprise."):t("Connectez-vous pour accéder à votre espace.")}</p>
+            <div className="field"><label>{t("E-mail")}</label>
               <input value={loginEmail} onChange={(e)=>setLoginEmail(e.target.value)} placeholder="prenom.nom@entreprise.fr" onKeyDown={(e)=>e.key==="Enter"&&doAuth()}/></div>
-            <div className="field"><label>Mot de passe</label>
+            <div className="field"><label>{t("Mot de passe")}</label>
               <input type="password" value={loginPwd} onChange={(e)=>setLoginPwd(e.target.value)} placeholder="••••••••" onKeyDown={(e)=>e.key==="Enter"&&doAuth()}/></div>
             {authError&&<p style={{color:"var(--coral)",fontSize:13,margin:"0 0 12px"}}>{authError}</p>}
-            <button className="btn block" disabled={authBusy} onClick={doAuth}>{authBusy?"Un instant…":(authMode==="signup"?"Créer mon compte":"Se connecter")}</button>
+            <button className="btn block" disabled={authBusy} onClick={doAuth}>{authBusy?t("Un instant…"):(authMode==="signup"?t("Créer mon compte"):t("Se connecter"))}</button>
             <div style={{textAlign:"center",marginTop:14}}>
               <button className="linkbtn" onClick={()=>{setAuthMode(authMode==="signup"?"signin":"signup");setAuthError("");}}>
-                {authMode==="signup"?"Vous avez déjà un compte ? Se connecter":"Pas encore de compte ? En créer un"}
+                {authMode==="signup"?t("Vous avez déjà un compte ? Se connecter"):t("Pas encore de compte ? En créer un")}
               </button>
             </div>
-            <p className="simnote">Vos identifiants sont gérés de façon sécurisée par Supabase.</p>
+            <p className="simnote">{t("Vos identifiants sont gérés de façon sécurisée par Supabase.")}</p>
           </div>
         </div>
       </div>
@@ -1833,16 +2505,17 @@ export default function Maillon(){
     return(
       <div className="mln"><style>{CSS}</style>
         <div className="login">
+          <button className="linkbtn" onClick={toggleGuestLang} style={{position:"absolute",top:18,right:18,fontSize:12}}>{uiLang==="fr"?"EN":"FR"}</button>
           <div className="loginbox" style={{textAlign:"center"}}>
-            <div className="brand" style={{marginBottom:22,justifyContent:"center"}}><Mark/><b className="disp" style={{fontSize:20}}>Maillon</b></div>
-            <h1 className="disp" style={{fontSize:20}}>Vous êtes invité(e)</h1>
-            <p className="loginsub">Rejoindre <b>{inviteInfo.company_name}</b> en tant que <b>{inviteInfo.role}</b> ?</p>
-            <div className="field" style={{textAlign:"left"}}><label>Votre prénom et nom</label>
+            <div className="brand" style={{marginBottom:22,justifyContent:"center"}}><Mark height={26}/></div>
+            <h1 className="disp" style={{fontSize:20}}>{t("Vous êtes invité(e)")}</h1>
+            <p className="loginsub">{t("Rejoindre")} <b>{inviteInfo.company_name}</b> {t("en tant que")} <b>{t(inviteInfo.role)}</b> ?</p>
+            <div className="field" style={{textAlign:"left"}}><label>{t("Votre prénom et nom")}</label>
               <input value={joinName} onChange={(e)=>setJoinName(e.target.value)} placeholder="ex : Camille Dubois" onKeyDown={(e)=>e.key==="Enter"&&joinViaInvite()}/></div>
-            <button className="btn block" disabled={authBusy||!joinName.trim()} onClick={joinViaInvite}>{authBusy?"Un instant…":"Rejoindre l'entreprise"}</button>
+            <button className="btn block" disabled={authBusy||!joinName.trim()} onClick={joinViaInvite}>{authBusy?t("Un instant…"):t("Rejoindre l'entreprise")}</button>
             <div style={{textAlign:"center",marginTop:14}}>
               <button className="linkbtn" onClick={()=>{setInviteToken(null);setInviteInfo(null);window.history.replaceState({},"",window.location.pathname);}}>
-                Non, créer ma propre entreprise
+                {t("Non, créer ma propre entreprise")}
               </button>
             </div>
           </div>
@@ -1851,129 +2524,186 @@ export default function Maillon(){
     );
   }
 
+  const renderPlanTable=(plansList,billing,setBilling,plan,setPlan)=>{
+    const shown=plansList.filter((pl)=>!(billing==="SansEngagement"&&pl.id==="gratuit"));
+    return(<>
+      <div className="billtoggle">
+        <div className="slide" style={{transform:billing==="SansEngagement"?"translateX(100%)":"translateX(0%)"}}/>
+        <button className={billing!=="SansEngagement"?"on":""} onClick={()=>setBilling(billing==="SansEngagement"?"Mensuelle":billing)}>{t("Engagement 1 an")}</button>
+        <button className={billing==="SansEngagement"?"on":""} onClick={()=>setBilling("SansEngagement")}>{t("Sans engagement")}</button>
+      </div>
+      {billing!=="SansEngagement"&&(
+        <div style={{display:"flex",gap:8,margin:"-6px 0 16px"}}>
+          <button type="button" className={"fchip"+(billing==="Mensuelle"?" on":"")} onClick={()=>setBilling("Mensuelle")}>{t("Mensuel")}</button>
+          <button type="button" className={"fchip"+(billing==="Annuelle"?" on":"")} onClick={()=>setBilling("Annuelle")}>{t("Comptant (1 an)")}</button>
+        </div>
+      )}
+      <div className="compwrap">
+        <table className="comptable">
+          <thead>
+            <tr className="rowsel">
+              <th></th>
+              {shown.map((pl)=>(
+                <th key={pl.id} className={plan===pl.id?"on":""} onClick={()=>setPlan(pl.id)}>
+                  {pl.best&&<span className="best">{t("Recommandé")}</span>}
+                  <div className="planname">{pl.name}</div>
+                  <div className="radio">{plan===pl.id&&<Check style={{color:"#fff",width:12,height:12}}/>}</div>
+                  {pl.monthly===0?<div className="prc">{t("Gratuit")}</div>:billing==="SansEngagement"?(
+                    <div className="prc">{priceFmt(pl.noCommit)} €<small> / {t("mois")}</small></div>
+                  ):billing==="Annuelle"?(
+                    <>
+                      <div className="prc">{priceFmt(pl.annual)} €<small> / {t("an")}</small></div>
+                      <div className="prcalt">{t("soit")} {priceFmt(pl.annual/12)} € / {t("mois")}</div>
+                    </>
+                  ):(
+                    <div className="prc">{priceFmt(pl.monthly)} €<small> / {t("mois")}</small></div>
+                  )}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {FEATURE_MATRIX.map((row,i)=>(
+              <tr key={i}>
+                <td className="fname">{t(row.label)}</td>
+                {shown.map((pl)=>{const v=row.vals[PLANS.indexOf(pl)];return(
+                  <td key={pl.id} className={plan===pl.id?"on":""}>
+                    {typeof v==="boolean"?(v?<Check style={{color:"var(--emerald)",width:15,height:15}}/>:<XI style={{color:"var(--slate-soft)",width:13,height:13}}/>):(
+                      <span className="compval">{t(v)}</span>
+                    )}
+                  </td>
+                );})}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>);
+  };
+
   /* ============ ONBOARDING ============ */
   if(!me){
-    const hints=["Identité","Activité","Détails","Abonnement"];
+    const hints=[t("Identité"),t("Activité"),t("Détails"),t("Abonnement")];
     return(
       <div className="mln"><style>{CSS}</style>
-        <div className="onb">
-          <div className="brand" style={{marginBottom:24}}><Mark/><b className="disp" style={{fontSize:20}}>Maillon</b></div>
-          <div className="eyebrow">Créez votre page entreprise</div>
-          <h1>Votre entreprise,<br/>reliée aux bonnes.</h1>
-          <p className="lead">Publiez une page complète, démarchez les sociétés qui vous intéressent. Si elles acceptent, vous communiquez directement. Rien sans double accord.</p>
-          <p className="lead" style={{fontWeight:600,color:"var(--emerald)",marginTop:-6}}>Ne soyez plus le maillon faible : devenez un maillon fort de votre écosystème.</p>
+        <div className="onb" style={obStep===3?{maxWidth:900}:undefined}>
+          <button className="linkbtn" onClick={toggleGuestLang} style={{position:"absolute",top:18,right:18,fontSize:12}}>{uiLang==="fr"?"EN":"FR"}</button>
+          <div className="brand" style={{marginBottom:24}}><Mark height={26}/></div>
+          <div className="eyebrow">{t("Créez votre page entreprise")}</div>
+          <h1>{t("Votre entreprise,")}<br/>{t("reliée aux bonnes.")}</h1>
+          <p className="lead">{t("Publiez une page complète, démarchez les sociétés qui vous intéressent. Si elles acceptent, vous communiquez directement. Rien sans double accord.")}</p>
+          <p className="lead" style={{fontWeight:600,color:"var(--emerald)",marginTop:-6}}>{t("Ne soyez plus le maillon faible : devenez un maillon fort de votre écosystème.")}</p>
           <div className="steps">{[0,1,2,3].map((i)=><div key={i} className={"stp"+(obStep>=i?" on":"")}/>)}</div>
-          <div className="stphint">Étape {obStep+1}/4 · {hints[obStep]}</div>
+          <div className="stphint">{t("Étape")} {obStep+1}/4 · {hints[obStep]}</div>
 
           {obStep===0&&(<>
-            <div className="field"><label>Votre prénom et nom</label>
+            <div className="field"><label>{t("Votre prénom et nom")}</label>
               <input value={form.ownerName} onChange={(e)=>setForm({...form,ownerName:e.target.value})} placeholder="ex : Camille Dubois"/></div>
-            <div className="field"><label>Nom de l'entreprise</label>
+            <div className="field"><label>{t("Nom de l'entreprise")}</label>
               <input value={form.name} onChange={(e)=>setForm({...form,name:e.target.value})} placeholder="ex : Studio Kavan"/></div>
             <div className="grid2">
-              <div className="field"><label>Secteur d'activité</label>
-                <input list="sectorlist" value={form.sector} onChange={(e)=>setForm({...form,sector:e.target.value})} placeholder="Écrivez ou choisissez…"/>
+              <div className="field"><label>{t("Secteur d'activité")}</label>
+                <input list="sectorlist" value={form.sector} onChange={(e)=>setForm({...form,sector:e.target.value})} placeholder={t("Écrivez ou choisissez…")}/>
                 <datalist id="sectorlist">{SECTORS.map((s)=><option key={s} value={s}/>)}</datalist>
-                <div className="uphint">Écrivez librement votre secteur, ou choisissez une suggestion.</div></div>
-              <div className="field"><label>Localisation</label>
+                <div className="uphint">{t("Écrivez librement votre secteur, ou choisissez une suggestion.")}</div></div>
+              <div className="field"><label>{t("Localisation")}</label>
                 <input value={form.loc} onChange={(e)=>setForm({...form,loc:e.target.value})} placeholder="Rennes"/></div>
             </div>
-            <div className="field"><label>Effectif</label>
+            <div className="field"><label>{t("Effectif")}</label>
               <select value={form.emp} onChange={(e)=>setForm({...form,emp:e.target.value})}>{EMP.map((s)=><option key={s}>{s}</option>)}</select></div>
-            <div className="field"><label>Logo de l'entreprise</label>
+            <div className="field"><label>{t("Logo de l'entreprise")}</label>
               <div className="logoup">
                 <div className="logoprev" style={{background:form.color}}>{form.logo?<img src={form.logo} alt="logo"/>:(form.name?form.name[0]:"?")}</div>
                 <div>
-                  <label className="uplabel btn-ghost sm">Importer votre logo<input type="file" accept="image/*" onChange={onLogo} style={{display:"none"}}/></label>
-                  <div className="uphint">PNG, JPG ou SVG — carré de préférence.</div>
+                  <label className="uplabel btn-ghost sm">{t("Importer votre logo")}<input type="file" accept="image/*" onChange={onLogo} style={{display:"none"}}/></label>
+                  <div className="uphint">{t("PNG, JPG ou SVG — carré de préférence.")}</div>
                 </div>
               </div></div>
-            <div className="uphint" style={{marginTop:4}}>Tous les champs sont obligatoires.</div>
-            <button className="btn block" style={{marginTop:8}} disabled={!(form.ownerName.trim()&&form.name.trim()&&form.sector.trim()&&form.loc.trim())} onClick={()=>setObStep(1)}>Continuer</button>
+            <div className="uphint" style={{marginTop:4}}>{t("Tous les champs sont obligatoires.")}</div>
+            <button className="btn block" style={{marginTop:8}} disabled={!(form.ownerName.trim()&&form.name.trim()&&form.sector.trim()&&form.loc.trim())} onClick={()=>setObStep(1)}>{t("Continuer")}</button>
           </>)}
 
           {obStep===1&&(<>
-            <div className="field"><label>Présentation</label>
-              <textarea rows={3} value={form.desc} onChange={(e)=>setForm({...form,desc:e.target.value})} placeholder="En une ou deux phrases, ce que fait votre entreprise."/></div>
-            <div className="field"><label>Ce que vous recherchez <span style={{textTransform:"none",letterSpacing:0}}>(virgules)</span></label>
+            <div className="field"><label>{t("Présentation")}</label>
+              <textarea rows={3} value={form.desc} onChange={(e)=>setForm({...form,desc:e.target.value})} placeholder={t("En une ou deux phrases, ce que fait votre entreprise.")}/></div>
+            <div className="field"><label>{t("Ce que vous recherchez")} <span style={{textTransform:"none",letterSpacing:0}}>({t("virgules")})</span></label>
               <input value={form.seek} onChange={(e)=>setForm({...form,seek:e.target.value})} placeholder="partenaires design, apporteurs d'affaires"/></div>
-            <div className="field"><label>Ce que vous proposez</label>
+            <div className="field"><label>{t("Ce que vous proposez")}</label>
               <input value={form.offer} onChange={(e)=>setForm({...form,offer:e.target.value})} placeholder="développement web, conseil"/></div>
             <div style={{display:"flex",gap:10,marginTop:8}}>
-              <button className="btn-ghost" onClick={()=>setObStep(0)}>Retour</button>
-              <button className="btn block" disabled={!(form.desc.trim()&&form.seek.trim()&&form.offer.trim())} onClick={()=>setObStep(2)}>Continuer</button>
+              <button className="btn-ghost" onClick={()=>setObStep(0)}>{t("Retour")}</button>
+              <button className="btn block" disabled={!(form.desc.trim()&&form.seek.trim()&&form.offer.trim())} onClick={()=>setObStep(2)}>{t("Continuer")}</button>
             </div>
           </>)}
 
           {obStep===2&&(<>
             <div className="grid2">
-              <div className="field"><label>Année de création</label>
+              <div className="field"><label>{t("Année de création")}</label>
                 <input value={form.founded} onChange={(e)=>setForm({...form,founded:e.target.value})} placeholder="2018"/></div>
-              <div className="field"><label>Chiffre d'affaires</label>
+              <div className="field"><label>{t("Chiffre d'affaires")}</label>
                 <select value={form.ca} onChange={(e)=>setForm({...form,ca:e.target.value})}>{CA.map((s)=><option key={s}>{s}</option>)}</select></div>
             </div>
-            <div className="field"><label>Certifications / labels <span style={{textTransform:"none",letterSpacing:0,color:"var(--slate-soft)"}}>(optionnel, séparez par des virgules)</span></label>
+            <div className="field"><label>{t("Certifications / labels")} <span style={{textTransform:"none",letterSpacing:0,color:"var(--slate-soft)"}}>({t("optionnel, séparez par des virgules")})</span></label>
               <input value={form.certifs} onChange={(e)=>setForm({...form,certifs:e.target.value})} placeholder="RGPD, ISO 27001"/></div>
-            <div className="field"><label>Site web <span style={{textTransform:"none",letterSpacing:0,color:"var(--slate-soft)"}}>(optionnel)</span></label>
+            <div className="field"><label>{t("Site web")} <span style={{textTransform:"none",letterSpacing:0,color:"var(--slate-soft)"}}>({t("optionnel")})</span></label>
               <input value={form.web} onChange={(e)=>setForm({...form,web:e.target.value})} placeholder="mon-entreprise.fr"/></div>
-            <div className="field"><label>SIRET</label>
+            <div className="field"><label>{t("SIRET")}</label>
               <input value={form.siret} onChange={(e)=>setForm({...form,siret:e.target.value})} placeholder="123 456 789 00012"/>
-              <div className="uphint">Vérification automatique via le répertoire SIREN — affiche un badge « entreprise vérifiée ».</div></div>
-            <div className="field"><label>Vos services / départements</label>
+              <div className="uphint">{t("Vérification automatique via le répertoire SIREN — affiche un badge « entreprise vérifiée ».")}</div></div>
+            <div className="field"><label>{t("Vos services / départements")}</label>
               <div className="svcwrap">{SERVICES.map((s)=>(
                 <button key={s} type="button" className={"svcchip"+(form.services.includes(s)?" on":"")}
-                  onClick={()=>setForm((f)=>({...f,services:f.services.includes(s)?f.services.filter((x)=>x!==s):[...f.services,s]}))}>{s}</button>
+                  onClick={()=>setForm((f)=>({...f,services:f.services.includes(s)?f.services.filter((x)=>x!==s):[...f.services,s]}))}>{t(s)}</button>
               ))}
               {form.services.filter((s)=>!SERVICES.includes(s)).map((s)=>(
                 <button key={s} type="button" className="svcchip on" onClick={()=>setForm((f)=>({...f,services:f.services.filter((x)=>x!==s)}))}>{s} ✕</button>
               ))}</div>
               <div className="invrow" style={{marginTop:8}}>
-                <input value={customService} onChange={(e)=>setCustomService(e.target.value)} placeholder="Autre (précisez)…" onKeyDown={(e)=>{if(e.key==="Enter"){e.preventDefault();addCustomService();}}}/>
-                <button type="button" className="btn-ghost sm" onClick={addCustomService}>Ajouter</button>
+                <input value={customService} onChange={(e)=>setCustomService(e.target.value)} placeholder={t("Autre (précisez)…")} onKeyDown={(e)=>{if(e.key==="Enter"){e.preventDefault();addCustomService();}}}/>
+                <button type="button" className="btn-ghost sm" onClick={addCustomService}>{t("Ajouter")}</button>
               </div>
-              <div className="uphint">Chaque service pourra échanger avec le même service des entreprises connectées.</div></div>
-            <div className="field"><label>Pôle qui reçoit les demandes</label>
-              <select value={form.receptionPole} onChange={(e)=>setForm({...form,receptionPole:e.target.value})}>{(form.services.length?form.services:["Direction"]).map((s)=><option key={s} value={s}>{s}</option>)}</select>
-              <div className="uphint">C'est ce pôle qui recevra les demandes de mise en relation adressées à votre entreprise.</div></div>
+              <div className="uphint">{t("Chaque service pourra échanger avec le même service des entreprises connectées.")}</div></div>
+            <div className="field"><label>{t("Pôle qui reçoit les demandes")}</label>
+              <select value={form.receptionPole} onChange={(e)=>setForm({...form,receptionPole:e.target.value})}>{(form.services.length?form.services:["Direction"]).map((s)=><option key={s} value={s}>{t(s)}</option>)}</select>
+              <div className="uphint">{t("C'est ce pôle qui recevra les demandes de mise en relation adressées à votre entreprise.")}</div></div>
             <div style={{display:"flex",gap:10,marginTop:8}}>
-              <button className="btn-ghost" onClick={()=>setObStep(1)}>Retour</button>
-              <button className="btn block" disabled={!(form.founded.trim()&&form.siret.trim()&&form.services.length>0)} onClick={()=>setObStep(3)}>Continuer</button>
+              <button className="btn-ghost" onClick={()=>setObStep(1)}>{t("Retour")}</button>
+              <button className="btn block" disabled={!(form.founded.trim()&&form.siret.trim()&&form.services.length>0)} onClick={()=>setObStep(3)}>{t("Continuer")}</button>
             </div>
           </>)}
 
           {obStep===3&&(<>
-            <div className="billtoggle">
-              <button className={form.billing==="Mensuelle"?"on":""} onClick={()=>setForm({...form,billing:"Mensuelle"})}>Mensuel</button>
-              <button className={form.billing==="Annuelle"?"on":""} onClick={()=>setForm((f)=>({...f,billing:"Annuelle",plan:f.plan==="gratuit"?"essentiel":f.plan}))}>Annuel <span className="save">2 mois offerts</span></button>
-            </div>
-            {form.billing==="Annuelle"&&<div className="uphint" style={{marginBottom:12}}>L'offre Découverte n'est disponible qu'en mensuel.</div>}
-            {PLANS.filter((pl)=>!(form.billing==="Annuelle"&&pl.id==="gratuit")).map((pl)=>(
-              <div key={pl.id} className={"planpick"+(form.plan===pl.id?" on":"")} onClick={()=>setForm({...form,plan:pl.id})}>
-                <div className="ph">
-                  <div className="pnm">{pl.name}{pl.best&&<span className="best">Recommandé</span>}</div>
-                  <div className="radio">{form.plan===pl.id&&<Check style={{color:"#fff",width:12,height:12}}/>}</div>
-                </div>
-                <div className="prc">{pl.monthly===0?"Gratuit":<>{form.billing==="Annuelle"?pl.annual:pl.monthly} €<small>{form.billing==="Annuelle"?" / an":" / mois"}</small></>}</div>
-                <div className="tg2">{pl.tagline}</div>
-                <ul>{pl.features.map((f,i)=>(
-                  <li key={i} className={f.ok?"":"no"}>{f.ok?<Check style={{color:"var(--emerald)",width:14,height:14}}/>:<XI style={{color:"var(--slate-soft)",width:13,height:13}}/>}{f.t}</li>
-                ))}</ul>
-              </div>
-            ))}
-            <p className="simnote">Tarifs indicatifs · abonnement simulé dans la maquette, aucun paiement réel.</p>
+            {renderPlanTable(PLANS,form.billing,(b)=>setForm({...form,billing:b}),form.plan,(id)=>setForm({...form,plan:id}))}
+            <p className="simnote">{t("Paiement sécurisé via Stripe.")} {t("L'offre")} {PLANS[0].name} {t("est activée immédiatement ; les offres payantes vous redirigent vers une page de paiement.")}</p>
             <div style={{display:"flex",gap:10,marginTop:8}}>
-              <button className="btn-ghost" onClick={()=>setObStep(2)}>Retour</button>
-              <button className="btn block" onClick={finishOnboarding}>Publier ma page</button>
+              <button className="btn-ghost" onClick={()=>setObStep(2)}>{t("Retour")}</button>
+              <button className="btn block" disabled={authBusy} onClick={finishOnboarding}>{authBusy?t("Un instant…"):t("Publier ma page")}</button>
             </div>
           </>)}
 
           <div style={{textAlign:"center",marginTop:18}}>
-            <button className="linkbtn" onClick={()=>{setForm((f)=>({...f,ownerName:f.ownerName||"Camille Dubois",name:"Studio Kavan",sector:"Tech & Dév",loc:"Rennes",emp:"1–10",color:"#0F846B",radius:100,desc:"Studio produit qui conçoit et développe des interfaces sur mesure pour les entreprises.",seek:"partenaires design, apporteurs d'affaires",offer:"développement web, applications métier",founded:"2020",ca:"< 500 k€",web:"studiokavan.fr",certifs:"RGPD",siret:"902 445 178 00021",plan:"pro",billing:"Mensuelle",services:["Direction","Commercial","Technique","RH"],receptionPole:"Commercial"}));setObStep(2);}}>
-              Remplir avec un exemple
+            <button className="linkbtn" onClick={()=>{setForm((f)=>({...f,ownerName:f.ownerName||"Camille Dubois",name:"Studio Kavan",sector:"Tech & Dév",loc:"Rennes",emp:"1–10",color:"#0F846B",radius:100,desc:"Studio produit qui conçoit et développe des interfaces sur mesure pour les entreprises.",seek:"partenaires design, apporteurs d'affaires",offer:"développement web, applications métier",founded:"2020",ca:"< 500 k€",web:"studiokavan.fr",certifs:"RGPD",siret:"902 445 178 00021",plan:"pro",billing:"Mensuelle",services:["Direction","Commercial","Technique","RH"],receptionPole:"Direction"}));setObStep(2);}}>
+              {t("Remplir avec un exemple")}
             </button>
           </div>
         </div>
-        <div className="foot">Prototype <b>Maillon</b> — maquette cliquable · données fictives</div>
+        <div className="foot">{t("Prototype")} <b>Maillon</b> — {t("maquette cliquable · données fictives")}</div>
+      </div>
+    );
+  }
+
+  /* ============ BIENVENUE ============ */
+  if(me&&justOnboarded){
+    return(
+      <div className="mln"><style>{CSS}</style>
+        <div className="login">
+          <div className="loginbox" style={{textAlign:"center"}}>
+            <div className="brand" style={{justifyContent:"center",marginBottom:20}}><Mark height={30}/></div>
+            <h1 className="disp" style={{fontSize:24,margin:"12px 0"}}>{t("Ne soyez plus le maillon faible : devenez un maillon fort de votre écosystème.")}</h1>
+            <p className="loginsub">{t("Votre page est en ligne. Découvrez les entreprises du réseau et commencez à transformer vos connexions en opportunités.")}</p>
+            <button className="btn block" style={{marginTop:8}} onClick={()=>setJustOnboarded(false)}>{t("Découvrir Maillon")}</button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -1998,33 +2728,32 @@ export default function Maillon(){
   const eventsByDate={};roleEvents.forEach((e)=>{(eventsByDate[e.date]=eventsByDate[e.date]||[]).push(e);});
   const detail=openC?companies.find((c)=>c.id===openC):null;
   const dAff=detail?affinity(detail):0;
-  const hovered=hoverM?markers.find((m)=>m.c.id===hoverM):null;
 
   return(
     <div className="mln"><style>{CSS}</style>
       <div className="bar">
-        <div className="brand" onClick={()=>setView("discover")}><Mark/><b>Maillon</b></div>
+        <div className="brand" onClick={()=>setView("discover")}><Mark height={22}/></div>
         <div className="nav">
-          <button className={view==="discover"?"on":""} onClick={()=>setView("discover")}><span className="lbl">Découvrir</span></button>
-          <button className={view==="requests"?"on":""} onClick={()=>setView("requests")}><span className="lbl">Demandes</span>{visIncoming.length>0&&<span className="badge">{visIncoming.length}</span>}</button>
-          <button className={view==="messages"?"on":""} onClick={()=>setView("messages")}><span className="lbl">Messages</span>{connected.length>0&&<span className="badge">{connected.length}</span>}</button>
-          <button className={view==="lists"?"on":""} onClick={()=>setView("lists")}><span className="lbl">Listes</span></button>
-          <button className={view==="emailing"?"on":""} onClick={()=>setView("emailing")}><span className="lbl">Emailing</span></button>
-          <button className={view==="needs"?"on":""} onClick={()=>setView("needs")}><span className="lbl">Besoins</span>{matchingNeeds.length>0&&<span className="badge">{matchingNeeds.length}</span>}</button>
-          <button className={view==="agenda"?"on":""} onClick={()=>setView("agenda")}><span className="lbl">Événements</span>{roleEvents.length>0&&<span className="badge">{roleEvents.length}</span>}</button>
-          <button className={view==="library"?"on":""} onClick={()=>setView("library")}><span className="lbl">Bibliothèque</span></button>
-          <button className={view==="blog"?"on":""} onClick={()=>setView("blog")}><span className="lbl">Actualités</span></button>
+          <button className={view==="discover"?"on":""} onClick={()=>setView("discover")}><span className="lbl">{t("Découvrir")}</span></button>
+          <button className={view==="requests"?"on":""} onClick={()=>setView("requests")}><span className="lbl">{t("Demandes")}</span>{visIncoming.length>0&&<span className="badge">{visIncoming.length}</span>}</button>
+          <button className={view==="messages"?"on":""} onClick={()=>setView("messages")}><span className="lbl">{t("Messages")}</span>{connected.length>0&&<span className="badge">{connected.length}</span>}</button>
+          <button className={view==="lists"?"on":""} onClick={()=>setView("lists")}><span className="lbl">{t("Listes")}</span></button>
+          <button className={view==="emailing"?"on":""} onClick={()=>setView("emailing")}><span className="lbl">{t("Emailing")}</span></button>
+          <button className={view==="needs"?"on":""} onClick={()=>setView("needs")}><span className="lbl">{t("Besoins")}</span>{matchingNeeds.length>0&&<span className="badge">{matchingNeeds.length}</span>}</button>
+          <button className={view==="agenda"?"on":""} onClick={()=>setView("agenda")}><span className="lbl">{t("Événements")}</span>{roleEvents.length>0&&<span className="badge">{roleEvents.length}</span>}</button>
+          <button className={view==="library"?"on":""} onClick={()=>setView("library")}><span className="lbl">{t("Bibliothèque")}</span></button>
+          <button className={view==="blog"?"on":""} onClick={()=>setView("blog")}><span className="lbl">{t("Actualités")}</span></button>
           <button className={"teamnav"+(chatOpen?" on":"")} onClick={()=>{setChatPane("list");setChatOpen(true);}}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 7V5a4 4 0 0 1 8 0v2M3 7h10v6H3z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/></svg>
-            <span className="lbl">Chat</span>
+            <span className="lbl">{t("Chat")}</span>
             {totalChatUnread>0&&<span className="badge">{totalChatUnread}</span>}
           </button>
         </div>
-        <div className="rolepick" title="Votre compte">
+        <div className="rolepick" title={t("Votre compte")}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>
-          <span className="rolename">{role}{isAdmin?" · admin":""}</span>
+          <span className="rolename">{t(role)}{isAdmin?` · ${t("admin")}`:""}</span>
         </div>
-        <button className="gearbtn" title="Se déconnecter" onClick={logout}>
+        <button className="gearbtn" title={t("Se déconnecter")} onClick={logout}>
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M15 17l5-5-5-5M20 12H9M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
         <div className="me" onClick={()=>setView("profile")}>
@@ -2036,19 +2765,19 @@ export default function Maillon(){
       {/* DISCOVER */}
       {view==="discover"&&(
         <div className="wrap"><div className="page">
-          <h2 className="ptitle disp">Découvrir des entreprises</h2>
-          <p className="psub">Filtrez par secteur, rayon d'action et effectif. Basculez en carte pour situer les sociétés en France. Le score d'affinité estime la complémentarité avec {me.name}.</p>
+          <h2 className="ptitle disp">{t("Découvrir des entreprises")}</h2>
+          <p className="psub">{t("Filtrez par secteur, rayon d'action et effectif. Basculez en carte pour situer les sociétés en France. Le score d'affinité estime la complémentarité avec")} {me.name}.</p>
           {me.planId==="gratuit"&&(
             <div className="memban">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2-6.3-4.6-6.3 4.6L8 13.8 2 9.4h7.6z" stroke="#7a5305" strokeWidth="1.3" strokeLinejoin="round"/></svg>
-              <span>Offre <b>Découverte</b> — {remaining()>0?`${remaining()} démarchage${remaining()>1?"s":""} restant${remaining()>1?"s":""} sur 5`:"vos 5 démarchages sont épuisés"}.</span>
-              <button className="btn" onClick={()=>setLimitOpen(true)}>Passer au payant</button>
+              <span>{t("Offre")} <b>{PLANS[0].name}</b> — {remaining()>0?`${remaining()} ${t(remaining()>1?"démarchages restants sur 5":"démarchage restant sur 5")}`:t("vos 5 démarchages sont épuisés")}.</span>
+              <button className="btn" onClick={openLimitUpgrade}>{t("Passer au payant")}</button>
             </div>
           )}
 
           {recos.length>0&&(
             <div className="recowrap">
-              <div className="recohead"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.4 7.4H22l-6 4.4 2.3 7.2L12 17.6 5.7 22 8 14.8 2 10.4h7.6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>Recommandé pour vous</div>
+              <div className="recohead"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.4 7.4H22l-6 4.4 2.3 7.2L12 17.6 5.7 22 8 14.8 2 10.4h7.6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>{t("Recommandé pour vous")}</div>
               <div className="recorow">
                 {recos.map((c)=>(
                   <div key={c.id} className="recocard">
@@ -2057,7 +2786,7 @@ export default function Maillon(){
                       <div style={{minWidth:0}}><div className="rname" onClick={()=>setOpenC(c.id)} style={{cursor:"pointer"}}>{c.name}</div><div className="reason">{recoReason(c)}</div></div>
                       <div className="raff">{c._aff}%</div>
                     </div>
-                    <button className="btn sm" onClick={()=>openProspect(c)}>Démarcher</button>
+                    <button className="btn sm" onClick={()=>openProspect(c)}>{t("Démarcher")}</button>
                   </div>
                 ))}
               </div>
@@ -2067,42 +2796,42 @@ export default function Maillon(){
           <div className="toolbar">
             <div className="search">
               <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6" stroke="var(--slate)" strokeWidth="1.8"/><path d="M14 14l4 4" stroke="var(--slate)" strokeWidth="1.8" strokeLinecap="round"/></svg>
-              <input placeholder="Rechercher une entreprise, un métier, un service…" value={q} onChange={(e)=>setQ(e.target.value)}/>
+              <input placeholder={t("Rechercher une entreprise, un métier, un service…")} value={q} onChange={(e)=>setQ(e.target.value)}/>
             </div>
             <div className="maptoggle">
-              <button className={mode==="list"?"on":""} onClick={()=>setMode("list")}>Liste</button>
+              <button className={mode==="list"?"on":""} onClick={()=>setMode("list")}>{t("Liste")}</button>
               <button className={mode==="map"?"on":""} onClick={()=>setMode("map")}>
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1.5c-2.5 0-4.5 2-4.5 4.5C3.5 9.5 8 14.5 8 14.5s4.5-5 4.5-8.5C12.5 3.5 10.5 1.5 8 1.5z" stroke="currentColor" strokeWidth="1.4"/><circle cx="8" cy="6" r="1.6" fill="currentColor"/></svg>
-                Carte
+                {t("Carte")}
               </button>
             </div>
           </div>
 
           <div className="advbar">
-            <div className="grp"><label>Secteur d'activité</label>
-              <select value={fSector} onChange={(e)=>setFSector(e.target.value)}><option value="">Tous les secteurs</option>{SECTORS.map((s)=><option key={s}>{s}</option>)}</select></div>
-            <div className="grp"><label>Rayon autour de vous</label>
-              <select value={fRadius} onChange={(e)=>setFRadius(Number(e.target.value))}><option value={0}>Toute la France</option>{[50,100,150,200,300].map((r)=><option key={r} value={r}>{r} km</option>)}</select></div>
-            <div className="grp"><label>Effectif</label>
-              <select value={fEmp} onChange={(e)=>setFEmp(e.target.value)}><option value="">Tous</option>{EMP.map((r)=><option key={r}>{r}</option>)}</select></div>
-            <div className="grp"><label>Trier par</label>
+            <div className="grp"><label>{t("Secteur d'activité")}</label>
+              <select value={fSector} onChange={(e)=>setFSector(e.target.value)}><option value="">{t("Tous les secteurs")}</option>{SECTORS.map((s)=><option key={s}>{s}</option>)}</select></div>
+            <div className="grp"><label>{t("Rayon autour de vous")}</label>
+              <select value={fRadius} onChange={(e)=>setFRadius(Number(e.target.value))}><option value={0}>{t("Toute la France")}</option>{[50,100,150,200,300].map((r)=><option key={r} value={r}>{r} km</option>)}</select></div>
+            <div className="grp"><label>{t("Effectif")}</label>
+              <select value={fEmp} onChange={(e)=>setFEmp(e.target.value)}><option value="">{t("Tous")}</option>{EMP.map((r)=><option key={r}>{r}</option>)}</select></div>
+            <div className="grp"><label>{t("Trier par")}</label>
               <select value={sort} onChange={(e)=>setSort(e.target.value)}>
-                <option value="aff">Affinité</option><option value="rating">Note</option><option value="recent">Plus récentes</option><option value="name">Nom A–Z</option></select></div>
-            <label className="toggle"><input type="checkbox" checked={fVerif} onChange={()=>setFVerif(!fVerif)}/>Vérifiées</label>
-            <button className="clear" onClick={clearFilters}>Réinitialiser</button>
+                <option value="aff">{t("Affinité")}</option><option value="rating">{t("Note")}</option><option value="recent">{t("Plus récentes")}</option><option value="name">{t("Nom A–Z")}</option></select></div>
+            <label className="toggle"><input type="checkbox" checked={fVerif} onChange={()=>setFVerif(!fVerif)}/>{t("Vérifiées")}</label>
+            <button className="clear" onClick={clearFilters}>{t("Réinitialiser")}</button>
           </div>
 
-          <div className="rescount">{filtered.length} entreprise{filtered.length>1?"s":""}{fSector?` · ${fSector}`:""}{fRadius>0?` · ${fRadius} km`:""}</div>
+          <div className="rescount">{filtered.length} {filtered.length>1?t("entreprises"):t("entreprise")}{fSector?` · ${fSector}`:""}{fRadius>0?` · ${fRadius} km`:""}</div>
 
           {mode==="map"?(
             <div className="mapbox">
-              <FranceMap companies={filtered} onOpen={(id)=>setOpenC(id)} onProspect={openProspect} aff={affinity}/>
+              <div className="mapview"><RealFranceMap companies={filtered} onOpen={(id)=>setOpenC(id)} onProspect={openProspect} aff={affinity}/></div>
               <div className="maplegend">
-                <h5>Secteurs affichés</h5>
+                <h5>{t("Secteurs affichés")}</h5>
                 {legendSectors.map((s)=>(
                   <div key={s} className="legitem"><span className="legdot" style={{background:SECTOR_COLORS[s]}}/>{s}</div>
                 ))}
-                <div className="maphint">Glissez pour vous déplacer, molette ou +/− pour zoomer. Les points proches se regroupent ; cliquez un point pour la fiche, un groupe pour zoomer.</div>
+                <div className="maphint">{t("Glissez pour vous déplacer, molette pour zoomer. Cliquez un point pour voir la fiche de l'entreprise.")}</div>
               </div>
             </div>
           ):(
@@ -2116,30 +2845,30 @@ export default function Maillon(){
                         <div className="cname" onClick={()=>setOpenC(c.id)}>{c.name}{c.verified&&<Check className="verif"/>}</div>
                         <div className="csector">{c.sector} · {c.loc} · {c.size}</div>
                       </div>
-                      <div className="aff"><div className="n">{c._aff}%</div><div className="l">affinité</div></div>
+                      <div className="aff"><div className="n">{c._aff}%</div><div className="l">{t("affinité")}</div></div>
                     </div>
                     <div className="ctag">{c.tag}</div>
-                    <div className="metaline"><span>★ {c.rating}</span><span>Créée {c.founded}</span><span>{c.dispo}</span></div>
+                    <div className="metaline"><span>★ {c.rating}</span><span>{t("Créée")} {c.founded}</span><span>{c.dispo}</span></div>
                     <div className="seek">
                       {c.seek.slice(0,2).map((s)=><span key={s} className="pill seek">↳ {s}</span>)}
                       {c.certifs.slice(0,1).map((s)=><span key={s} className="pill cert">{s}</span>)}
                     </div>
                     <div className="cfoot">
                       {c.rel==="none"?(
-                        <><button className="btn sm" onClick={()=>openProspect(c)}>Démarcher</button>
-                          <button className="btn-ghost sm" onClick={()=>setOpenC(c.id)}>Voir la fiche</button></>
+                        <><button className="btn sm" onClick={()=>openProspect(c)}>{t("Démarcher")}</button>
+                          <button className="btn-ghost sm" onClick={()=>setOpenC(c.id)}>{t("Voir la fiche")}</button></>
                       ):c.rel==="sent"?(
-                        <span className="status"><span className="dot" style={{background:"var(--amber)"}}/>Demande envoyée</span>
+                        <span className="status"><span className="dot" style={{background:"var(--amber)"}}/>{t("Demande envoyée")}</span>
                       ):c.rel==="connected"?(
-                        <button className="btn-ghost sm" onClick={()=>{setActiveConv(c.id);setView("messages");}}>Ouvrir la discussion</button>
+                        <button className="btn-ghost sm" onClick={()=>{setActiveConv(c.id);setView("messages");}}>{t("Ouvrir la discussion")}</button>
                       ):c.rel==="incoming"?(
-                        <button className="btn sm" onClick={()=>setView("requests")}>Répondre à sa demande</button>
-                      ):(<span className="status" style={{color:"var(--slate-soft)"}}>Décliné</span>)}
+                        <button className="btn sm" onClick={()=>setView("requests")}>{t("Répondre à sa demande")}</button>
+                      ):(<span className="status" style={{color:"var(--slate-soft)"}}>{t("Décliné")}</span>)}
                       {rl&&<span className="status" style={{marginLeft:"auto",color:rl[1]}}>{rl[0]}</span>}
                     </div>
                   </div>);})}
               </div>
-              {filtered.length===0&&<div className="empty"><h3>Aucune entreprise sur ces critères</h3><p>Élargissez les filtres ou réinitialisez.</p></div>}
+              {filtered.length===0&&<div className="empty"><h3>{t("Aucune entreprise sur ces critères")}</h3><p>{t("Élargissez les filtres ou réinitialisez.")}</p></div>}
             </>
           )}
         </div></div>
@@ -2148,50 +2877,50 @@ export default function Maillon(){
       {/* REQUESTS */}
       {view==="requests"&&(
         <div className="wrap"><div className="page">
-          <h2 className="ptitle disp">Demandes de mise en relation</h2>
-          <p className="psub">Vous décidez. Accepter ouvre la messagerie ; décliner clôt la demande.</p>
-          <div className="seclabel">Reçues · à traiter {visIncoming.length>0&&<span className="badge">{visIncoming.length}</span>}</div>
-          {visIncoming.length===0?(<p style={{color:"var(--slate)",fontSize:14}}>Aucune demande en attente{!isAdmin?` pour le service ${role}`:""}.</p>
+          <h2 className="ptitle disp">{t("Demandes de mise en relation")}</h2>
+          <p className="psub">{t("Vous décidez. Accepter ouvre la messagerie ; décliner clôt la demande.")}</p>
+          <div className="seclabel">{t("Reçues · à traiter")} {visIncoming.length>0&&<span className="badge">{visIncoming.length}</span>}</div>
+          {visIncoming.length===0?(<p style={{color:"var(--slate)",fontSize:14}}>{t("Aucune demande en attente")}{!isAdmin?` ${t("pour le service")} ${t(role)}`:""}.</p>
           ):visIncoming.map((c)=>(
             <div key={c.id} className="reqcard">
               <div className="reqhead">
                 <div className="logo" style={{background:c.color}}>{logoImg(c)}</div>
                 <div style={{flex:1}}>
                   <div className="cname" onClick={()=>setOpenC(c.id)}>{c.name}{c.verified&&<Check className="verif"/>}</div>
-                  <div className="csector">{c.sector} · {c.loc} · reçue par votre pôle <b>{me.receptionPole}</b></div>
+                  <div className="csector">{c.sector} · {c.loc} · {t("reçue par votre pôle")} <b>{t(me.receptionPole)}</b></div>
                 </div>
               </div>
-              <div className="reqmsg"><span className="q">Son message</span>{c.reqMsg}</div>
+              <div className="reqmsg"><span className="q">{t("Son message")}</span>{c.reqMsg}</div>
               <label className="consentrow">
                 <input type="checkbox" checked={!!emailOptIn[c.id]} onChange={(e)=>setEmailOptIn((m)=>({...m,[c.id]:e.target.checked}))}/>
-                J'accepte de recevoir les campagnes d'emailing de {c.name}
+                {t("J'accepte de recevoir les campagnes d'emailing de")} {c.name}
               </label>
               {emailOptIn[c.id]&&(()=>{const emails=emailAddrByCompany[c.id]&&emailAddrByCompany[c.id].length?emailAddrByCompany[c.id]:[""];return(
                 <div className="field" style={{margin:"0 0 14px 26px"}}>
-                  <label>Adresse(s) email de réception</label>
+                  <label>{t("Adresse(s) email de réception")}</label>
                   {emails.map((val,i)=>(
                     <div key={i} style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
                       <input type="email" value={val} onChange={(e)=>{const next=[...emails];next[i]=e.target.value;setEmailAddrByCompany((m)=>({...m,[c.id]:next}));}} placeholder="contact@votre-entreprise.fr"/>
-                      {emails.length>1&&<span className="rm" style={{color:"var(--coral)",cursor:"pointer",fontSize:12,fontWeight:600,flex:"0 0 auto"}} onClick={()=>{const next=emails.filter((_,x)=>x!==i);setEmailAddrByCompany((m)=>({...m,[c.id]:next}));}}>Retirer</span>}
+                      {emails.length>1&&<span className="rm" style={{color:"var(--coral)",cursor:"pointer",fontSize:12,fontWeight:600,flex:"0 0 auto"}} onClick={()=>{const next=emails.filter((_,x)=>x!==i);setEmailAddrByCompany((m)=>({...m,[c.id]:next}));}}>{t("Retirer")}</span>}
                     </div>
                   ))}
-                  <span className="rm" style={{color:"var(--emerald)",cursor:"pointer",fontSize:12.5,fontWeight:600}} onClick={()=>setEmailAddrByCompany((m)=>({...m,[c.id]:[...emails,""]}))}>+ Ajouter un autre email</span>
+                  <span className="rm" style={{color:"var(--emerald)",cursor:"pointer",fontSize:12.5,fontWeight:600}} onClick={()=>setEmailAddrByCompany((m)=>({...m,[c.id]:[...emails,""]}))}>+ {t("Ajouter un autre email")}</span>
                 </div>
               );})()}
               <div className="reqact">
-                <button className="btn sm" disabled={!!emailOptIn[c.id]&&!(emailAddrByCompany[c.id]||[]).some((e)=>e.trim())} onClick={()=>accept(c,emailOptIn[c.id],emailAddrByCompany[c.id])}><span style={{display:"inline-flex",alignItems:"center",gap:6}}><Check/>Accepter</span></button>
-                <button className="btn-danger" onClick={()=>decline(c)}><span style={{display:"inline-flex",alignItems:"center",gap:6}}><XI/>Décliner</span></button>
+                <button className="btn sm" disabled={!!emailOptIn[c.id]&&!(emailAddrByCompany[c.id]||[]).some((e)=>e.trim())} onClick={()=>accept(c,emailOptIn[c.id],emailAddrByCompany[c.id])}><span style={{display:"inline-flex",alignItems:"center",gap:6}}><Check/>{t("Accepter")}</span></button>
+                <button className="btn-danger" onClick={()=>decline(c)}><span style={{display:"inline-flex",alignItems:"center",gap:6}}><XI/>{t("Décliner")}</span></button>
               </div>
             </div>
           ))}
-          <div className="seclabel">Envoyées · en attente</div>
-          {sent.length===0?(<p style={{color:"var(--slate)",fontSize:14}}>Aucune demande envoyée en attente. Allez dans « Découvrir » pour démarcher une entreprise.</p>
+          <div className="seclabel">{t("Envoyées · en attente")}</div>
+          {sent.length===0?(<p style={{color:"var(--slate)",fontSize:14}}>{t("Aucune demande envoyée en attente. Allez dans « Découvrir » pour démarcher une entreprise.")}</p>
           ):sent.map((c)=>(
             <div key={c.id} className="reqcard">
               <div className="reqhead">
                 <div className="logo" style={{background:c.color}}>{c.name[0]}</div>
-                <div style={{flex:1}}><div className="cname" style={{cursor:"default"}}>{c.name}</div><div className="csector">{c.sector} · {c.loc}{c.sentTo?` · service ${c.sentTo}`:""}</div></div>
-                <span className="status" style={{color:"var(--amber)"}}><span className="dot" style={{background:"var(--amber)"}}/>En attente de réponse</span>
+                <div style={{flex:1}}><div className="cname" style={{cursor:"default"}}>{c.name}</div><div className="csector">{c.sector} · {c.loc}{c.sentTo?` · ${t("service")} ${t(c.sentTo)}`:""}</div></div>
+                <span className="status" style={{color:"var(--amber)"}}><span className="dot" style={{background:"var(--amber)"}}/>{t("En attente de réponse")}</span>
               </div>
             </div>
           ))}
@@ -2201,17 +2930,17 @@ export default function Maillon(){
       {/* MESSAGES */}
       {view==="messages"&&(
         <div className="wrap"><div className="page">
-          <h2 className="ptitle disp">Messages</h2>
-          <p className="psub">Vous échangez uniquement avec les entreprises connectées — et service par service : chaque département discute avec son homologue de l'autre entreprise.</p>
+          <h2 className="ptitle disp">{t("Messages")}</h2>
+          <p className="psub">{t("Vous échangez uniquement avec les entreprises connectées — et service par service : chaque département discute avec son homologue de l'autre entreprise.")}</p>
           {isAdmin?(
-            <div className="rolebar admin">Accès administrateur (<b>{role}</b>) — vous voyez la messagerie de tous les services.</div>
+            <div className="rolebar admin">{t("Accès administrateur")} (<b>{t(role)}</b>) — {t("vous voyez la messagerie de tous les services.")}</div>
           ):(
-            <div className="rolebar">En tant que <b>{role}</b>, vous voyez : {[role,...(access.grants[role]||[])].join(", ")}. Les autres services restent cloisonnés.</div>
+            <div className="rolebar">{t("En tant que")} <b>{t(role)}</b>, {t("vous voyez")} : {[role,...(access.grants[role]||[])].map((s)=>t(s)).join(", ")}. {t("Les autres services restent cloisonnés.")}</div>
           )}
           {connected.length===0?(
             <div className="empty">
               <svg width="46" height="46" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H8l-4 3V5z" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinejoin="round"/></svg>
-              <h3>Aucune conversation</h3><p>Acceptez une demande ou démarchez une entreprise pour débloquer la messagerie.</p>
+              <h3>{t("Aucune conversation")}</h3><p>{t("Acceptez une demande ou démarchez une entreprise pour débloquer la messagerie.")}</p>
             </div>
           ):(
             <>
@@ -2219,16 +2948,16 @@ export default function Maillon(){
               <div className="agenda">
                 <div className="agtitle">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.8"/><path d="M3 9h18M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
-                  Visios à venir · par service
+                  {t("Visios à venir · par service")}
                 </div>
                 {Object.keys(agendaByService).filter((svc)=>canSee(role,svc)).map((svc)=>(
                   <div key={svc} className="aggroup">
-                    <div className="agsvc">{svc}</div>
+                    <div className="agsvc">{t(svc)}</div>
                     {agendaByService[svc].map((it,i)=>(
                       <div key={i} className="agitem">
                         <div className="aglogo" style={{background:it.c.color}}>{logoImg(it.c)}</div>
-                        <div className="aginfo"><b>{it.c.name}</b><small>{it.date} à {it.time}</small></div>
-                        <button className="btn sm" onClick={()=>{setActiveConv(it.c.id);setActiveService(it.svc);startVisio(it.c,[it.svc]);}}>Rejoindre</button>
+                        <div className="aginfo"><b>{it.c.name}</b><small>{it.date} {t("à")} {it.time}</small></div>
+                        <button className="btn sm" onClick={()=>{setActiveConv(it.c.id);setActiveService(it.svc);startVisio(it.c,[it.svc]);}}>{t("Rejoindre")}</button>
                       </div>
                     ))}
                   </div>
@@ -2240,7 +2969,7 @@ export default function Maillon(){
                 {connected.map((c)=>(
                   <div key={c.id} className={"conv"+(active&&active.id===c.id?" on":"")} onClick={()=>{setActiveConv(c.id);setActiveService(commonServices(c)[0]||"Direction");}}>
                     <div className="logo" style={{background:c.color}}>{logoImg(c)}</div>
-                    <div style={{minWidth:0}}><b>{c.name}</b><small>{lastText(c)||`${commonServices(c).length} services en commun`}</small></div>
+                    <div style={{minWidth:0}}><b>{c.name}</b><small>{lastText(c)||`${commonServices(c).length} ${t("services en commun")}`}</small></div>
                   </div>
                 ))}
               </div>
@@ -2248,51 +2977,51 @@ export default function Maillon(){
                 <div className="chat">
                   <div className="chathead">
                     <div className="logo" style={{background:active.color}}>{logoImg(active)}</div>
-                    <div><b style={{fontSize:15}}>{active.name}</b><div className="chansub">{mServices.length} service{mServices.length>1?"s":""} en commun — choisissez un canal</div></div>
+                    <div><b style={{fontSize:15}}>{active.name}</b><div className="chansub">{mServices.length} {mServices.length>1?t("services en commun"):t("service en commun")} — {t("choisissez un canal")}</div></div>
                     <button className="btn-ghost sm" style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:6}} onClick={()=>{const d=mSvc||commonServices(active)[0]||(active.services&&active.services[0])||"Direction";setVisioSvcs([d]);setVisioSetup(true);}}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="12" height="12" rx="2.5" stroke="currentColor" strokeWidth="1.9"/><path d="M15 10l6-3v10l-6-3" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round"/></svg>Visio</button>
-                    {mSvc&&<button className="btn-ghost sm" onClick={()=>{setCollab("quote");setCollabForm({subject:"",budget:"",name:""});}}>Devis</button>}
-                    {mSvc&&<button className="btn-ghost sm" onClick={()=>{setCollab("doc");setCollabForm({subject:"",budget:"",name:""});}}>Document</button>}
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="12" height="12" rx="2.5" stroke="currentColor" strokeWidth="1.9"/><path d="M15 10l6-3v10l-6-3" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round"/></svg>{t("Visio")}</button>
+                    {mSvc&&<button className="btn-ghost sm" onClick={()=>{setCollab("quote");setCollabForm({subject:"",budget:"",name:""});}}>{t("Devis")}</button>}
+                    {mSvc&&<button className="btn-ghost sm" onClick={()=>{setCollab("doc");setCollabForm({subject:"",budget:"",name:""});}}>{t("Document")}</button>}
                   </div>
                   {mServices.length>0?(
                     <>
                       <div className="chantabs">
-                        {mServices.map((s)=><button key={s} className={"chantab"+(s===mSvc?" on":"")} onClick={()=>setActiveService(s)}>{s}</button>)}
+                        {mServices.map((s)=><button key={s} className={"chantab"+(s===mSvc?" on":"")} onClick={()=>setActiveService(s)}>{t(s)}</button>)}
                       </div>
                       <div className="stream" ref={streamRef}>
-                        <div className="bub sys">Canal {mSvc} · votre {mSvc} ↔ {mSvc} de {active.name}</div>
+                        <div className="bub sys">{t("Canal")} {t(mSvc)} · {t("votre")} {t(mSvc)} ↔ {t(mSvc)} {t("de")} {active.name}</div>
                         {mStream.map((m,i)=>{
                           if(m.kind==="meeting")return(
                           <div key={i} className="meetcard">
                             <div className="meetico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="12" height="12" rx="2.5" stroke="currentColor" strokeWidth="1.9"/><path d="M15 10l6-3v10l-6-3" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round"/></svg></div>
-                            <div><b>Visio planifiée</b><small>{m.date} à {m.time} · {(m.services||[mSvc]).join(", ")}</small></div>
-                            <button className="btn sm" onClick={()=>startVisio(active,m.services||[mSvc])}>Rejoindre</button>
+                            <div><b>{t("Visio planifiée")}</b><small>{m.date} {t("à")} {m.time} · {(m.services||[mSvc]).map((s)=>t(s)).join(", ")}</small></div>
+                            <button className="btn sm" onClick={()=>startVisio(active,m.services||[mSvc])}>{t("Rejoindre")}</button>
                           </div>);
                           if(m.kind==="quote")return(
                           <div key={i} className="meetcard">
                             <div className="meetico" style={{background:"var(--amber-wash)",color:"var(--amber)",fontWeight:800,fontFamily:"Bricolage Grotesque"}}>€</div>
-                            <div><b>Demande de devis</b><small>{m.subject}{m.budget?` · budget ${m.budget}`:""}</small></div>
-                            <span className="postself">{m.from==="me"?"Envoyée":"Reçue"}</span>
+                            <div><b>{t("Demande de devis")}</b><small>{m.subject}{m.budget?` · ${t("budget")} ${m.budget}`:""}</small></div>
+                            <span className="postself">{m.from==="me"?t("Envoyée"):t("Reçue")}</span>
                           </div>);
                           if(m.kind==="doc")return(
                           <div key={i} className="meetcard">
                             <div className="meetico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 2h8l4 4v16H6z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M14 2v4h4" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg></div>
-                            <div><b>Document partagé</b><small>{m.name}</small></div>
-                            <button className="btn-ghost sm" onClick={()=>toast("Téléchargement (démo)")}>Ouvrir</button>
+                            <div><b>{t("Document partagé")}</b><small>{m.name}</small></div>
+                            <button className="btn-ghost sm" onClick={()=>toast(t("Téléchargement (démo)"))}>{t("Ouvrir")}</button>
                           </div>);
                           return <div key={i} className={"bub "+m.from}>{m.text}</div>;
                         })}
                       </div>
                       <div className="composer">
-                        <input placeholder={`Écrire au service ${mSvc} de ${active.name}…`} value={draft} onChange={(e)=>setDraft(e.target.value)} onKeyDown={(e)=>e.key==="Enter"&&send()}/>
-                        <button className="btn sm" onClick={send}>Envoyer</button>
+                        <input placeholder={`${t("Écrire au service")} ${t(mSvc)} ${t("de")} ${active.name}…`} value={draft} onChange={(e)=>setDraft(e.target.value)} onKeyDown={(e)=>e.key==="Enter"&&send()}/>
+                        <button className="btn sm" onClick={send}>{t("Envoyer")}</button>
                       </div>
                     </>
                   ):(
-                    <div className="msgempty">Aucun service en commun avec {active.name}. Ajoutez des services à votre page pour ouvrir des canaux.</div>
+                    <div className="msgempty">{t("Aucun service en commun avec")} {active.name}. {t("Ajoutez des services à votre page pour ouvrir des canaux.")}</div>
                   )}
                 </div>
-              ):<div className="msgempty">Sélectionnez une conversation</div>}
+              ):<div className="msgempty">{t("Sélectionnez une conversation")}</div>}
             </div>
             </>
           )}
@@ -2311,11 +3040,11 @@ export default function Maillon(){
           <div className="chatpanel">
             <div className="cphead">
               {chatPane==="list"?(
-                <span className="cptitle">Chat</span>
+                <span className="cptitle">{t("Chat")}</span>
               ):(
                 <div className="cpback" onClick={()=>setChatPane("list")}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  <b>{activeTeammateId==null?"Général":(activeMate?activeMate.name:"")}</b>
+                  <b>{activeTeammateId==null?t("Général"):(activeMate?activeMate.name:"")}</b>
                 </div>
               )}
               <span className="cpclose" onClick={()=>setChatOpen(false)}>
@@ -2328,15 +3057,15 @@ export default function Maillon(){
                   <div className="logo" style={{background:"var(--ink)"}}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M17 20v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M7 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM20 20v-1a3.5 3.5 0 0 0-2.5-3.4M15 4.2a3 3 0 0 1 0 5.6" stroke="#fff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </div>
-                  <div style={{minWidth:0}}><b>Général</b>
-                    <small>{lastOf(internalChat)?`${lastOf(internalChat).authorId===(currentUser&&currentUser.id)?"Vous : ":""}${lastOf(internalChat).text}`:"Conversation d'équipe"}</small>
+                  <div style={{minWidth:0}}><b>{t("Général")}</b>
+                    <small>{lastOf(internalChat)?`${lastOf(internalChat).authorId===(currentUser&&currentUser.id)?t("Vous")+" : ":""}${lastOf(internalChat).text}`:t("Conversation d'équipe")}</small>
                   </div>
                 </div>
                 {mates.map((m)=>{const l=lastOf(currentUser?(internalDMs[dmKey(currentUser.id,m.id)]||[]):[]);return(
                   <div key={m.id} className="conv" onClick={()=>openThread(m.id)}>
                     <div className="logo" style={{background:"var(--ink)"}}>{m.name[0]}</div>
                     <div style={{minWidth:0}}><b>{m.name}</b>
-                      <small>{l?`${l.authorId===currentUser.id?"Vous : ":""}${l.text}`:"Nouvelle conversation"}</small>
+                      <small>{l?`${l.authorId===currentUser.id?t("Vous")+" : ":""}${l.text}`:t("Nouvelle conversation")}</small>
                     </div>
                   </div>
                 );})}
@@ -2345,17 +3074,17 @@ export default function Maillon(){
               <div className="cpthread">
                 <div className="stream" ref={teamStreamRef}>
                   {thread.length===0?(
-                    <div className="bub sys">Aucun message pour l'instant — lancez la discussion.</div>
+                    <div className="bub sys">{t("Aucun message pour l'instant — lancez la discussion.")}</div>
                   ):thread.map((m)=>{const mine=currentUser&&m.authorId===currentUser.id;return(
                     <div key={m.id} className={"bub "+(mine?"me":"them")}>
-                      {!mine&&activeTeammateId==null&&<b style={{display:"block",fontSize:11.5,marginBottom:3,opacity:.75}}>{(team.find((t)=>t.id===m.authorId)||{}).name||"—"}</b>}
+                      {!mine&&activeTeammateId==null&&<b style={{display:"block",fontSize:11.5,marginBottom:3,opacity:.75}}>{(team.find((tm)=>tm.id===m.authorId)||{}).name||"—"}</b>}
                       {m.text}
                     </div>
                   );})}
                 </div>
                 <div className="composer">
-                  <input placeholder={activeTeammateId==null?"Écrire au canal Général…":`Écrire à ${activeMate?activeMate.name:""}…`} value={internalMsg} onChange={(e)=>setInternalMsg(e.target.value)} onKeyDown={(e)=>e.key==="Enter"&&sendInternalMsg()}/>
-                  <button className="btn sm" onClick={sendInternalMsg}>Envoyer</button>
+                  <input placeholder={activeTeammateId==null?t("Écrire au canal Général…"):`${t("Écrire à")} ${activeMate?activeMate.name:""}…`} value={internalMsg} onChange={(e)=>setInternalMsg(e.target.value)} onKeyDown={(e)=>e.key==="Enter"&&sendInternalMsg()}/>
+                  <button className="btn sm" onClick={sendInternalMsg}>{t("Envoyer")}</button>
                 </div>
               </div>
             )}
@@ -2365,17 +3094,17 @@ export default function Maillon(){
       {/* AGENDA */}
       {view==="agenda"&&(
         <div className="wrap"><div className="page">
-          <h2 className="ptitle disp">Événements</h2>
-          <p className="psub">Toutes vos visios à venir avec les entreprises connectées, classées par date. Une visio de groupe apparaît avec tous ses services.{!isAdmin&&` En tant que ${role}, vous ne voyez que les visios de votre service.`}</p>
+          <h2 className="ptitle disp">{t("Événements")}</h2>
+          <p className="psub">{t("Toutes vos visios à venir avec les entreprises connectées, classées par date. Une visio de groupe apparaît avec tous ses services.")}{!isAdmin&&` ${t("En tant que")} ${t(role)}, ${t("vous ne voyez que les visios de votre service.")}`}</p>
           <div style={{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap"}}>
-            <button className="btn-ghost sm" onClick={()=>toast("Événements exportés (.ics) — démo")}>Exporter (.ics)</button>
-            <button className="btn-ghost sm" onClick={()=>toast("Connexion à Google Agenda — démo")}>Connecter Google Agenda</button>
-            <button className="btn-ghost sm" onClick={()=>toast("Connexion à Outlook — démo")}>Connecter Outlook</button>
+            <button className="btn-ghost sm" onClick={()=>toast(t("Événements exportés (.ics) — démo"))}>{t("Exporter (.ics)")}</button>
+            <button className="btn-ghost sm" onClick={()=>toast(t("Connexion à Google Agenda — démo"))}>{t("Connecter Google Agenda")}</button>
+            <button className="btn-ghost sm" onClick={()=>toast(t("Connexion à Outlook — démo"))}>{t("Connecter Outlook")}</button>
           </div>
           {roleEvents.length===0?(
             <div className="empty">
               <svg width="46" height="46" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="var(--slate-soft)" strokeWidth="1.6"/><path d="M3 9h18M8 3v4M16 3v4" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinecap="round"/></svg>
-              <h3>Aucune visio planifiée</h3><p>Planifiez une visio depuis une conversation pour la retrouver ici.</p>
+              <h3>{t("Aucune visio planifiée")}</h3><p>{t("Planifiez une visio depuis une conversation pour la retrouver ici.")}</p>
             </div>
           ):(
             Object.keys(eventsByDate).map((date)=>(
@@ -2385,9 +3114,9 @@ export default function Maillon(){
                   <div key={i} className="agevent">
                     <div className="agtime">{e.time}</div>
                     <div className="aglogo" style={{background:e.c.color}}>{logoImg(e.c)}</div>
-                    <div className="aginfo"><b>{e.c.name}{e.services.length>1?" · visio de groupe":""}</b>
-                      <div className="agsvcs">{e.services.map((s)=><span key={s} className="pill offer">{s}</span>)}</div></div>
-                    <button className="btn sm" onClick={()=>startVisio(e.c,e.services)}>Rejoindre</button>
+                    <div className="aginfo"><b>{e.c.name}{e.services.length>1?` · ${t("visio de groupe")}`:""}</b>
+                      <div className="agsvcs">{e.services.map((s)=><span key={s} className="pill offer">{t(s)}</span>)}</div></div>
+                    <button className="btn sm" onClick={()=>startVisio(e.c,e.services)}>{t("Rejoindre")}</button>
                   </div>
                 ))}
               </div>
@@ -2399,32 +3128,32 @@ export default function Maillon(){
       {/* BIBLIOTHÈQUE — registre de toutes les actions */}
       {view==="library"&&(
         <div className="wrap"><div className="page">
-          <h2 className="ptitle disp">Bibliothèque</h2>
-          <p className="psub">Le registre de toutes les actions effectuées sur votre espace : demandes envoyées, mises en relation, visios, publications…</p>
+          <h2 className="ptitle disp">{t("Bibliothèque")}</h2>
+          <p className="psub">{t("Le registre de toutes les actions effectuées sur votre espace : demandes envoyées, mises en relation, visios, publications…")}</p>
           <div className="toolbar">
             <div className="search">
               <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6" stroke="var(--slate)" strokeWidth="1.8"/><path d="M14 14l4 4" stroke="var(--slate)" strokeWidth="1.8" strokeLinecap="round"/></svg>
-              <input placeholder="Rechercher dans la bibliothèque…" value={libQuery} onChange={(e)=>setLibQuery(e.target.value)}/>
+              <input placeholder={t("Rechercher dans la bibliothèque…")} value={libQuery} onChange={(e)=>setLibQuery(e.target.value)}/>
             </div>
           </div>
           <div style={{display:"flex",flexWrap:"wrap",gap:8,margin:"2px 0 18px"}}>
             {HIST_CATEGORIES.map((cat)=>{const count=history.filter((e)=>e.kind===cat.kind).length;if(!count)return null;return(
-              <button key={cat.kind} type="button" className={"fchip"+(libFilters.includes(cat.kind)?" on":"")} onClick={()=>toggleLibFilter(cat.kind)}>{cat.label} ({count})</button>
+              <button key={cat.kind} type="button" className={"fchip"+(libFilters.includes(cat.kind)?" on":"")} onClick={()=>toggleLibFilter(cat.kind)}>{t(cat.label)} ({count})</button>
             );})}
-            {libFilters.length>0&&<button type="button" className="linkbtn" style={{fontSize:12.5}} onClick={()=>setLibFilters([])}>Réinitialiser les filtres</button>}
+            {libFilters.length>0&&<button type="button" className="linkbtn" style={{fontSize:12.5}} onClick={()=>setLibFilters([])}>{t("Réinitialiser les filtres")}</button>}
           </div>
           {(()=>{const byCategory=libFilters.length?history.filter((e)=>libFilters.includes(e.kind)):history;
             const filtered=libQuery.trim()?byCategory.filter((e)=>e.text.toLowerCase().includes(libQuery.trim().toLowerCase())):byCategory;
             if(history.length===0)return(
               <div className="empty">
                 <svg width="46" height="46" viewBox="0 0 24 24" fill="none"><path d="M4 5h16M4 12h16M4 19h10" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinecap="round"/></svg>
-                <h3>Aucune activité pour l'instant</h3><p>Chaque action que vous effectuez apparaîtra ici, avec la date et l'heure.</p>
+                <h3>{t("Aucune activité pour l'instant")}</h3><p>{t("Chaque action que vous effectuez apparaîtra ici, avec la date et l'heure.")}</p>
               </div>
             );
             if(filtered.length===0)return(
               <div className="empty">
                 <svg width="46" height="46" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6" stroke="var(--slate-soft)" strokeWidth="1.6"/><path d="M14 14l4 4" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinecap="round"/></svg>
-                <h3>Aucun résultat</h3><p>{libQuery.trim()?`Aucune action ne correspond à « ${libQuery} ».`:"Aucune action ne correspond aux filtres sélectionnés."}</p>
+                <h3>{t("Aucun résultat")}</h3><p>{libQuery.trim()?`${t("Aucune action ne correspond à")} « ${libQuery} ».`:t("Aucune action ne correspond aux filtres sélectionnés.")}</p>
               </div>
             );
             return(
@@ -2458,14 +3187,14 @@ export default function Maillon(){
         return(
         <div className="wrap"><div className="page">
           <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
-            <div><h2 className="ptitle disp">Emailing</h2>
-              <p className="psub" style={{marginBottom:0}}>Envoyez des campagnes uniquement aux entreprises qui ont accepté de les recevoir, au moment de la mise en relation.</p></div>
-            <button className="btn sm" disabled={emailingRecipients.length===0} onClick={openCampaign}>Nouvelle campagne</button>
+            <div><h2 className="ptitle disp">{t("Emailing")}</h2>
+              <p className="psub" style={{marginBottom:0}}>{t("Envoyez des campagnes uniquement aux entreprises qui ont accepté de les recevoir, au moment de la mise en relation.")}</p></div>
+            <button className="btn sm" disabled={emailingRecipients.length===0} onClick={openCampaign}>{t("Nouvelle campagne")}</button>
           </div>
 
-          <div className="seclabel" style={{marginTop:26}}>Destinataires éligibles {emailingRecipients.length>0&&<span className="badge">{emailingRecipients.length}</span>}</div>
+          <div className="seclabel" style={{marginTop:26}}>{t("Destinataires éligibles")} {emailingRecipients.length>0&&<span className="badge">{emailingRecipients.length}</span>}</div>
           {emailingRecipients.length===0?(
-            <p style={{color:"var(--slate)",fontSize:14}}>Aucune entreprise n'a encore accepté de recevoir vos campagnes. Le consentement se donne dans l'onglet « Demandes » au moment d'accepter une mise en relation.</p>
+            <p style={{color:"var(--slate)",fontSize:14}}>{t("Aucune entreprise n'a encore accepté de recevoir vos campagnes. Le consentement se donne dans l'onglet « Demandes » au moment d'accepter une mise en relation.")}</p>
           ):(
             <div className="libcard" style={{marginBottom:28}}>
               {emailingRecipients.map((c)=>(
@@ -2478,11 +3207,11 @@ export default function Maillon(){
             </div>
           )}
 
-          <div className="seclabel">Campagnes envoyées</div>
+          <div className="seclabel">{t("Campagnes envoyées")}</div>
           {campaigns.length===0?(
             <div className="empty">
               <svg width="46" height="46" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4z" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinejoin="round"/><path d="M4 7l8 6 8-6" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              <h3>Aucune campagne envoyée</h3><p>Créez votre première campagne d'emailing ci-dessus.</p>
+              <h3>{t("Aucune campagne envoyée")}</h3><p>{t("Créez votre première campagne d'emailing ci-dessus.")}</p>
             </div>
           ):(
             <div className="libcard">
@@ -2497,17 +3226,17 @@ export default function Maillon(){
                     <div className="ni"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><path d="M4 7l8 6 8-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
                     <div style={{flex:1,minWidth:0}}>
                       <p style={{fontWeight:600}}>{camp.name||camp.subject}</p>
-                      <p style={{margin:"3px 0 0",fontSize:12.5,color:"var(--slate)"}}>Sujet : {camp.subject}</p>
+                      <p style={{margin:"3px 0 0",fontSize:12.5,color:"var(--slate)"}}>{t("Sujet")} : {camp.subject}</p>
                       {camp.body&&<p style={{margin:"4px 0 0",fontSize:13,color:"var(--slate)"}}>{camp.body}</p>}
                       {camp.rsvp&&(
                         <p style={{margin:"6px 0 0",fontSize:12,fontWeight:600}}>
-                          <span style={{color:"var(--emerald)"}}>✓ {confirmed} confirmé{confirmed>1?"s":""}</span>{" · "}
-                          <span style={{color:"var(--coral)"}}>✗ {declined} décliné{declined>1?"s":""}</span>{" · "}
-                          <span style={{color:"var(--amber)"}}>⏳ {pending} en attente</span>
+                          <span style={{color:"var(--emerald)"}}>✓ {confirmed} {confirmed>1?t("confirmés"):t("confirmé")}</span>{" · "}
+                          <span style={{color:"var(--coral)"}}>✗ {declined} {declined>1?t("déclinés"):t("décliné")}</span>{" · "}
+                          <span style={{color:"var(--amber)"}}>⏳ {pending} {t("en attente")}</span>
                         </p>
                       )}
                     </div>
-                    <span className="nat">{camp.recipients.length} destinataire{camp.recipients.length>1?"s":""} · {camp.date}</span>
+                    <span className="nat">{camp.recipients.length} {camp.recipients.length>1?t("destinataires"):t("destinataire")} · {camp.date}</span>
                   </div>
                   {open&&camp.rsvp&&(
                     <div style={{background:"var(--paper)",borderBottom:"1px solid var(--line-soft)"}}>
@@ -2515,7 +3244,7 @@ export default function Maillon(){
                         <div key={r.companyId} className="subrow" style={{padding:"8px 18px"}}>
                           <span className="tree">└</span>{r.name}
                           <span style={{marginLeft:"auto",fontWeight:600,fontSize:12,color:r.status==="confirmed"?"var(--emerald)":r.status==="declined"?"var(--coral)":"var(--amber)"}}>
-                            {r.status==="confirmed"?"✓ Confirmé":r.status==="declined"?"✗ Décliné":"⏳ En attente"}
+                            {r.status==="confirmed"?"✓ "+t("Confirmé"):r.status==="declined"?"✗ "+t("Décliné"):"⏳ "+t("En attente")}
                           </span>
                         </div>
                       ))}
@@ -2532,32 +3261,32 @@ export default function Maillon(){
               <div className="modal" onClick={()=>setCampaignOpen(false)}>
                 <div className="mbox" onClick={(e)=>e.stopPropagation()}>
                   <div className="mhead">
-                    <div><h3 className="disp">Nouvelle campagne d'emailing</h3>
-                      <p className="mi">Renseignez son identité, choisissez les destinataires, puis le contenu.</p></div>
+                    <div><h3 className="disp">{t("Nouvelle campagne d'emailing")}</h3>
+                      <p className="mi">{t("Renseignez son identité, choisissez les destinataires, puis le contenu.")}</p></div>
                   </div>
 
-                  <div className="msec">Identité de la campagne</div>
-                  <div className="field"><label>Nom de la campagne</label>
+                  <div className="msec">{t("Identité de la campagne")}</div>
+                  <div className="field"><label>{t("Nom de la campagne")}</label>
                     <input value={campaignForm.name} onChange={(e)=>setCampaignForm({...campaignForm,name:e.target.value})} placeholder="ex : Promo rentrée 2026 — Réseau Maillon"/></div>
-                  <div className="field"><label>Sujet de l'email</label>
+                  <div className="field"><label>{t("Sujet de l'email")}</label>
                     <input value={campaignForm.subject} onChange={(e)=>setCampaignForm({...campaignForm,subject:e.target.value})} placeholder="ex : Nos nouveautés du mois"/></div>
-                  <div className="field"><label>Liste de diffusion</label>
+                  <div className="field"><label>{t("Liste de diffusion")}</label>
                     <select value={campaignForm.list} onChange={(e)=>{const val=e.target.value;setCampaignForm({...campaignForm,list:val});applyList(val);}}>
-                      <option value="all">Toutes les listes de diffusion ({allListedCompanies.length})</option>
-                      {distLists.length>0&&<optgroup label="Vos listes">
+                      <option value="all">{t("Toutes les listes de diffusion")} ({allListedCompanies.length})</option>
+                      {distLists.length>0&&<optgroup label={t("Vos listes")}>
                         {distLists.map((l)=><option key={l.id} value={"list:"+l.id}>{l.name} ({l.companyIds.filter((id)=>emailingRecipients.some((c)=>c.id===id)).length})</option>)}
                       </optgroup>}
                     </select>
-                    <div className="uphint">Présélectionne les destinataires ci-dessous ; vous pouvez encore ajuster la sélection à la main. Créez vos propres listes dans l'onglet « Listes ».</div>
+                    <div className="uphint">{t("Présélectionne les destinataires ci-dessous ; vous pouvez encore ajuster la sélection à la main. Créez vos propres listes dans l'onglet « Listes ».")}</div>
                   </div>
                   <label className="consentrow">
                     <input type="checkbox" checked={campaignForm.needsRsvp} onChange={(e)=>setCampaignForm({...campaignForm,needsRsvp:e.target.checked})}/>
-                    Cette campagne demande une confirmation (ex : présence à un événement)
+                    {t("Cette campagne demande une confirmation (ex : présence à un événement)")}
                   </label>
 
-                  <div className="msec">Destinataires</div>
+                  <div className="msec">{t("Destinataires")}</div>
                   <div className="field">
-                    <label>Sélection ({selectedCompanies.length}/{emailingRecipients.length})</label>
+                    <label>{t("Sélection")} ({selectedCompanies.length}/{emailingRecipients.length})</label>
                     <div className="libcard" style={{maxHeight:180,overflowY:"auto"}}>
                       {emailingRecipients.map((c)=>(
                         <label key={c.id} className="consentrow" style={{padding:"10px 14px",margin:0}}>
@@ -2568,21 +3297,21 @@ export default function Maillon(){
                     </div>
                   </div>
 
-                  <div className="msec">Template &amp; tracking</div>
-                  <div className="field"><label>Message (texte simple)</label>
-                    <textarea rows={3} value={campaignForm.body} onChange={(e)=>setCampaignForm({...campaignForm,body:e.target.value})} placeholder="Votre message aux entreprises abonnées."/></div>
+                  <div className="msec">{t("Template & tracking")}</div>
+                  <div className="field"><label>{t("Message (texte simple)")}</label>
+                    <textarea rows={3} value={campaignForm.body} onChange={(e)=>setCampaignForm({...campaignForm,body:e.target.value})} placeholder={t("Votre message aux entreprises abonnées.")}/></div>
                   <div className="field">
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-                      <label style={{margin:0}}>HTML de l'email (facultatif)</label>
-                      <button type="button" className="btn-ghost sm" onClick={()=>setCampaignForm((f)=>({...f,html:buildEmailSkeleton(f.subject)}))}>Générer le squelette email</button>
+                      <label style={{margin:0}}>{t("HTML de l'email (facultatif)")}</label>
+                      <button type="button" className="btn-ghost sm" onClick={()=>setCampaignForm((f)=>({...f,html:buildEmailSkeleton(f.subject)}))}>{t("Générer le squelette email")}</button>
                     </div>
                     <textarea rows={6} className="mono" style={{fontSize:12.5}} value={campaignForm.html} onChange={(e)=>setCampaignForm({...campaignForm,html:e.target.value})} placeholder="<!DOCTYPE html><html>…"/>
-                    <div className="uphint">Placeholders : [Prénom] · [VIEW_ONLINE] · {"{{HEADER}}"} (header expéditeur) · {"{{FOOTER}}"} (footer + désabo) · [REDIRECT_URL] (lien bouton tracké). Le pixel d'ouverture est injecté automatiquement.</div>
+                    <div className="uphint">{t("Placeholders")} : [Prénom] · [VIEW_ONLINE] · {"{{HEADER}}"} ({t("header expéditeur")}) · {"{{FOOTER}}"} ({t("footer + désabo")}) · [REDIRECT_URL] ({t("lien bouton tracké")}). {t("Le pixel d'ouverture est injecté automatiquement.")}</div>
                   </div>
 
                   <div style={{display:"flex",gap:10,marginTop:4}}>
-                    <button className="btn-ghost" onClick={()=>setCampaignOpen(false)}>Annuler</button>
-                    <button className="btn block" disabled={!campaignForm.name.trim()||!campaignForm.subject.trim()||selectedCompanies.length===0} onClick={()=>sendCampaign(selectedCompanies)}>Envoyer la campagne</button>
+                    <button className="btn-ghost" onClick={()=>setCampaignOpen(false)}>{t("Annuler")}</button>
+                    <button className="btn block" disabled={!campaignForm.name.trim()||!campaignForm.subject.trim()||selectedCompanies.length===0} onClick={()=>sendCampaign(selectedCompanies)}>{t("Envoyer la campagne")}</button>
                   </div>
                 </div>
               </div>
@@ -2595,17 +3324,17 @@ export default function Maillon(){
       {view==="lists"&&(()=>{const eligible=connected.filter((c)=>c.emailingConsent);return(
         <div className="wrap"><div className="page">
           <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
-            <div><h2 className="ptitle disp">Listes de diffusion</h2>
-              <p className="psub" style={{marginBottom:0}}>Regroupez vos entreprises abonnées dans des listes réutilisables (ex : « Mail du jeudi matin ») pour ne plus avoir à tout recocher à chaque campagne.</p></div>
-            <button className="btn sm" disabled={eligible.length===0} onClick={()=>{setListForm({name:"",companyIds:[]});setListOpen(true);}}>Créer une liste</button>
+            <div><h2 className="ptitle disp">{t("Listes de diffusion")}</h2>
+              <p className="psub" style={{marginBottom:0}}>{t("Regroupez vos entreprises abonnées dans des listes réutilisables (ex : « Mail du jeudi matin ») pour ne plus avoir à tout recocher à chaque campagne.")}</p></div>
+            <button className="btn sm" disabled={eligible.length===0} onClick={()=>{setListForm({name:"",companyIds:[]});setListOpen(true);}}>{t("Créer une liste")}</button>
           </div>
 
           {eligible.length===0&&distLists.length===0?(
-            <p style={{color:"var(--slate)",fontSize:14,marginTop:26}}>Aucune entreprise n'a encore accepté de recevoir vos campagnes. Le consentement se donne dans l'onglet « Demandes » au moment d'accepter une mise en relation.</p>
+            <p style={{color:"var(--slate)",fontSize:14,marginTop:26}}>{t("Aucune entreprise n'a encore accepté de recevoir vos campagnes. Le consentement se donne dans l'onglet « Demandes » au moment d'accepter une mise en relation.")}</p>
           ):distLists.length===0?(
             <div className="empty">
               <svg width="46" height="46" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h10M4 18h7" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinecap="round"/></svg>
-              <h3>Aucune liste pour l'instant</h3><p>Créez votre première liste de diffusion ci-dessus.</p>
+              <h3>{t("Aucune liste pour l'instant")}</h3><p>{t("Créez votre première liste de diffusion ci-dessus.")}</p>
             </div>
           ):(
             <div className="libcard" style={{marginTop:26}}>
@@ -2615,17 +3344,17 @@ export default function Maillon(){
                     <div className="ni"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h10M4 18h7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg></div>
                     <div style={{flex:1,minWidth:0}}>
                       <p style={{fontWeight:600}}>{l.name}</p>
-                      <p style={{margin:"4px 0 0",fontSize:12.5,color:"var(--slate)"}}>{members.map((c)=>c.name).join(", ")||"Aucune entreprise (retirée depuis)"}</p>
+                      <p style={{margin:"4px 0 0",fontSize:12.5,color:"var(--slate)"}}>{members.map((c)=>c.name).join(", ")||t("Aucune entreprise (retirée depuis)")}</p>
                     </div>
                     <span className="nat" style={{display:"flex",alignItems:"center",gap:12}}>
-                      {members.length} entreprise{members.length>1?"s":""}
-                      <span className="rm" style={{color:"var(--coral)",cursor:"pointer",fontWeight:600}} onClick={(e)=>{e.stopPropagation();deleteList(l.id);}}>Supprimer</span>
+                      {members.length} {members.length>1?t("entreprises"):t("entreprise")}
+                      <span className="rm" style={{color:"var(--coral)",cursor:"pointer",fontWeight:600}} onClick={(e)=>{e.stopPropagation();deleteList(l.id);}}>{t("Supprimer")}</span>
                     </span>
                   </div>
                   {open&&(
                     <div style={{background:"var(--paper)",borderBottom:"1px solid var(--line-soft)"}}>
                       {members.length===0?(
-                        <p style={{margin:0,padding:"14px 18px",fontSize:13,color:"var(--slate-soft)"}}>Aucune entreprise dans cette liste.</p>
+                        <p style={{margin:0,padding:"14px 18px",fontSize:13,color:"var(--slate-soft)"}}>{t("Aucune entreprise dans cette liste.")}</p>
                       ):members.map((c)=>(
                         <div key={c.id} className="subgrp">
                           <div className="subhead">
@@ -2633,7 +3362,7 @@ export default function Maillon(){
                             <b>{c.name}</b>
                           </div>
                           {(c.emailingContacts||[]).length===0?(
-                            <div className="subrow"><span className="tree">└</span><span style={{color:"var(--slate-soft)"}}>Aucun contact enregistré</span></div>
+                            <div className="subrow"><span className="tree">└</span><span style={{color:"var(--slate-soft)"}}>{t("Aucun contact enregistré")}</span></div>
                           ):c.emailingContacts.map((ct,i)=>(
                             <div key={i} className="subrow"><span className="tree">└</span><b style={{color:"var(--ink)"}}>{ct.name}</b>&nbsp;{ct.email}</div>
                           ))}
@@ -2652,13 +3381,13 @@ export default function Maillon(){
               <div className="modal" onClick={()=>setListOpen(false)}>
                 <div className="mbox" onClick={(e)=>e.stopPropagation()}>
                   <div className="mhead">
-                    <div><h3 className="disp">Nouvelle liste de diffusion</h3>
+                    <div><h3 className="disp">{t("Nouvelle liste de diffusion")}</h3>
                       <p className="mi">ex : « Mail du jeudi matin »</p></div>
                   </div>
-                  <div className="field"><label>Nom de la liste</label>
+                  <div className="field"><label>{t("Nom de la liste")}</label>
                     <input value={listForm.name} onChange={(e)=>setListForm({...listForm,name:e.target.value})} placeholder="ex : Mail du jeudi matin"/></div>
                   <div className="field">
-                    <label>Entreprises ({listForm.companyIds.length}/{eligible.length})</label>
+                    <label>{t("Entreprises")} ({listForm.companyIds.length}/{eligible.length})</label>
                     <div className="libcard" style={{maxHeight:220,overflowY:"auto"}}>
                       {eligible.map((c)=>(
                         <label key={c.id} className="consentrow" style={{padding:"10px 14px",margin:0}}>
@@ -2669,8 +3398,8 @@ export default function Maillon(){
                     </div>
                   </div>
                   <div style={{display:"flex",gap:10,marginTop:4}}>
-                    <button className="btn-ghost" onClick={()=>setListOpen(false)}>Annuler</button>
-                    <button className="btn block" disabled={!listForm.name.trim()||listForm.companyIds.length===0} onClick={createList}>Créer la liste</button>
+                    <button className="btn-ghost" onClick={()=>setListOpen(false)}>{t("Annuler")}</button>
+                    <button className="btn block" disabled={!listForm.name.trim()||listForm.companyIds.length===0} onClick={createList}>{t("Créer la liste")}</button>
                   </div>
                 </div>
               </div>
@@ -2683,14 +3412,14 @@ export default function Maillon(){
       {view==="needs"&&(
         <div className="wrap"><div className="page">
           <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
-            <div><h2 className="ptitle disp">Mur de besoins</h2>
-              <p className="psub" style={{marginBottom:0}}>Exprimez ce que vous cherchez, ou proposez vos services aux entreprises qui cherchent. La mise en relation vient à vous.</p></div>
-            <button className="btn sm" onClick={()=>setNeedOpen(true)}>Publier un besoin</button>
+            <div><h2 className="ptitle disp">{t("Mur de besoins")}</h2>
+              <p className="psub" style={{marginBottom:0}}>{t("Exprimez ce que vous cherchez, ou proposez vos services aux entreprises qui cherchent. La mise en relation vient à vous.")}</p></div>
+            <button className="btn sm" onClick={()=>setNeedOpen(true)}>{t("Publier un besoin")}</button>
           </div>
 
           <div className="filt" style={{margin:"20px 0 18px"}}>
-            <button className={"fchip"+(needFilter==="all"?" on":"")} onClick={()=>setNeedFilter("all")}>Tous les besoins</button>
-            <button className={"fchip"+(needFilter==="match"?" on":"")} onClick={()=>setNeedFilter("match")}>Qui me correspondent{matchingNeeds.length>0?` (${matchingNeeds.length})`:""}</button>
+            <button className={"fchip"+(needFilter==="all"?" on":"")} onClick={()=>setNeedFilter("all")}>{t("Tous les besoins")}</button>
+            <button className={"fchip"+(needFilter==="match"?" on":"")} onClick={()=>setNeedFilter("match")}>{t("Qui me correspondent")}{matchingNeeds.length>0?` (${matchingNeeds.length})`:""}</button>
           </div>
 
           <div className="needwrap">
@@ -2700,20 +3429,20 @@ export default function Maillon(){
                 <div key={n.id} className="needcard">
                   <div className="needhead">
                     <div className="logo" style={{background:a.color}}>{logoImg(a)}</div>
-                    <div style={{minWidth:0}}><b>{a.name}{n.mine?" · vous":""}</b><small>{a.sector}{a.sector?" · ":""}{n.loc} · {n.date}</small></div>
-                    {match&&<span className="needmatch">Correspond à votre activité</span>}
+                    <div style={{minWidth:0}}><b>{a.name}{n.mine?` · ${t("vous")}`:""}</b><small>{a.sector}{a.sector?" · ":""}{n.loc} · {n.date}</small></div>
+                    {match&&<span className="needmatch">{t("Correspond à votre activité")}</span>}
                   </div>
                   <h3>{n.title}</h3>
                   <div className="needmeta">
-                    <span className="pill seek">↳ Recherche : {n.sought}</span>
+                    <span className="pill seek">↳ {t("Recherche")} : {n.sought}</span>
                     <span className="pill offer">{n.loc}</span>
                   </div>
                   <div className="needfoot">
-                    <span className="resp">{n.responses} réponse{n.responses>1?"s":""}</span>
+                    <span className="resp">{n.responses} {n.responses>1?t("réponses"):t("réponse")}</span>
                     {n.mine?(
-                      <span className="resp" style={{marginLeft:"auto",color:"var(--emerald)",fontWeight:600}}>Votre besoin</span>
+                      <span className="resp" style={{marginLeft:"auto",color:"var(--emerald)",fontWeight:600}}>{t("Votre besoin")}</span>
                     ):(
-                      <button className="btn sm" onClick={()=>respondToNeed(n)}>Proposer mes services</button>
+                      <button className="btn sm" onClick={()=>respondToNeed(n)}>{t("Proposer mes services")}</button>
                     )}
                   </div>
                 </div>
@@ -2726,18 +3455,73 @@ export default function Maillon(){
       {/* PROFILE */}
       {view==="profile"&&(
         <div className="wrap"><div className="page">
-          <h2 className="ptitle disp">Ma page entreprise</h2>
-          <p className="psub">Votre tableau de bord et la fiche que voient les autres entreprises.</p>
-          <div className="dashsec"><h5 className="dashh">Tableau de bord</h5>
+          <h2 className="ptitle disp">{t("Ma page entreprise")}</h2>
+          <p className="psub">{t("Votre tableau de bord et la fiche que voient les autres entreprises.")}</p>
+          <div className="dashsec"><h5 className="dashh">{t("Tableau de bord")}</h5>
             <div className="dash">
-              <div className="dtile"><b>{84+connected.length*12+needs.filter((n)=>n.mine).length*6}</b><span>Vues de la fiche (30 j)</span></div>
-              <div className="dtile"><b>{connected.length}</b><span>Relations actives</span></div>
-              <div className="dtile"><b>{incoming.length}</b><span>Demandes reçues</span></div>
-              <div className="dtile"><b>{prospectsUsed}</b><span>Démarchages envoyés</span></div>
-              <div className="dtile"><b>{needs.filter((n)=>n.mine).length}</b><span>Besoins publiés</span></div>
-              <div className="dtile"><b>★ {me.rating}</b><span>Note moyenne</span></div>
+              <div className="dtile"><b>{84+connected.length*12+needs.filter((n)=>n.mine).length*6}</b><span>{t("Vues de la fiche (30 j)")}</span></div>
+              <div className="dtile"><b>{connected.length}</b><span>{t("Relations actives")}</span></div>
+              <div className="dtile"><b>{incoming.length}</b><span>{t("Demandes reçues")}</span></div>
+              <div className="dtile"><b>{prospectsUsed}</b><span>{t("Démarchages envoyés")}</span></div>
+              <div className="dtile"><b>{needs.filter((n)=>n.mine).length}</b><span>{t("Besoins publiés")}</span></div>
+              <div className="dtile"><b>★ {me.rating}</b><span>{t("Note moyenne")}</span></div>
             </div>
           </div>
+
+          {currentUser&&(
+            <div className="dashsec"><h5 className="dashh">{t("Mon compte")}</h5>
+              <div className="prof"><div className="profbody">
+                <div style={{display:"flex",gap:16,alignItems:"center",marginBottom:18}}>
+                  <div style={{width:64,height:64,borderRadius:"50%",background:me.color,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Bricolage Grotesque'",fontWeight:800,fontSize:24,flex:"0 0 auto"}}>
+                    {(currentUser.name||"?").trim().split(/\s+/).map((w)=>w[0]).slice(0,2).join("").toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="profname disp" style={{fontSize:18}}>{currentUser.name}</div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap",margin:"6px 0"}}>
+                      <span className="pill offer">{t(currentUser.role)}</span>
+                      {isAdmin&&<span className="pill seek">{t("Administrateur")}</span>}
+                    </div>
+                    {session&&session.user&&session.user.last_sign_in_at&&<div className="profmeta">{t("Dernière connexion")} : {new Date(session.user.last_sign_in_at).toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>}
+                  </div>
+                </div>
+
+                <div className="profsec" style={{marginTop:0}}>
+                  <h5>{t("Informations personnelles")}</h5>
+                  <div className="field"><label>{t("Prénom et nom")}</label>
+                    <input value={profileName} onChange={(e)=>setProfileName(e.target.value)}/></div>
+                  <div className="field"><label>{t("Email")}</label>
+                    <input value={currentUser.email} disabled style={{opacity:.6,cursor:"not-allowed"}}/>
+                    <div className="uphint">{t("L'adresse email ne peut pas être modifiée ici.")}</div></div>
+                  <button className="btn sm" disabled={profileNameSaving||!profileName.trim()||profileName.trim()===currentUser.name} onClick={saveProfileName}>{profileNameSaving?t("Enregistrement…"):t("Enregistrer")}</button>
+                </div>
+
+                <div className="profsec">
+                  <h5>{t("Langue")}</h5>
+                  <p className="d">{t("La langue utilisée pour vos communications et, à terme, l'interface de Maillon.")}</p>
+                  <div className="field" style={{maxWidth:260}}>
+                    <select value={currentUser.language} onChange={(e)=>setLanguage(e.target.value)} style={{border:"1px solid var(--line)",borderRadius:10,padding:"9px 11px",fontSize:13.5,fontWeight:600,background:"#fff",color:"var(--ink)",width:"100%"}}>
+                      {LANGUAGES.map((l)=><option key={l.code} value={l.code}>{l.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="profsec">
+                  <h5>{t("Changer le mot de passe")}</h5>
+                  <div className="field"><label>{t("Mot de passe actuel")}</label>
+                    <input type="password" value={pwdCurrent} onChange={(e)=>setPwdCurrent(e.target.value)}/></div>
+                  <div className="grid2">
+                    <div className="field"><label>{t("Nouveau mot de passe")}</label>
+                      <input type="password" value={pwdNew} onChange={(e)=>setPwdNew(e.target.value)} placeholder={t("Min. 8 caractères")}/></div>
+                    <div className="field"><label>{t("Confirmer le nouveau mot de passe")}</label>
+                      <input type="password" value={pwdConfirm} onChange={(e)=>setPwdConfirm(e.target.value)} placeholder={t("Identique")}/></div>
+                  </div>
+                  {pwdError&&<p style={{color:"var(--coral)",fontSize:13,margin:"0 0 12px"}}>{pwdError}</p>}
+                  <button className="btn sm" disabled={pwdBusy} onClick={changePassword}>{pwdBusy?t("Un instant…"):t("Modifier le mot de passe")}</button>
+                </div>
+              </div></div>
+            </div>
+          )}
+
           <div className="prof">
             <div className="profban" style={{background:`linear-gradient(120deg, ${me.color}, ${me.color}bb)`}}/>
             <div className="profbody">
@@ -2747,67 +3531,67 @@ export default function Maillon(){
                   <div className="profmeta">{me.sector} · {me.loc} · {me.size}</div></div>
               </div>
               <div className="pgrid" style={{marginTop:4}}>
-                <div className="pcell"><div className="k">Création</div><div className="v">{me.founded}</div></div>
-                <div className="pcell"><div className="k">Chiffre d'affaires</div><div className="v">{me.ca}</div></div>
-                <div className="pcell"><div className="k">Effectif</div><div className="v">{me.size}</div></div>
-                <div className="pcell"><div className="k">Site web</div><div className="v">{me.web}</div></div>
-                <div className="pcell"><div className="k">SIRET</div><div className="v" style={{fontSize:12.5}}>{me.siret||"—"}{me.verifiedSiren&&<Check className="verif" style={{width:13,height:13,marginLeft:5}}/>}</div></div>
-                <div className="pcell"><div className="k">Abonnement</div><div className="v" style={{color:me.membre?"var(--emerald)":"var(--ink)"}}>{me.planId==="gratuit"?me.plan:`${me.plan} · ${me.billing}`}</div></div>
+                <div className="pcell"><div className="k">{t("Création")}</div><div className="v">{me.founded}</div></div>
+                <div className="pcell"><div className="k">{t("Chiffre d'affaires")}</div><div className="v">{me.ca}</div></div>
+                <div className="pcell"><div className="k">{t("Effectif")}</div><div className="v">{me.size}</div></div>
+                <div className="pcell"><div className="k">{t("Site web")}</div><div className="v">{me.web}</div></div>
+                <div className="pcell"><div className="k">{t("SIRET")}</div><div className="v" style={{fontSize:12.5}}>{me.siret||"—"}{me.verifiedSiren&&<Check className="verif" style={{width:13,height:13,marginLeft:5}}/>}</div></div>
+                <div className="pcell"><div className="k">{t("Abonnement")}</div><div className="v" style={{color:me.membre?"var(--emerald)":"var(--ink)"}}>{me.planId==="gratuit"?me.plan:`${me.plan} · ${me.billing}`}</div></div>
               </div>
-              <div className="profsec"><h5>Pôle de réception des demandes</h5><p>Les demandes de mise en relation adressées à votre entreprise arrivent au pôle <b>{me.receptionPole}</b>.</p></div>
-              <div className="profsec"><h5>Présentation</h5><p>{me.desc}</p></div>
-              <div className="profsec"><h5>Ce que nous recherchons</h5>
+              <div className="profsec"><h5>{t("Pôle de réception des demandes")}</h5><p>{t("Les demandes de mise en relation adressées à votre entreprise arrivent au pôle")} <b>{t(me.receptionPole)}</b>.</p></div>
+              <div className="profsec"><h5>{t("Présentation")}</h5><p>{me.desc}</p></div>
+              <div className="profsec"><h5>{t("Ce que nous recherchons")}</h5>
                 <div className="seek" style={{marginTop:4}}>{me.seek.map((s)=><span key={s} className="pill seek">↳ {s}</span>)}</div></div>
-              <div className="profsec"><h5>Ce que nous proposons</h5>
+              <div className="profsec"><h5>{t("Ce que nous proposons")}</h5>
                 <div className="seek" style={{marginTop:4}}>{me.offer.map((s)=><span key={s} className="pill offer">{s}</span>)}</div></div>
-              {me.certifs.length>0&&<div className="profsec"><h5>Certifications</h5>
+              {me.certifs.length>0&&<div className="profsec"><h5>{t("Certifications")}</h5>
                 <div className="seek" style={{marginTop:4}}>{me.certifs.map((s)=><span key={s} className="pill cert">{s}</span>)}</div></div>}
-              <div style={{marginTop:22}}><button className="btn-ghost sm" onClick={()=>{setMe(null);setObStep(0);}}>Recréer / modifier ma page</button></div>
+              <div style={{marginTop:22}}><button className="btn-ghost sm" onClick={()=>{setMe(null);setObStep(0);}}>{t("Recréer / modifier ma page")}</button></div>
             </div>
           </div>
 
-          <h2 className="ptitle disp" style={{marginTop:36}}>Accès &amp; cloisonnement</h2>
+          <h2 className="ptitle disp" style={{marginTop:36}}>{t("Accès & cloisonnement")}</h2>
           {isAdmin?(
-            <p className="psub">Vous êtes en Direction : vous seul(e) pouvez gérer les droits d'accès et le cloisonnement de votre entreprise.</p>
+            <p className="psub">{t("Vous êtes en Direction : vous seul(e) pouvez gérer les droits d'accès et le cloisonnement de votre entreprise.")}</p>
           ):(
-            <p className="psub">Seule la Direction peut gérer les droits d'accès et le cloisonnement. Vous êtes connecté en tant que {role} — voici les règles en vigueur (lecture seule).</p>
+            <p className="psub">{t("Seule la Direction peut gérer les droits d'accès et le cloisonnement. Vous êtes connecté en tant que")} {t(role)} — {t("voici les règles en vigueur (lecture seule).")}</p>
           )}
 
           <div className="prof"><div className="profbody">
             <div className="accsec">
-              <h5>Accès complet (administrateurs)</h5>
-              <p className="d">Ces services voient la messagerie de tous les pôles.</p>
+              <h5>{t("Accès complet (administrateurs)")}</h5>
+              <p className="d">{t("Ces services voient la messagerie de tous les pôles.")}</p>
               <div className="svcwrap">
                 {(me.services||[]).map((s)=>(
                   <button key={s} type="button" className={"svcchip"+(access.admins.includes(s)?" on":"")}
-                    onClick={()=>isAdmin&&toggleAdmin(s)} style={isAdmin?{}:{cursor:"default",opacity:.9}}>{s}</button>
+                    onClick={()=>isAdmin&&toggleAdmin(s)} style={isAdmin?{}:{cursor:"default",opacity:.9}}>{t(s)}</button>
                 ))}
               </div>
             </div>
 
             <div className="accsec">
-              <h5>Autorisations supplémentaires</h5>
-              <p className="d">Par défaut, ce service ne voit que sa messagerie par pôle.</p>
+              <h5>{t("Autorisations supplémentaires")}</h5>
+              <p className="d">{t("Par défaut, ce service ne voit que sa messagerie par pôle.")}</p>
               {(me.services||[]).filter((s)=>!access.admins.includes(s)).map((s)=>(
                 <div key={s} className="accrow">
-                  <div className="rn">{s}<span style={{fontWeight:400,color:"var(--slate)",fontSize:12}}>peut aussi voir :</span></div>
+                  <div className="rn">{t(s)}<span style={{fontWeight:400,color:"var(--slate)",fontSize:12}}>{t("peut aussi voir :")}</span></div>
                   <div className="svcwrap">
                     {(me.services||[]).filter((o)=>o!==s&&!access.admins.includes(o)).map((o)=>(
                       <button key={o} type="button" className={"svcchip"+((access.grants[s]||[]).includes(o)?" on":"")}
-                        onClick={()=>isAdmin&&toggleGrant(s,o)} style={isAdmin?{}:{cursor:"default",opacity:.9}}>{o}</button>
+                        onClick={()=>isAdmin&&toggleGrant(s,o)} style={isAdmin?{}:{cursor:"default",opacity:.9}}>{t(o)}</button>
                     ))}
-                    {(me.services||[]).filter((o)=>o!==s&&!access.admins.includes(o)).length===0&&<span style={{fontSize:12.5,color:"var(--slate-soft)"}}>Aucun autre service à partager.</span>}
+                    {(me.services||[]).filter((o)=>o!==s&&!access.admins.includes(o)).length===0&&<span style={{fontSize:12.5,color:"var(--slate-soft)"}}>{t("Aucun autre service à partager.")}</span>}
                   </div>
                 </div>
               ))}
             </div>
 
             <div className="accsec">
-              <h5>Collaborateurs</h5>
-              <p className="d">Chaque collaborateur est rattaché à un rôle. Il ne voit que ce que ce rôle autorise — il ne peut pas le changer lui-même.</p>
+              <h5>{t("Collaborateurs")}</h5>
+              <p className="d">{t("Chaque collaborateur est rattaché à un rôle. Il ne voit que ce que ce rôle autorise — il ne peut pas le changer lui-même.")}</p>
               {team.map((m)=>(
                 <div key={m.id} className="accrole">
-                  <div><b style={m.status==="disabled"?{color:"var(--slate-soft)"}:{}}>{m.name}</b><small> {m.status==="invited"?"invitation en attente":m.status==="disabled"?"compte désactivé":(access.admins.includes(m.role)?"administrateur":"accès cloisonné")}</small></div>
+                  <div><b style={m.status==="disabled"?{color:"var(--slate-soft)"}:{}}>{m.name}</b><small> {m.status==="invited"?t("invitation en attente"):m.status==="disabled"?t("compte désactivé"):(access.admins.includes(m.role)?t("administrateur"):t("accès cloisonné"))}</small></div>
                   <select value={m.role} onChange={(e)=>{
                     if(!isAdmin)return;
                     const r=e.target.value;
@@ -2817,42 +3601,42 @@ export default function Maillon(){
                       return;
                     }
                     if(r==="Direction"&&m.role!=="Direction"){
-                      setDirectionConfirm({message:`Donner le rôle Direction à ${m.name} lui donnera aussi le contrôle total des droits d'accès et du cloisonnement de votre entreprise. Confirmer ?`,onConfirm:()=>updateRole(m.id,r)});
+                      setDirectionConfirm({message:`${t("Donner le rôle Direction à")} ${m.name} ${t("lui donnera aussi le contrôle total des droits d'accès et du cloisonnement de votre entreprise. Confirmer ?")}`,onConfirm:()=>updateRole(m.id,r)});
                     }else{
                       updateRole(m.id,r);
                     }
-                  }} disabled={!isAdmin||m.status==="disabled"}>{[...(me.services||[]),...((me.services||[]).includes("Autre")?[]:["Autre"])].map((s)=><option key={s} value={s}>{s}</option>)}</select>
-                  {isAdmin&&m.status!=="invited"&&<button className="linkbtn" style={{fontSize:12,marginLeft:2}} onClick={()=>toggleAccount(m.id)}>{m.status==="disabled"?"Réactiver":"Désactiver"}</button>}
+                  }} disabled={!isAdmin||m.status==="disabled"}>{[...(me.services||[]),...((me.services||[]).includes("Autre")?[]:["Autre"])].map((s)=><option key={s} value={s}>{t(s)}</option>)}</select>
+                  {isAdmin&&m.status!=="invited"&&<button className="linkbtn" style={{fontSize:12,marginLeft:2}} onClick={()=>toggleAccount(m.id)}>{m.status==="disabled"?t("Réactiver"):t("Désactiver")}</button>}
                 </div>
               ))}
             </div>
 
             {isAdmin&&(
               <div className="accsec">
-                <h5>Inviter un collaborateur</h5>
-                <p className="d">Un lien d'invitation est créé et copié dans votre presse-papiers. Envoyez-le vous-même à votre collègue (email, message…) : en l'ouvrant, il/elle rejoint directement votre entreprise avec le rôle choisi.</p>
+                <h5>{t("Inviter un collaborateur")}</h5>
+                <p className="d">{t("Un lien d'invitation est créé et copié dans votre presse-papiers. Envoyez-le vous-même à votre collègue (email, message…) : en l'ouvrant, il/elle rejoint directement votre entreprise avec le rôle choisi.")}</p>
                 <div className="invrow">
                   <input placeholder="prenom.nom@entreprise.fr" value={inviteEmail} onChange={(e)=>setInviteEmail(e.target.value)}/>
-                  <select value={inviteRole||(me.services.find((s)=>!access.admins.includes(s))||me.services[0])} onChange={(e)=>setInviteRole(e.target.value)}>{[...(me.services||[]),...((me.services||[]).includes("Autre")?[]:["Autre"])].map((s)=><option key={s} value={s}>{s}</option>)}</select>
-                  {inviteRole==="Autre"&&<input value={inviteRoleCustom} onChange={(e)=>setInviteRoleCustom(e.target.value)} placeholder="Précisez le service…"/>}
+                  <select value={inviteRole||(me.services.find((s)=>!access.admins.includes(s))||me.services[0])} onChange={(e)=>setInviteRole(e.target.value)}>{[...(me.services||[]),...((me.services||[]).includes("Autre")?[]:["Autre"])].map((s)=><option key={s} value={s}>{t(s)}</option>)}</select>
+                  {inviteRole==="Autre"&&<input value={inviteRoleCustom} onChange={(e)=>setInviteRoleCustom(e.target.value)} placeholder={t("Précisez le service…")}/>}
                   <button className="btn sm" onClick={()=>{
                     const r=inviteRole||(me.services.find((s)=>!access.admins.includes(s))||me.services[0]);
                     const finalRole=r==="Autre"?(inviteRoleCustom.trim()||"Autre"):r;
                     const doInvite=()=>{sendInvite(inviteEmail,finalRole);setInviteEmail("");setInviteRoleCustom("");};
                     if(finalRole==="Direction"){
-                      setDirectionConfirm({message:"La personne invitée avec le rôle Direction aura le contrôle total des droits d'accès et du cloisonnement de votre entreprise. Confirmer ?",onConfirm:doInvite});
+                      setDirectionConfirm({message:t("La personne invitée avec le rôle Direction aura le contrôle total des droits d'accès et du cloisonnement de votre entreprise. Confirmer ?"),onConfirm:doInvite});
                     }else{
                       doInvite();
                     }
-                  }}>Inviter</button>
+                  }}>{t("Inviter")}</button>
                 </div>
                 {pendingInvites.length>0&&(
                   <div style={{marginTop:14,display:"flex",flexDirection:"column",gap:8}}>
                     {pendingInvites.map((inv)=>(
                       <div key={inv.id} className="accrole">
-                        <div><b>{inv.email}</b><small> invitation en attente · {inv.role}</small></div>
-                        <button className="linkbtn" style={{fontSize:12}} onClick={()=>{navigator.clipboard&&navigator.clipboard.writeText(inviteLink(inv.token)).catch(()=>{});toast("Lien copié !");}}>Copier le lien</button>
-                        <button className="linkbtn" style={{fontSize:12,marginLeft:8}} onClick={()=>revokeInvite(inv.id)}>Révoquer</button>
+                        <div><b>{inv.email}</b><small> {t("invitation en attente")} · {t(inv.role)}</small></div>
+                        <button className="linkbtn" style={{fontSize:12}} onClick={()=>{navigator.clipboard&&navigator.clipboard.writeText(inviteLink(inv.token)).catch(()=>{});toast(t("Lien copié !"));}}>{t("Copier le lien")}</button>
+                        <button className="linkbtn" style={{fontSize:12,marginLeft:8}} onClick={()=>revokeInvite(inv.id)}>{t("Révoquer")}</button>
                       </div>
                     ))}
                   </div>
@@ -2861,35 +3645,49 @@ export default function Maillon(){
             )}
 
             <div className="accsec">
-              <h5>Pôle de réception des demandes</h5>
-              <p className="d">Le pôle qui reçoit toutes les demandes de mise en relation adressées à votre entreprise.</p>
-              <select value={me.receptionPole} onChange={(e)=>isAdmin&&setReceptionPole(e.target.value)} disabled={!isAdmin} style={{border:"1px solid var(--line)",borderRadius:10,padding:"8px 11px",fontSize:13.5,fontWeight:600,background:"#fff",color:"var(--ink)"}}>{(me.services||[]).map((s)=><option key={s} value={s}>{s}</option>)}</select>
+              <h5>{t("Pôle de réception des demandes")}</h5>
+              <p className="d">{t("Le pôle qui reçoit toutes les demandes de mise en relation adressées à votre entreprise.")}</p>
+              <select value={me.receptionPole} onChange={(e)=>isAdmin&&setReceptionPole(e.target.value)} disabled={!isAdmin} style={{border:"1px solid var(--line)",borderRadius:10,padding:"8px 11px",fontSize:13.5,fontWeight:600,background:"#fff",color:"var(--ink)"}}>{(me.services||[]).map((s)=><option key={s} value={s}>{t(s)}</option>)}</select>
             </div>
 
             <div className="accsec">
-              <h5>Sécurité &amp; notifications</h5>
-              <p className="d">La double authentification est propre à votre compte personnel (elle vous protège, vous — pas toute l'entreprise).</p>
-              <label className="setrow"><span>Double authentification (2FA)</span><input type="checkbox" checked={twofa} onChange={()=>{if(mfaBusy)return;twofa?disableMfa():startMfaEnroll();}} disabled={mfaBusy}/></label>
-              <label className="setrow"><span>Notifications par e-mail</span><input type="checkbox" checked={notifEmail} onChange={toggleNotifEmail}/></label>
-              <label className="setrow"><span>Notifications push</span><input type="checkbox" checked={notifPush} onChange={()=>setNotifPush(!notifPush)}/></label>
-              <p style={{fontSize:11.5,color:"var(--slate-soft)",marginTop:6}}>Les notifications push nécessitent une configuration supplémentaire côté navigateur — à venir.</p>
+              <h5>{t("Sécurité & notifications")}</h5>
+              <p className="d">{t("La double authentification est propre à votre compte personnel (elle vous protège, vous — pas toute l'entreprise).")}</p>
+              <label className="setrow"><span>{t("Double authentification (2FA)")}</span><input type="checkbox" checked={twofa} onChange={()=>{if(mfaBusy)return;twofa?disableMfa():startMfaEnroll();}} disabled={mfaBusy}/></label>
+              <label className="setrow"><span>{t("Notifications par e-mail")}</span><input type="checkbox" checked={notifEmail} onChange={toggleNotifEmail}/></label>
+              <label className="setrow"><span>{t("Notifications push")}</span><input type="checkbox" checked={notifPush} onChange={()=>notifPush?disablePush():enablePush()}/></label>
+              <p style={{fontSize:11.5,color:"var(--slate-soft)",marginTop:6}}>{t("Votre navigateur vous demandera l'autorisation. Fonctionne même si Maillon est en arrière-plan, tant que ce navigateur reste ouvert.")}</p>
             </div>
 
             <div className="accsec">
-              <h5>Journal d'accès</h5>
-              <p className="d">Historique des actions sensibles sur votre espace.</p>
-              {auditLog.length===0?<p style={{fontSize:12.5,color:"var(--slate-soft)"}}>Aucune action enregistrée pour l'instant.</p>:
+              <h5>{t("Journal d'accès")}</h5>
+              <p className="d">{t("Historique des actions sensibles sur votre espace.")}</p>
+              {auditLog.length===0?<p style={{fontSize:12.5,color:"var(--slate-soft)"}}>{t("Aucune action enregistrée pour l'instant.")}</p>:
                 <div className="auditlist">{auditLog.slice(0,8).map((e)=><div key={e.id} className="auditrow"><span className="at">{e.at}</span>{e.text}</div>)}</div>}
             </div>
 
-            <div className="accnote">Le cloisonnement s'applique à votre entreprise uniquement. L'autre entreprise gère ses propres règles de son côté.</div>
+            <div className="accnote">{t("Le cloisonnement s'applique à votre entreprise uniquement. L'autre entreprise gère ses propres règles de son côté.")}</div>
 
             {isAdmin&&(
               <div style={{marginTop:20,display:"flex",alignItems:"center",gap:12}}>
-                <button className="btn" disabled={!accessDirty||accessSaving} onClick={saveAccess}>{accessSaving?"Enregistrement…":"Sauvegarder"}</button>
-                {accessDirty&&<button className="linkbtn" onClick={resetAccessDraft}>Annuler les modifications</button>}
+                <button className="btn" disabled={!accessDirty||accessSaving} onClick={saveAccess}>{accessSaving?t("Enregistrement…"):t("Sauvegarder")}</button>
+                {accessDirty&&<button className="linkbtn" onClick={resetAccessDraft}>{t("Annuler les modifications")}</button>}
               </div>
             )}
+          </div></div>
+
+          <h2 className="ptitle disp" style={{marginTop:36}}>{t("Abonnement & facturation")}</h2>
+          <p className="psub">{t("Gérez ici votre offre et vos informations de paiement, séparément du reste de votre compte.")}</p>
+          <div className="prof"><div className="profbody">
+            <div className="profsec" style={{marginTop:0}}>
+              <h5>{t("Offre actuelle")}</h5>
+              <p className="d">{t("Vous êtes sur l'offre")} <b>{me.planId==="gratuit"?me.plan:`${me.plan} · ${me.billing}`}</b>.</p>
+              {me.planId!=="gratuit"?(
+                <button className="btn-ghost sm" onClick={manageBilling}>{t("Gérer mon abonnement / facturation")}</button>
+              ):(
+                <p style={{fontSize:12.5,color:"var(--slate-soft)"}}>{t("Aucun abonnement payant à gérer pour le moment.")}</p>
+              )}
+            </div>
           </div></div>
         </div></div>
       )}
@@ -2898,9 +3696,9 @@ export default function Maillon(){
       {view==="blog"&&(
         <div className="wrap"><div className="page">
           <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
-            <div><h2 className="ptitle disp">Actualités</h2>
-              <p className="psub" style={{marginBottom:0}}>Le fil commun des entreprises de Maillon. La lecture est ouverte à tous ; publier demande une adhésion.</p></div>
-            <button className="btn sm" onClick={tryPublish}>Publier une actualité</button>
+            <div><h2 className="ptitle disp">{t("Actualités")}</h2>
+              <p className="psub" style={{marginBottom:0}}>{t("Le fil commun des entreprises de Maillon. La lecture est ouverte à tous ; publier demande une adhésion.")}</p></div>
+            <button className="btn sm" onClick={tryPublish}>{t("Publier une actualité")}</button>
           </div>
 
           <div className="blog" style={{marginTop:24}}>
@@ -2908,8 +3706,8 @@ export default function Maillon(){
               {!me.membre&&(
                 <div className="memban">
                   <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M4 7V5a4 4 0 0 1 8 0v2M3 7h10v6H3z" stroke="#7a5305" strokeWidth="1.4" strokeLinejoin="round"/></svg>
-                  <span>La publication est réservée à l'offre Pro. <b>Passez Pro</b> pour partager vos news.</span>
-                  <button className="btn" onClick={()=>setAdhesion(true)}>Passer Pro</button>
+                  <span>{t("La publication est réservée à l'offre Maillon Fort.")} <b>{t("Passez à Maillon Fort")}</b> {t("pour partager vos news.")}</span>
+                  <button className="btn" onClick={openAdhesionUpgrade}>{t("Passer à Maillon Fort")}</button>
                 </div>
               )}
               <div className="feed">
@@ -2918,7 +3716,7 @@ export default function Maillon(){
                     {reposted&&(
                       <div className="repostmeta">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 2l4 4-4 4M3 12V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 12v3a3 3 0 0 1-3 3H3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        Republié par <b>{author.name}</b>
+                        {t("Republié par")} <b>{author.name}</b>
                       </div>
                     )}
                     <div className="posthead">
@@ -2936,12 +3734,12 @@ export default function Maillon(){
                         {p.likes}
                       </button>
                       <span style={{fontSize:13,color:"var(--slate)",display:"flex",alignItems:"center",gap:6}}>
-                        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 3h10v8H6l-3 2.5V3z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/></svg>Commenter</span>
+                        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 3h10v8H6l-3 2.5V3z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/></svg>{t("Commenter")}</span>
                       <button className="like rep" onClick={()=>repost(p)}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M17 2l4 4-4 4M3 12V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 12v3a3 3 0 0 1-3 3H3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        Republier
+                        {t("Republier")}
                       </button>
-                      {author.isMe&&<span className="postself">{reposted?"Republié par vous":"Votre publication"}</span>}
+                      {author.isMe&&<span className="postself">{reposted?t("Republié par vous"):t("Votre publication")}</span>}
                     </div>
                   </div>
                 );})}
@@ -2951,21 +3749,21 @@ export default function Maillon(){
             <aside className="bside">
               {me.membre?(
                 <div className="memok">
-                  <h4><Check/> Offre Pro active</h4>
-                  <p>Abonnement {me.plan} · {me.billing}. Vous pouvez publier vos actualités sur le fil commun.</p>
-                  <button className="btn block" onClick={tryPublish}>Publier une actualité</button>
+                  <h4><Check/> {t("Offre Pro active")}</h4>
+                  <p>{t("Abonnement")} {me.plan} · {me.billing}. {t("Vous pouvez publier vos actualités sur le fil commun.")}</p>
+                  <button className="btn block" onClick={tryPublish}>{t("Publier une actualité")}</button>
                 </div>
               ):(
                 <div className="memcard">
-                  <h4>Passez à l'offre Pro</h4>
-                  <p>Votre offre {me.plan} n'inclut pas la publication. Passez Pro pour publier vos news et gagner en visibilité.</p>
+                  <h4>{t("Passez à l'offre Maillon Fort")}</h4>
+                  <p>{t("Votre offre")} {me.plan} {t("n'inclut pas la publication. Passez à Maillon Fort pour publier vos news et gagner en visibilité.")}</p>
                   <ul>
-                    <li><Check/> Publier sur le fil commun</li>
-                    <li><Check/> Mise en avant de vos news</li>
-                    <li><Check/> Statistiques de visibilité</li>
-                    <li><Check/> Badge Pro sur votre page</li>
+                    <li><Check/> {t("Publier sur le fil commun")}</li>
+                    <li><Check/> {t("Mise en avant de vos news")}</li>
+                    <li><Check/> {t("Statistiques de visibilité")}</li>
+                    <li><Check/> {t("Badge Maillon Fort sur votre page")}</li>
                   </ul>
-                  <button className="btn-light" onClick={()=>setAdhesion(true)}>Voir l'offre Pro</button>
+                  <button className="btn-light" onClick={openAdhesionUpgrade}>{t("Voir l'offre Maillon Fort")}</button>
                 </div>
               )}
             </aside>
@@ -2988,42 +3786,42 @@ export default function Maillon(){
               </div>
               <div className="paff">
                 <Ring score={dAff}/>
-                <div className="why"><b>{dAff}% d'affinité avec {me.name}.</b> Estimée sur la complémentarité de vos activités, ce que vous cherchez de part et d'autre, et la proximité.</div>
+                <div className="why"><b>{dAff}% {t("d'affinité avec")} {me.name}.</b> {t("Estimée sur la complémentarité de vos activités, ce que vous cherchez de part et d'autre, et la proximité.")}</div>
               </div>
               <div className="pgrid">
-                <div className="pcell"><div className="k">Création</div><div className="v">{detail.founded}</div></div>
-                <div className="pcell"><div className="k">Effectif</div><div className="v">{detail.emp}</div></div>
-                <div className="pcell"><div className="k">Chiffre d'affaires</div><div className="v">{detail.ca}</div></div>
-                <div className="pcell"><div className="k">Disponibilité</div><div className="v">{detail.dispo}</div></div>
-                <div className="pcell"><div className="k">Note</div><div className="v">★ {detail.rating}</div></div>
-                <div className="pcell"><div className="k">Références</div><div className="v">{detail.refs} clients</div></div>
-                <div className="pcell"><div className="k">Langues</div><div className="v">{detail.langues.join(", ")}</div></div>
-                <div className="pcell"><div className="k">SIRET</div><div className="v" style={{fontSize:12.5}}>{detail.siret}{detail.verifiedSiren&&<Check className="verif" style={{width:13,height:13,marginLeft:5}}/>}</div></div>
-                <div className="pcell"><div className="k">Site web</div><div className="v">{detail.web}</div></div>
+                <div className="pcell"><div className="k">{t("Création")}</div><div className="v">{detail.founded}</div></div>
+                <div className="pcell"><div className="k">{t("Effectif")}</div><div className="v">{detail.emp}</div></div>
+                <div className="pcell"><div className="k">{t("Chiffre d'affaires")}</div><div className="v">{detail.ca}</div></div>
+                <div className="pcell"><div className="k">{t("Disponibilité")}</div><div className="v">{detail.dispo}</div></div>
+                <div className="pcell"><div className="k">{t("Note")}</div><div className="v">★ {detail.rating}</div></div>
+                <div className="pcell"><div className="k">{t("Références")}</div><div className="v">{detail.refs} {t("clients")}</div></div>
+                <div className="pcell"><div className="k">{t("Langues")}</div><div className="v">{detail.langues.join(", ")}</div></div>
+                <div className="pcell"><div className="k">{t("SIRET")}</div><div className="v" style={{fontSize:12.5}}>{detail.siret}{detail.verifiedSiren&&<Check className="verif" style={{width:13,height:13,marginLeft:5}}/>}</div></div>
+                <div className="pcell"><div className="k">{t("Site web")}</div><div className="v">{detail.web}</div></div>
               </div>
             </div>
-            <div className="psec"><h5>À propos</h5><p>{detail.desc}</p></div>
-            <div className="psec"><h5>Ce qu'elle recherche</h5>
+            <div className="psec"><h5>{t("À propos")}</h5><p>{detail.desc}</p></div>
+            <div className="psec"><h5>{t("Ce qu'elle recherche")}</h5>
               <div className="seek">{detail.seek.map((s)=><span key={s} className="pill seek">↳ {s}</span>)}</div></div>
-            <div className="psec"><h5>Ce qu'elle propose</h5>
+            <div className="psec"><h5>{t("Ce qu'elle propose")}</h5>
               <div className="seek">{detail.offer.map((s)=><span key={s} className="pill offer">{s}</span>)}</div></div>
-            {detail.certifs.length>0&&<div className="psec"><h5>Certifications & labels</h5>
+            {detail.certifs.length>0&&<div className="psec"><h5>{t("Certifications & labels")}</h5>
               <div className="seek">{detail.certifs.map((s)=><span key={s} className="pill cert">{s}</span>)}</div></div>}
-            <div className="psec"><h5>Services / départements</h5>
-              <div className="seek">{(detail.services||[]).map((s)=><span key={s} className="pill offer">{s}</span>)}</div></div>
-            <div className="psec"><h5>Réception des demandes</h5>
-              <p style={{fontSize:14,color:"var(--slate)"}}>Les demandes de mise en relation arrivent au pôle <b style={{color:"var(--ink)"}}>{detail.receptionPole}</b>.</p>
-              <button className="linkbtn" style={{marginTop:10,color:"var(--coral)"}} onClick={()=>toast(`${detail.name} signalée — notre équipe va examiner`)}>⚑ Signaler cette entreprise</button></div>
+            <div className="psec"><h5>{t("Services / départements")}</h5>
+              <div className="seek">{(detail.services||[]).map((s)=><span key={s} className="pill offer">{t(s)}</span>)}</div></div>
+            <div className="psec"><h5>{t("Réception des demandes")}</h5>
+              <p style={{fontSize:14,color:"var(--slate)"}}>{t("Les demandes de mise en relation arrivent au pôle")} <b style={{color:"var(--ink)"}}>{t(detail.receptionPole)}</b>.</p>
+              <button className="linkbtn" style={{marginTop:10,color:"var(--coral)"}} onClick={()=>toast(`${detail.name} ${t("signalée — notre équipe va examiner")}`)}>⚑ {t("Signaler cette entreprise")}</button></div>
             <div className="pcta">
               {detail.rel==="none"?(
-                <button className="btn block" onClick={()=>openProspect(detail)}>Démarcher {detail.name}</button>
+                <button className="btn block" onClick={()=>openProspect(detail)}>{t("Démarcher")} {detail.name}</button>
               ):detail.rel==="connected"?(
-                <button className="btn block" onClick={()=>{setActiveConv(detail.id);setView("messages");setOpenC(null);}}>Ouvrir la discussion</button>
+                <button className="btn block" onClick={()=>{setActiveConv(detail.id);setView("messages");setOpenC(null);}}>{t("Ouvrir la discussion")}</button>
               ):detail.rel==="incoming"?(
-                <button className="btn block" onClick={()=>{setView("requests");setOpenC(null);}}>Répondre à sa demande</button>
+                <button className="btn block" onClick={()=>{setView("requests");setOpenC(null);}}>{t("Répondre à sa demande")}</button>
               ):detail.rel==="sent"?(
-                <button className="btn-ghost block" disabled style={{opacity:.6}}>Demande en attente</button>
-              ):(<button className="btn-ghost block" disabled style={{opacity:.6}}>Demande déclinée</button>)}
+                <button className="btn-ghost block" disabled style={{opacity:.6}}>{t("Demande en attente")}</button>
+              ):(<button className="btn-ghost block" disabled style={{opacity:.6}}>{t("Demande déclinée")}</button>)}
             </div>
           </div>
         </>
@@ -3037,15 +3835,15 @@ export default function Maillon(){
             <div className="mbox" onClick={(e)=>e.stopPropagation()}>
               <div className="mhead">
                 <div className="logo" style={{background:prospect.color}}>{prospect.name[0]}</div>
-                <div><h3 className="disp">Démarcher {prospect.name}</h3>
-                  <p className="mi">Votre demande part avec votre message. {prospect.name} accepte ou refuse la mise en relation.</p></div>
+                <div><h3 className="disp">{t("Démarcher")} {prospect.name}</h3>
+                  <p className="mi">{t("Votre demande part avec votre message.")} {prospect.name} {t("accepte ou refuse la mise en relation.")}</p></div>
               </div>
-              <div className="accnote" style={{marginBottom:14}}>Votre demande sera reçue par le pôle <b>{prospect.receptionPole}</b> de {prospect.name}, qui décidera de l'accepter.</div>
-              <div className="field"><label>Votre message d'introduction</label>
+              <div className="accnote" style={{marginBottom:14}}>{t("Votre demande sera reçue par le pôle")} <b>{t(prospect.receptionPole)}</b> {t("de")} {prospect.name}, {t("qui décidera de l'accepter.")}</div>
+              <div className="field"><label>{t("Votre message d'introduction")}</label>
                 <textarea rows={4} value={pmsg} onChange={(e)=>setPmsg(e.target.value)}/></div>
               <div style={{display:"flex",gap:10,marginTop:4}}>
-                <button className="btn-ghost" onClick={()=>setProspect(null)}>Annuler</button>
-                <button className="btn block" onClick={sendProspect}>Envoyer la demande</button>
+                <button className="btn-ghost" onClick={()=>setProspect(null)}>{t("Annuler")}</button>
+                <button className="btn block" onClick={sendProspect}>{t("Envoyer la demande")}</button>
               </div>
             </div>
           </div>
@@ -3057,18 +3855,15 @@ export default function Maillon(){
         <>
           <div className="scrim" onClick={()=>setAdhesion(false)}/>
           <div className="modal" onClick={()=>setAdhesion(false)}>
-            <div className="mbox" onClick={(e)=>e.stopPropagation()}>
-              <h3 className="disp">Passer à l'offre Pro</h3>
-              <p className="mi" style={{marginBottom:18}}>La publication d'actualités est incluse dans l'offre Pro. Choisissez votre facturation :</p>
-              <div className="plan" onClick={()=>adhere("Mensuelle")}>
-                <div className="pn">Pro — mensuel</div>
-                <div className="pp">39 €<small> / mois</small></div>
+            <div className="mbox" style={{width:"min(640px,100%)"}} onClick={(e)=>e.stopPropagation()}>
+              <h3 className="disp">{t("Passer à l'offre Maillon Fort")}</h3>
+              <p className="mi" style={{marginBottom:18}}>{t("La publication d'actualités est incluse dans l'offre Maillon Fort. Choisissez votre facturation :")}</p>
+              {renderPlanTable(PLANS.filter((pl)=>pl.id!=="gratuit"),upgradeBilling,setUpgradeBilling,upgradePlan,setUpgradePlan)}
+              <p className="simnote" style={{marginTop:14}}>{t("Paiement sécurisé via Stripe.")}</p>
+              <div style={{display:"flex",gap:10,marginTop:4}}>
+                <button className="btn-ghost" onClick={()=>setAdhesion(false)}>{t("Annuler")}</button>
+                <button className="btn block" onClick={()=>upgradeTo(upgradePlan,upgradeBilling)}>{t("Continuer vers le paiement")}</button>
               </div>
-              <div className="plan" onClick={()=>adhere("Annuelle")}>
-                <div className="pn">Pro — annuel <span className="best">2 mois offerts</span></div>
-                <div className="pp">374 €<small> / an</small></div>
-              </div>
-              <p className="simnote">Maquette — abonnement simulé, aucun paiement réel n'est effectué.</p>
             </div>
           </div>
         </>
@@ -3082,28 +3877,28 @@ export default function Maillon(){
             <div className="mbox" onClick={(e)=>e.stopPropagation()}>
               <div className="mhead">
                 <div className="logo" style={{background:me.color}}>{logoImg(me)}</div>
-                <div><h3 className="disp">Publier une actualité</h3>
-                  <p className="mi">Elle apparaîtra sur le fil commun au nom de {me.name}.</p></div>
+                <div><h3 className="disp">{t("Publier une actualité")}</h3>
+                  <p className="mi">{t("Elle apparaîtra sur le fil commun au nom de")} {me.name}.</p></div>
               </div>
-              <div className="field"><label>Titre</label>
+              <div className="field"><label>{t("Titre")}</label>
                 <input value={postForm.title} onChange={(e)=>setPostForm({...postForm,title:e.target.value})} placeholder="ex : Nous recrutons un développeur"/></div>
-              <div className="field"><label>Catégorie</label>
+              <div className="field"><label>{t("Catégorie")}</label>
                 <input value={postForm.tag} onChange={(e)=>setPostForm({...postForm,tag:e.target.value})} placeholder="Offre, Recrutement, Certification…"/></div>
-              <div className="field"><label>Message</label>
-                <textarea rows={4} value={postForm.body} onChange={(e)=>setPostForm({...postForm,body:e.target.value})} placeholder="Votre actualité en quelques lignes."/></div>
-              <div className="field"><label>Photo (facultative)</label>
+              <div className="field"><label>{t("Message")}</label>
+                <textarea rows={4} value={postForm.body} onChange={(e)=>setPostForm({...postForm,body:e.target.value})} placeholder={t("Votre actualité en quelques lignes.")}/></div>
+              <div className="field"><label>{t("Photo (facultative)")}</label>
                 {postForm.photo?(
                   <div className="photopick">
                     <img src={postForm.photo} alt=""/>
-                    <span className="rm" onClick={()=>setPostForm((f)=>({...f,photo:null}))}>Retirer la photo</span>
+                    <span className="rm" onClick={()=>setPostForm((f)=>({...f,photo:null}))}>{t("Retirer la photo")}</span>
                   </div>
                 ):(
-                  <label className="uplabel btn-ghost sm">Ajouter une photo<input type="file" accept="image/*" onChange={onPhotoPick} style={{display:"none"}}/></label>
+                  <label className="uplabel btn-ghost sm">{t("Ajouter une photo")}<input type="file" accept="image/*" onChange={onPhotoPick} style={{display:"none"}}/></label>
                 )}
               </div>
               <div style={{display:"flex",gap:10,marginTop:4}}>
-                <button className="btn-ghost" onClick={()=>setComposeOpen(false)}>Annuler</button>
-                <button className="btn block" onClick={publish}>Publier</button>
+                <button className="btn-ghost" onClick={()=>setComposeOpen(false)}>{t("Annuler")}</button>
+                <button className="btn block" onClick={publish}>{t("Publier")}</button>
               </div>
             </div>
           </div>
@@ -3116,32 +3911,47 @@ export default function Maillon(){
           <div className="scrim" onClick={()=>setVisioSetup(false)}/>
           <div className="modal" onClick={()=>setVisioSetup(false)}>
             <div className="mbox" onClick={(e)=>e.stopPropagation()}>
-              <h3 className="disp">Visio avec {active.name}</h3>
-              <p className="mi" style={{marginBottom:14}}>Choisissez un ou plusieurs services — vous pouvez inviter plusieurs services à la même visio.</p>
-              <div className="field"><label>Services concernés</label>
+              <h3 className="disp">{t("Visio avec")} {active.name}</h3>
+              <p className="mi" style={{marginBottom:14}}>{t("Choisissez un ou plusieurs services — vous pouvez inviter plusieurs services à la même visio.")}</p>
+              <div className="field"><label>{t("Services concernés")}</label>
                 <div className="svcwrap">
                   {(isAdmin?[...new Set([...(me.services||[]),...(active.services||[])])]:[role,...(access.grants[role]||[])]).map((s)=>(
                     <button key={s} type="button" className={"svcchip"+(visioSvcs.includes(s)?" on":"")}
-                      onClick={()=>setVisioSvcs((v)=>v.includes(s)?v.filter((x)=>x!==s):[...v,s])}>{s}</button>
+                      onClick={()=>setVisioSvcs((v)=>v.includes(s)?v.filter((x)=>x!==s):[...v,s])}>{t(s)}</button>
                   ))}
                 </div>
-                <div className="uphint">{isAdmin?(visioSvcs.length>1?`Visio de groupe · ${visioSvcs.length} services`:"Sélectionnez un ou plusieurs services"):`En tant que ${role}, vous ne pouvez lancer une visio que pour votre service.`}</div>
+                <div className="uphint">{isAdmin?(visioSvcs.length>1?`${t("Visio de groupe")} · ${visioSvcs.length} ${t("services")}`:t("Sélectionnez un ou plusieurs services")):`${t("En tant que")} ${t(role)}, ${t("vous ne pouvez lancer une visio que pour votre service.")}`}</div>
               </div>
-              <button className="btn block" onClick={()=>startVisio(active,visioSvcs)} style={visioSvcs.length?{}:{opacity:.5,pointerEvents:"none"}}>Démarrer la visio maintenant</button>
-              <div style={{display:"flex",alignItems:"center",gap:10,margin:"16px 0",color:"var(--slate-soft)",fontSize:12}}><div style={{flex:1,height:1,background:"var(--line)"}}/>ou planifier<div style={{flex:1,height:1,background:"var(--line)"}}/></div>
+              <button className="btn block" onClick={()=>startVisio(active,visioSvcs)} style={visioSvcs.length?{}:{opacity:.5,pointerEvents:"none"}}>{t("Démarrer la visio maintenant")}</button>
+              <div style={{display:"flex",alignItems:"center",gap:10,margin:"16px 0",color:"var(--slate-soft)",fontSize:12}}><div style={{flex:1,height:1,background:"var(--line)"}}/>{t("ou planifier")}<div style={{flex:1,height:1,background:"var(--line)"}}/></div>
               <div className="grid2">
-                <div className="field"><label>Date</label><input type="date" value={schedForm.date} onChange={(e)=>setSchedForm({...schedForm,date:e.target.value})}/></div>
-                <div className="field"><label>Heure</label><input type="time" value={schedForm.time} onChange={(e)=>setSchedForm({...schedForm,time:e.target.value})}/></div>
+                <div className="field"><label>{t("Date")}</label><input type="date" value={schedForm.date} onChange={(e)=>setSchedForm({...schedForm,date:e.target.value})}/></div>
+                <div className="field"><label>{t("Heure")}</label><input type="time" value={schedForm.time} onChange={(e)=>setSchedForm({...schedForm,time:e.target.value})}/></div>
               </div>
-              <button className="btn-ghost" style={{width:"100%",...(visioSvcs.length?{}:{opacity:.5,pointerEvents:"none"})}} onClick={scheduleVisio}>Planifier la visio</button>
-              <p className="simnote">Visio simulée — aucune vidéo réelle n'est établie dans la maquette.</p>
+              <button className="btn-ghost" style={{width:"100%",...(visioSvcs.length?{}:{opacity:.5,pointerEvents:"none"})}} onClick={scheduleVisio}>{t("Planifier la visio")}</button>
+              <p className="simnote">{t("Visio simulée — aucune vidéo réelle n'est établie dans la maquette.")}</p>
             </div>
           </div>
         </>
       )}
 
       {/* VISIO ROOM */}
-      {visio&&(()=>{const c=companies.find((x)=>x.id===visio.companyId);if(!c)return null;return <VisioRoom me={me} company={c} services={visio.services} onEnd={endVisio}/>;})()}
+      {visio&&(()=>{const c=companies.find((x)=>x.id===visio.companyId);if(!c)return null;return <VisioRoom me={me} company={c} services={visio.services} url={visio.url} onEnd={endVisio} lang={uiLang}/>;})()}
+
+      {/* INVITATION VISIO ENTRANTE */}
+      {incomingVisio&&!visio&&(
+        <>
+          <div className="scrim" onClick={()=>setIncomingVisio(null)}/>
+          <div className="modal" onClick={()=>setIncomingVisio(null)}>
+            <div className="mbox" onClick={(e)=>e.stopPropagation()}>
+              <h3 className="disp">{t("Visio entrante")}</h3>
+              <p className="mi" style={{marginBottom:18}}><b>{incomingVisio.fromName}</b> {t("vous invite à une visio")} · {(incomingVisio.services||[]).map((s)=>t(s)).join(", ")}.</p>
+              <button className="btn block" onClick={joinIncomingVisio}>{t("Rejoindre la visio")}</button>
+              <div style={{textAlign:"center",marginTop:12}}><button className="linkbtn" onClick={()=>setIncomingVisio(null)}>{t("Ignorer")}</button></div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* CONFIRMATION RÔLE DIRECTION */}
       {directionConfirm&&(
@@ -3149,10 +3959,10 @@ export default function Maillon(){
           <div className="scrim" onClick={()=>setDirectionConfirm(null)}/>
           <div className="modal" onClick={()=>setDirectionConfirm(null)}>
             <div className="mbox" onClick={(e)=>e.stopPropagation()}>
-              <h3 className="disp">Attention</h3>
+              <h3 className="disp">{t("Attention")}</h3>
               <p className="mi" style={{marginBottom:16}}>{directionConfirm.message}</p>
-              <button className="btn block" onClick={()=>{directionConfirm.onConfirm();setDirectionConfirm(null);}}>Confirmer</button>
-              <div style={{textAlign:"center",marginTop:12}}><button className="linkbtn" onClick={()=>setDirectionConfirm(null)}>Annuler</button></div>
+              <button className="btn block" onClick={()=>{directionConfirm.onConfirm();setDirectionConfirm(null);}}>{t("Confirmer")}</button>
+              <div style={{textAlign:"center",marginTop:12}}><button className="linkbtn" onClick={()=>setDirectionConfirm(null)}>{t("Annuler")}</button></div>
             </div>
           </div>
         </>
@@ -3164,9 +3974,9 @@ export default function Maillon(){
           <div className="scrim" onClick={()=>setCustomRolePrompt(null)}/>
           <div className="modal" onClick={()=>setCustomRolePrompt(null)}>
             <div className="mbox" onClick={(e)=>e.stopPropagation()}>
-              <h3 className="disp">Préciser le service</h3>
-              <p className="mi" style={{marginBottom:16}}>Quel service pour {customRolePrompt.name} ?</p>
-              <div className="field"><label>Service</label>
+              <h3 className="disp">{t("Préciser le service")}</h3>
+              <p className="mi" style={{marginBottom:16}}>{t("Quel service pour")} {customRolePrompt.name} ?</p>
+              <div className="field"><label>{t("Service")}</label>
                 <input value={customRoleValue} onChange={(e)=>setCustomRoleValue(e.target.value)} placeholder="ex : Support client" onKeyDown={(e)=>e.key==="Enter"&&customRoleValue.trim()&&(()=>{
                   const r=customRoleValue.trim();const id=customRolePrompt.id;
                   setCustomRolePrompt(null);
@@ -3178,8 +3988,8 @@ export default function Maillon(){
                 setCustomRolePrompt(null);
                 if(r==="Direction")setDirectionConfirm({message:`Donner le rôle Direction à ${customRolePrompt.name} lui donnera aussi le contrôle total des droits d'accès et du cloisonnement de votre entreprise. Confirmer ?`,onConfirm:()=>updateRole(id,r)});
                 else updateRole(id,r);
-              }}>Confirmer</button>
-              <div style={{textAlign:"center",marginTop:12}}><button className="linkbtn" onClick={()=>setCustomRolePrompt(null)}>Annuler</button></div>
+              }}>{t("Confirmer")}</button>
+              <div style={{textAlign:"center",marginTop:12}}><button className="linkbtn" onClick={()=>setCustomRolePrompt(null)}>{t("Annuler")}</button></div>
             </div>
           </div>
         </>
@@ -3191,15 +4001,15 @@ export default function Maillon(){
           <div className="scrim" onClick={cancelMfaEnroll}/>
           <div className="modal" onClick={cancelMfaEnroll}>
             <div className="mbox" onClick={(e)=>e.stopPropagation()}>
-              <h3 className="disp">Activer la double authentification</h3>
-              <p className="mi" style={{marginBottom:16}}>Scannez ce code avec votre application d'authentification (Google Authenticator, Authy…), puis entrez le code à 6 chiffres généré.</p>
+              <h3 className="disp">{t("Activer la double authentification")}</h3>
+              <p className="mi" style={{marginBottom:16}}>{t("Scannez ce code avec votre application d'authentification (Google Authenticator, Authy…), puis entrez le code à 6 chiffres généré.")}</p>
               {mfaQr&&<div style={{textAlign:"center",margin:"0 0 14px"}}><div style={{display:"inline-block"}} dangerouslySetInnerHTML={{__html:mfaQr}}/></div>}
-              {mfaSecret&&<p style={{fontSize:12,color:"var(--slate)",textAlign:"center",wordBreak:"break-all",marginBottom:14}}>Ou entrez la clé manuellement : <b>{mfaSecret}</b></p>}
-              <div className="field"><label>Code à 6 chiffres</label>
+              {mfaSecret&&<p style={{fontSize:12,color:"var(--slate)",textAlign:"center",wordBreak:"break-all",marginBottom:14}}>{t("Ou entrez la clé manuellement")} : <b>{mfaSecret}</b></p>}
+              <div className="field"><label>{t("Code à 6 chiffres")}</label>
                 <input value={mfaCode} onChange={(e)=>setMfaCode(e.target.value)} placeholder="123456" maxLength={6} onKeyDown={(e)=>e.key==="Enter"&&confirmMfaEnroll()}/></div>
               {mfaError&&<p style={{color:"var(--coral)",fontSize:13,margin:"0 0 12px"}}>{mfaError}</p>}
-              <button className="btn block" disabled={mfaBusy||!mfaCode.trim()} onClick={confirmMfaEnroll}>{mfaBusy?"Vérification…":"Confirmer et activer"}</button>
-              <div style={{textAlign:"center",marginTop:12}}><button className="linkbtn" onClick={cancelMfaEnroll}>Annuler</button></div>
+              <button className="btn block" disabled={mfaBusy||!mfaCode.trim()} onClick={confirmMfaEnroll}>{mfaBusy?t("Vérification…"):t("Confirmer et activer")}</button>
+              <div style={{textAlign:"center",marginTop:12}}><button className="linkbtn" onClick={cancelMfaEnroll}>{t("Annuler")}</button></div>
             </div>
           </div>
         </>
@@ -3210,20 +4020,15 @@ export default function Maillon(){
         <>
           <div className="scrim" onClick={()=>setLimitOpen(false)}/>
           <div className="modal" onClick={()=>setLimitOpen(false)}>
-            <div className="mbox" onClick={(e)=>e.stopPropagation()}>
-              <h3 className="disp">Passez à la vitesse supérieure</h3>
-              <p className="mi" style={{marginBottom:18}}>L'offre Découverte est limitée à 5 démarchages, non renouvelables{remaining()===0?" — vous les avez tous utilisés":""}. Pour continuer à démarcher, passez à une offre payante (démarchages illimités).</p>
-              <div className="plan" onClick={()=>upgradeTo("essentiel","Mensuelle")}>
-                <div className="pn">Pro</div>
-                <div className="pp">19 €<small> / mois</small></div>
-                <div className="tg2" style={{margin:"2px 0 0"}}>Démarchages illimités + mur de besoins & visio</div>
+            <div className="mbox" style={{width:"min(640px,100%)"}} onClick={(e)=>e.stopPropagation()}>
+              <h3 className="disp">{t("Passez à la vitesse supérieure")}</h3>
+              <p className="mi" style={{marginBottom:18}}>{t("L'offre Premier Maillon est limitée à 5 démarchages, non renouvelables")}{remaining()===0?` — ${t("vous les avez tous utilisés")}`:""}. {t("Pour continuer à démarcher, passez à une offre payante (démarchages illimités).")}</p>
+              {renderPlanTable(PLANS.filter((pl)=>pl.id!=="gratuit"),upgradeBilling,setUpgradeBilling,upgradePlan,setUpgradePlan)}
+              <p className="simnote" style={{marginTop:14}}>{t("Paiement sécurisé via Stripe.")}</p>
+              <div style={{display:"flex",gap:10,marginTop:4}}>
+                <button className="btn-ghost" onClick={()=>setLimitOpen(false)}>{t("Annuler")}</button>
+                <button className="btn block" onClick={()=>upgradeTo(upgradePlan,upgradeBilling)}>{t("Continuer vers le paiement")}</button>
               </div>
-              <div className="plan" onClick={()=>upgradeTo("pro","Mensuelle")}>
-                <div className="pn">Business <span className="best">Blog inclus</span></div>
-                <div className="pp">39 €<small> / mois</small></div>
-                <div className="tg2" style={{margin:"2px 0 0"}}>Tout Pro + actualités, mise en avant & visio de groupe</div>
-              </div>
-              <p className="simnote">Abonnement simulé — aucun paiement réel n'est effectué.</p>
             </div>
           </div>
         </>
@@ -3235,19 +4040,19 @@ export default function Maillon(){
           <div className="scrim" onClick={()=>setNeedOpen(false)}/>
           <div className="modal" onClick={()=>setNeedOpen(false)}>
             <div className="mbox" onClick={(e)=>e.stopPropagation()}>
-              <h3 className="disp">Publier un besoin</h3>
-              <p className="mi" style={{marginBottom:16}}>Décrivez ce que vous cherchez. Les entreprises concernées pourront vous proposer leurs services.</p>
-              <div className="field"><label>Votre besoin</label>
+              <h3 className="disp">{t("Publier un besoin")}</h3>
+              <p className="mi" style={{marginBottom:16}}>{t("Décrivez ce que vous cherchez. Les entreprises concernées pourront vous proposer leurs services.")}</p>
+              <div className="field"><label>{t("Votre besoin")}</label>
                 <textarea rows={3} value={needForm.title} onChange={(e)=>setNeedForm({...needForm,title:e.target.value})} placeholder="ex : Nous cherchons un prestataire logistique en Bretagne"/></div>
               <div className="grid2">
-                <div className="field"><label>Secteur recherché</label>
+                <div className="field"><label>{t("Secteur recherché")}</label>
                   <select value={needForm.sought} onChange={(e)=>setNeedForm({...needForm,sought:e.target.value})}>{SECTORS.map((s)=><option key={s}>{s}</option>)}</select></div>
-                <div className="field"><label>Localisation</label>
+                <div className="field"><label>{t("Localisation")}</label>
                   <input value={needForm.loc} onChange={(e)=>setNeedForm({...needForm,loc:e.target.value})} placeholder={me.loc}/></div>
               </div>
               <div style={{display:"flex",gap:10,marginTop:4}}>
-                <button className="btn-ghost" onClick={()=>setNeedOpen(false)}>Annuler</button>
-                <button className="btn block" onClick={publishNeed}>Publier</button>
+                <button className="btn-ghost" onClick={()=>setNeedOpen(false)}>{t("Annuler")}</button>
+                <button className="btn block" onClick={publishNeed}>{t("Publier")}</button>
               </div>
             </div>
           </div>
@@ -3260,31 +4065,31 @@ export default function Maillon(){
           <div className="scrim" onClick={()=>setCollab(null)}/>
           <div className="modal" onClick={()=>setCollab(null)}>
             <div className="mbox" onClick={(e)=>e.stopPropagation()}>
-              <h3 className="disp">{collab==="quote"?"Demander un devis":"Partager un document"}</h3>
-              <p className="mi" style={{marginBottom:16}}>Service {mSvc} · {active.name}.</p>
+              <h3 className="disp">{collab==="quote"?t("Demander un devis"):t("Partager un document")}</h3>
+              <p className="mi" style={{marginBottom:16}}>{t("Service")} {t(mSvc)} · {active.name}.</p>
               {collab==="quote"?(
                 <>
-                  <div className="field"><label>Objet de la demande</label><input value={collabForm.subject} onChange={(e)=>setCollabForm({...collabForm,subject:e.target.value})} placeholder="ex : Refonte de notre site e-commerce"/></div>
-                  <div className="field"><label>Budget indicatif (optionnel)</label><input value={collabForm.budget} onChange={(e)=>setCollabForm({...collabForm,budget:e.target.value})} placeholder="ex : 5 000 – 8 000 €"/></div>
+                  <div className="field"><label>{t("Objet de la demande")}</label><input value={collabForm.subject} onChange={(e)=>setCollabForm({...collabForm,subject:e.target.value})} placeholder="ex : Refonte de notre site e-commerce"/></div>
+                  <div className="field"><label>{t("Budget indicatif (optionnel)")}</label><input value={collabForm.budget} onChange={(e)=>setCollabForm({...collabForm,budget:e.target.value})} placeholder="ex : 5 000 – 8 000 €"/></div>
                 </>
               ):(
-                <div className="field"><label>Nom du document</label><input value={collabForm.name} onChange={(e)=>setCollabForm({...collabForm,name:e.target.value})} placeholder="Proposition_commerciale.pdf"/></div>
+                <div className="field"><label>{t("Nom du document")}</label><input value={collabForm.name} onChange={(e)=>setCollabForm({...collabForm,name:e.target.value})} placeholder="Proposition_commerciale.pdf"/></div>
               )}
               <div style={{display:"flex",gap:10,marginTop:4}}>
-                <button className="btn-ghost" onClick={()=>setCollab(null)}>Annuler</button>
-                <button className="btn block" onClick={postCollab}>{collab==="quote"?"Envoyer la demande":"Partager"}</button>
+                <button className="btn-ghost" onClick={()=>setCollab(null)}>{t("Annuler")}</button>
+                <button className="btn block" onClick={postCollab}>{collab==="quote"?t("Envoyer la demande"):t("Partager")}</button>
               </div>
-              <p className="simnote">Espace de collaboration — dans la vraie application, devis et fichiers seraient réellement transmis et stockés.</p>
+              <p className="simnote">{t("Espace de collaboration — dans la vraie application, devis et fichiers seraient réellement transmis et stockés.")}</p>
             </div>
           </div>
         </>
       )}
 
       <div className="toasts">
-        {toasts.map((t)=><div key={t.id} className="toast">{t.t.startsWith("✓")?<span className="tk"><Check/></span>:null}{t.t.replace("✓ ","")}</div>)}
+        {toasts.map((ts)=><div key={ts.id} className="toast">{ts.t.startsWith("✓")?<span className="tk"><Check/></span>:null}{ts.t.replace("✓ ","")}</div>)}
       </div>
 
-      <div className="foot">Prototype <b>Maillon</b> — tous secteurs · carte · affinité · double consentement · messagerie par service · visio · blog & adhésion · données fictives</div>
+      <div className="foot">{t("Prototype")} <b>Maillon</b> — {t("tous secteurs · carte · affinité · double consentement · messagerie par service · visio · blog & adhésion · données fictives")}</div>
     </div>
   );
 }
