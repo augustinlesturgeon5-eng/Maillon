@@ -84,26 +84,35 @@ const CSS = `
 .mln .stp.on{background:var(--emerald);}
 .mln .stphint{font-family:'Inter';font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate-soft);margin-bottom:16px;}
 
-.mln .landing{min-height:100vh;background:var(--paper);}
+.mln .landing{min-height:100vh;background:var(--paper);overflow-x:hidden;}
 .mln .landbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:20px 28px;background:rgba(251,250,247,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
 .mln .landbar .actions{display:flex;align-items:center;gap:14px;}
-.mln .landhero{max-width:760px;margin:0 auto;padding:72px 24px 56px;text-align:center;}
+.mln .landglow{position:relative;}
+.mln .landglow::before{content:"";position:absolute;top:-140px;left:50%;transform:translateX(-50%);width:min(1000px,160vw);height:620px;background:radial-gradient(closest-side, rgba(15,132,107,.18), rgba(15,132,107,0) 72%);pointer-events:none;z-index:0;}
+.mln .landglow::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(15,24,38,.06) 1px, transparent 1px);background-size:22px 22px;-webkit-mask-image:radial-gradient(closest-side, #000 0%, transparent 75%);mask-image:radial-gradient(closest-side, #000 0%, transparent 75%);-webkit-mask-position:top center;mask-position:top center;pointer-events:none;z-index:0;}
+.mln .landhero{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:72px 24px 56px;text-align:center;}
 .mln .landhero .eyebrow{font-family:'Inter';font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--emerald);font-weight:700;margin-bottom:16px;}
-.mln .landhero h1{font-family:'Bricolage Grotesque';font-weight:800;font-size:clamp(32px,5.5vw,52px);line-height:1.08;letter-spacing:-.02em;margin:0 0 18px;}
+.mln .landhero h1{font-family:'Bricolage Grotesque';font-weight:800;font-size:clamp(34px,6vw,58px);line-height:1.06;letter-spacing:-.02em;margin:0 0 18px;}
+.mln .landhero h1 .accent{color:var(--emerald);}
 .mln .landhero p.lead{font-size:17px;color:var(--slate);max-width:560px;margin:0 auto 30px;line-height:1.55;}
 .mln .landcta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:14px;}
 .mln .landcta .btn,.mln .landcta .btn-ghost{padding:14px 26px;font-size:15.5px;}
+.mln .landcta .btn{box-shadow:0 16px 34px -16px rgba(15,132,107,.55);}
 .mln .landsub{font-size:12.5px;color:var(--slate-soft);}
-.mln .landfeats{max-width:1040px;margin:0 auto;padding:10px 24px 64px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;}
-.mln .featcard{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px 22px;text-align:left;}
-.mln .featcard .fi{width:38px;height:38px;border-radius:10px;background:var(--emerald-wash);color:var(--emerald);display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
+.mln .landfeats{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding:10px 24px 64px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;}
+.mln .featcard{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px 22px;text-align:left;transition:transform .28s cubic-bezier(.22,1,.36,1),box-shadow .28s ease,border-color .28s ease;}
+.mln .featcard:hover{transform:translateY(-5px);box-shadow:0 22px 44px -26px rgba(15,24,38,.24);border-color:var(--emerald);}
+.mln .featcard .fi{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--emerald-wash),#fff);color:var(--emerald);display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
 .mln .featcard h4{font-family:'Bricolage Grotesque';font-weight:700;font-size:16px;margin:0 0 8px;}
 .mln .featcard p{font-size:13.5px;color:var(--slate);line-height:1.5;margin:0;}
-.mln .landbanner{max-width:760px;margin:0 auto 72px;padding:40px 32px;border-radius:20px;background:var(--ink);text-align:center;}
-.mln .landbanner h3{font-family:'Bricolage Grotesque';color:#fff;font-weight:800;font-size:clamp(20px,3vw,26px);margin:0 0 10px;}
-.mln .landbanner p{color:#c7ccd4;font-size:14px;margin:0 0 22px;}
-.mln .landbanner .btn{background:var(--emerald);}
+.mln .landbanner{position:relative;overflow:hidden;max-width:760px;margin:0 auto 72px;padding:40px 32px;border-radius:20px;background:radial-gradient(130% 180% at 50% -30%, rgba(22,168,134,.4), transparent 62%),var(--ink);text-align:center;}
+.mln .landbanner h3{position:relative;font-family:'Bricolage Grotesque';color:#fff;font-weight:800;font-size:clamp(20px,3vw,26px);margin:0 0 10px;}
+.mln .landbanner p{position:relative;color:#c7ccd4;font-size:14px;margin:0 0 22px;}
+.mln .landbanner .btn{position:relative;background:var(--emerald);}
 .mln .landbanner .btn:hover{background:var(--emerald-bright);}
+.mln .reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease;}
+.mln .reveal.in{opacity:1;transform:none;}
+@media (prefers-reduced-motion: reduce){.mln .reveal{opacity:1;transform:none;transition:none;}}
 
 .mln .field{margin-bottom:16px;}
 .mln .field>label{display:block;font-family:'Inter';font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-bottom:6px;}
@@ -767,6 +776,8 @@ const TRANSLATIONS={en:{
   "Aucun besoin pour l'instant":"No needs yet",
   "Soyez le premier à publier ce que vous recherchez.":"Be the first to post what you're looking for.",
   "Le réseau des entreprises qui se choisissent.":"The network where companies choose each other.",
+  "Le réseau des entreprises":"The network where companies",
+  "qui se choisissent.":"choose each other.",
   "Repérez les partenaires les plus complémentaires à votre activité, partout en France, et n'échangez qu'avec ceux qui vous ont dit oui.":"Spot the partners most complementary to your business, anywhere in France, and only talk to the ones who said yes to you.",
   "Mensuel":"Monthly",
   "Comptant (1 an)":"Upfront (1 year)",
@@ -1087,6 +1098,73 @@ const TRANSLATIONS={en:{
 }};
 const mapDirectoryCompany=(row)=>{const base=mapCompanyRow(row);return {...base,tag:base.desc,rel:"none",channels:{}};};
 const isRealCompany=(c)=>!!c&&typeof c.id==="string";
+
+const LAND_FEATS=[
+  {icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>,
+    title:"Double consentement",body:"Vous démarchez, l'entreprise décide. Aucune messagerie ne s'ouvre sans accord des deux côtés."},
+  {icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H8l-4 3V5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>,
+    title:"Messagerie cloisonnée",body:"Chaque service échange avec son homologue chez l'autre entreprise, en toute confidentialité."},
+  {icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2-6.3-4.6-6.3 4.6L8 13.8 2 9.4h7.6z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/></svg>,
+    title:"Carte & score d'affinité",body:"Repérez partout en France les entreprises les plus complémentaires à la vôtre."},
+  {icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><path d="M4 7l8 6 8-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    title:"Emailing & listes de diffusion",body:"Envoyez des campagnes aux entreprises qui ont accepté de les recevoir, et regroupez-les dans vos propres listes."},
+];
+
+function Landing({t,uiLang,toggleGuestLang,onAuth}){
+  const revealRefs=useRef([]);
+  revealRefs.current=[];
+  const addReveal=(el)=>{if(el&&!revealRefs.current.includes(el))revealRefs.current.push(el);};
+  useEffect(()=>{
+    const els=revealRefs.current;
+    if(!els.length)return;
+    if(typeof IntersectionObserver==="undefined"){els.forEach((el)=>el.classList.add("in"));return;}
+    const io=new IntersectionObserver((entries)=>{
+      entries.forEach((e)=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);}});
+    },{threshold:0.15});
+    els.forEach((el)=>io.observe(el));
+    return ()=>io.disconnect();
+  },[]);
+  return(
+    <div className="mln"><style>{CSS}</style>
+      <div className="landing">
+        <div className="landbar">
+          <div className="brand"><Mark height={24}/></div>
+          <div className="actions">
+            <button className="linkbtn" onClick={toggleGuestLang}>{uiLang==="fr"?"EN":"FR"}</button>
+            <button className="btn-ghost sm" onClick={()=>onAuth("signin")}>{t("Se connecter")}</button>
+          </div>
+        </div>
+        <div className="landglow">
+          <div className="landhero">
+            <div className="eyebrow">{t("Créez votre page entreprise")}</div>
+            <h1>{t("Le réseau des entreprises")} <span className="accent">{t("qui se choisissent.")}</span></h1>
+            <p className="lead">{t("Repérez les partenaires les plus complémentaires à votre activité, partout en France, et n'échangez qu'avec ceux qui vous ont dit oui.")}</p>
+            <div className="landcta">
+              <button className="btn" onClick={()=>onAuth("signup")}>{t("Créer mon compte")}</button>
+              <button className="btn-ghost" onClick={()=>onAuth("signin")}>{t("Se connecter")}</button>
+            </div>
+            <div className="landsub">{t("Gratuit pour commencer, sans carte bancaire.")}</div>
+          </div>
+        </div>
+        <div className="landfeats">
+          {LAND_FEATS.map((f,i)=>(
+            <div key={f.title} ref={addReveal} className="featcard reveal" style={{transitionDelay:`${i*70}ms`}}>
+              <div className="fi">{f.icon}</div>
+              <h4>{t(f.title)}</h4>
+              <p>{t(f.body)}</p>
+            </div>
+          ))}
+        </div>
+        <div ref={addReveal} className="landbanner reveal">
+          <h3>{t("Prêt à trouver vos prochains partenaires ?")}</h3>
+          <p>{t("Publiez votre page en quelques minutes et commencez à explorer le réseau.")}</p>
+          <button className="btn" onClick={()=>onAuth("signup")}>{t("Créer mon compte")}</button>
+        </div>
+        <div className="foot">{t("Prototype")} <b>Maillon</b> — {t("maquette cliquable · données fictives")}</div>
+      </div>
+    </div>
+  );
+}
 
 function VisioRoom({me,company,services,url,onEnd,lang}){
   const t=(s)=>(TRANSLATIONS[lang]&&TRANSLATIONS[lang][s])||s;
@@ -2224,54 +2302,7 @@ export default function Maillon(){
   /* ============ PAGE D'ACCUEIL ============ */
   if(!session&&preAuthView==="landing"){
     const goAuth=(mode)=>{setAuthMode(mode);setAuthError("");setPreAuthView("auth");};
-    const FEATS=[
-      {icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>,
-        title:"Double consentement",body:"Vous démarchez, l'entreprise décide. Aucune messagerie ne s'ouvre sans accord des deux côtés."},
-      {icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H8l-4 3V5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>,
-        title:"Messagerie cloisonnée",body:"Chaque service échange avec son homologue chez l'autre entreprise, en toute confidentialité."},
-      {icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2-6.3-4.6-6.3 4.6L8 13.8 2 9.4h7.6z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/></svg>,
-        title:"Carte & score d'affinité",body:"Repérez partout en France les entreprises les plus complémentaires à la vôtre."},
-      {icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><path d="M4 7l8 6 8-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-        title:"Emailing & listes de diffusion",body:"Envoyez des campagnes aux entreprises qui ont accepté de les recevoir, et regroupez-les dans vos propres listes."},
-    ];
-    return(
-      <div className="mln"><style>{CSS}</style>
-        <div className="landing">
-          <div className="landbar">
-            <div className="brand"><Mark height={24}/></div>
-            <div className="actions">
-              <button className="linkbtn" onClick={toggleGuestLang}>{uiLang==="fr"?"EN":"FR"}</button>
-              <button className="btn-ghost sm" onClick={()=>goAuth("signin")}>{t("Se connecter")}</button>
-            </div>
-          </div>
-          <div className="landhero">
-            <div className="eyebrow">{t("Créez votre page entreprise")}</div>
-            <h1>{t("Le réseau des entreprises qui se choisissent.")}</h1>
-            <p className="lead">{t("Repérez les partenaires les plus complémentaires à votre activité, partout en France, et n'échangez qu'avec ceux qui vous ont dit oui.")}</p>
-            <div className="landcta">
-              <button className="btn" onClick={()=>goAuth("signup")}>{t("Créer mon compte")}</button>
-              <button className="btn-ghost" onClick={()=>goAuth("signin")}>{t("Se connecter")}</button>
-            </div>
-            <div className="landsub">{t("Gratuit pour commencer, sans carte bancaire.")}</div>
-          </div>
-          <div className="landfeats">
-            {FEATS.map((f)=>(
-              <div key={f.title} className="featcard">
-                <div className="fi">{f.icon}</div>
-                <h4>{t(f.title)}</h4>
-                <p>{t(f.body)}</p>
-              </div>
-            ))}
-          </div>
-          <div className="landbanner">
-            <h3>{t("Prêt à trouver vos prochains partenaires ?")}</h3>
-            <p>{t("Publiez votre page en quelques minutes et commencez à explorer le réseau.")}</p>
-            <button className="btn" onClick={()=>goAuth("signup")}>{t("Créer mon compte")}</button>
-          </div>
-          <div className="foot">{t("Prototype")} <b>Maillon</b> — {t("maquette cliquable · données fictives")}</div>
-        </div>
-      </div>
-    );
+    return <Landing t={t} uiLang={uiLang} toggleGuestLang={toggleGuestLang} onAuth={goAuth}/>;
   }
 
   /* ============ AUTHENTIFICATION ============ */
