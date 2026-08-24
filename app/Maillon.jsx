@@ -498,146 +498,6 @@ const CSS = `
 }
 `;
 
-const seed = (o) => ({ verified:true, rating:4.7, ...o, color:SECTOR_COLORS[o.sector] });
-const DIRECTORY_RAW = [
-  seed({ id:1, name:"Fibre & Cie", sector:"Tech & Dév", loc:"Rennes", size:"12 pers.", emp:"11–50",
-    founded:2016, ca:"500 k–2 M€", dispo:"Disponible", web:"fibre-cie.fr", refs:34, rating:4.9,
-    certifs:["RGPD","ISO 27001"], langues:["Français","Anglais"],
-    tag:"Studio de développement web & applications métier pour PME.",
-    seek:["Partenaires design","Apporteurs d'affaires"], offer:["Dev sur mesure","Intégration API","Maintenance"],
-    desc:"Studio technique rennais. On conçoit des applications robustes, du cadrage au déploiement, avec un suivi long terme.", rel:"none" }),
-  seed({ id:2, name:"Atelier Signal", sector:"Design & Création", loc:"Nantes", size:"6 pers.", emp:"1–10",
-    founded:2019, ca:"< 500 k€", dispo:"Disponible", web:"ateliersignal.studio", refs:52, rating:4.8,
-    certifs:["Qualiopi"], langues:["Français","Anglais","Espagnol"],
-    tag:"Identité visuelle, branding et direction artistique.",
-    seek:["Studios web","Imprimeurs"], offer:["Branding","Charte graphique","Packaging"],
-    desc:"Petit atelier de design qui construit des identités qui durent. Un interlocuteur unique du brief à la livraison.", rel:"incoming", toService:"Commercial",
-    reqMsg:"Bonjour, on cherche un partenaire tech fiable pour référer nos clients qui ont besoin de sites sur mesure. Votre profil colle parfaitement — on démarre une discussion ?" }),
-  seed({ id:3, name:"Relais Nord", sector:"Logistique & Transport", loc:"Lille", size:"48 pers.", emp:"11–50",
-    founded:2008, ca:"2–10 M€", dispo:"Sur devis", web:"relais-nord.com", refs:120, rating:4.6,
-    certifs:["ISO 9001","AEO"], langues:["Français","Néerlandais"],
-    tag:"Transport et stockage pour flux régionaux et nationaux.",
-    seek:["E-commerçants","Industriels"], offer:["Entrepôt","Livraison dernier km","Préparation commandes"],
-    desc:"Transporteur régional avec entrepôt de 4000m². Suivi en temps réel, engagement sur les délais, flotte récente.", rel:"none" }),
-  seed({ id:4, name:"Cap Talents", sector:"RH & Recrutement", loc:"Paris", size:"22 pers.", emp:"11–50",
-    founded:2014, ca:"2–10 M€", dispo:"Disponible", web:"captalents.fr", refs:88, rating:4.7, verified:false,
-    certifs:["OPQCM"], langues:["Français","Anglais"],
-    tag:"Recrutement de profils cadres et techniques.",
-    seek:["Scale-ups","ESN"], offer:["Chasse de tête","Recrutement volume","Marque employeur"],
-    desc:"Cabinet orienté tech et fonctions support. Sourcing rigoureux, garantie de remplacement, forte connaissance des salaires du marché.", rel:"none" }),
-  seed({ id:5, name:"Bordier & Associés", sector:"Juridique & Compta", loc:"Rennes", size:"9 pers.", emp:"1–10",
-    founded:2003, ca:"500 k–2 M€", dispo:"Sur devis", web:"bordier-associes.fr", refs:210, rating:4.9,
-    certifs:["Ordre des experts-comptables"], langues:["Français"],
-    tag:"Expertise comptable et conseil juridique aux TPE-PME.",
-    seek:["Jeunes entreprises","Réseaux pro"], offer:["Comptabilité","Paie","Conseil juridique","Fiscalité"],
-    desc:"Cabinet de proximité. On simplifie l'administratif pour que vous restiez concentré sur votre activité. Outils numériques inclus.", rel:"connected",
-    channels:{Direction:[{from:"sys",text:"Mise en relation acceptée il y a 3 jours (canal Direction)."},{from:"them",text:"Ravi de démarrer cet échange ! On peut caler un point cette semaine ?"},{from:"sys",kind:"meeting",date:"2026-08-20",time:"14:30"}],
-      "Comptabilité":[{from:"sys",text:"Canal Comptabilité ouvert."},{from:"them",text:"Bonjour, on peut échanger sur la reprise de votre comptabilité dès que vous voulez."}]} }),
-  seed({ id:6, name:"Éclat Studio", sector:"Marketing & Com", loc:"Bordeaux", size:"15 pers.", emp:"11–50",
-    founded:2017, ca:"500 k–2 M€", dispo:"Disponible", web:"eclat.studio", refs:67, rating:4.5,
-    certifs:["Google Partner","Meta Business Partner"], langues:["Français","Anglais"],
-    tag:"Stratégie de contenu, réseaux sociaux et acquisition.",
-    seek:["Agences complémentaires","Annonceurs"], offer:["Social media","Publicité en ligne","SEO"],
-    desc:"Agence data-driven. On pilote vos campagnes à la performance avec un reporting clair chaque mois.", rel:"incoming", toService:"Direction",
-    reqMsg:"Salut ! On a plusieurs clients qui nous demandent du développement et on préfère référer que sous-traiter dans le flou. On aimerait vous rencontrer." }),
-  seed({ id:7, name:"Grand Angle", sector:"Événementiel", loc:"Lyon", size:"11 pers.", emp:"11–50",
-    founded:2012, ca:"2–10 M€", dispo:"Complet", web:"grandangle-events.fr", refs:45, rating:4.8,
-    certifs:["ISO 20121"], langues:["Français","Anglais","Italien"],
-    tag:"Organisation d'événements pro et séminaires d'entreprise.",
-    seek:["Traiteurs","Prestataires audiovisuels"], offer:["Séminaires","Salons","Team building"],
-    desc:"Agence événementielle clé en main. Du concept à la logistique, on orchestre des événements qui marquent, en France comme à l'étranger.", rel:"none" }),
-  seed({ id:8, name:"Forge Industrielle", sector:"Industrie & Production", loc:"Clermont-Ferrand", size:"64 pers.", emp:"51–200",
-    founded:1998, ca:"> 10 M€", dispo:"Sur devis", web:"forge-industrielle.fr", refs:150, rating:4.4, verified:false,
-    certifs:["ISO 9001","EN 9100"], langues:["Français","Allemand"],
-    tag:"Fabrication de pièces métalliques et sous-traitance.",
-    seek:["Bureaux d'études","Donneurs d'ordre"], offer:["Usinage","Tôlerie","Prototypage"],
-    desc:"Atelier de mécanique de précision. Petites et moyennes séries, prototypage rapide, contrôle qualité systématique.", rel:"none" }),
-  seed({ id:9, name:"Solstice Énergie", sector:"Énergie & Environnement", loc:"Montpellier", size:"30 pers.", emp:"11–50",
-    founded:2015, ca:"2–10 M€", dispo:"Disponible", web:"solstice-energie.fr", refs:74, rating:4.6,
-    certifs:["QualiPV","RGE"], langues:["Français","Anglais"],
-    tag:"Installation solaire et conseil en efficacité énergétique.",
-    seek:["Industriels","Bailleurs","Collectivités"], offer:["Photovoltaïque","Audit énergétique","Bornes de recharge"],
-    desc:"Installateur photovoltaïque et bureau d'études énergie. On aide les entreprises à réduire leur facture et leur empreinte.", rel:"none" }),
-  seed({ id:10, name:"Cabinet Vega", sector:"Conseil & Stratégie", loc:"Toulouse", size:"18 pers.", emp:"11–50",
-    founded:2011, ca:"2–10 M€", dispo:"Sur devis", web:"cabinet-vega.fr", refs:96, rating:4.7,
-    certifs:["ISO 20700"], langues:["Français","Anglais","Espagnol"],
-    tag:"Conseil en stratégie et transformation pour ETI.",
-    seek:["Dirigeants","Fonds d'investissement"], offer:["Stratégie","Organisation","Pilotage de projet"],
-    desc:"Cabinet de conseil indépendant. On accompagne les dirigeants sur leurs décisions structurantes, du diagnostic à la mise en œuvre.", rel:"none" }),
-  seed({ id:11, name:"Novabat", sector:"BTP & Construction", loc:"Marseille", size:"85 pers.", emp:"51–200",
-    founded:2005, ca:"> 10 M€", dispo:"Sur devis", web:"novabat.fr", refs:180, rating:4.3, verified:false,
-    certifs:["Qualibat","RGE"], langues:["Français"],
-    tag:"Gros œuvre et rénovation de bâtiments tertiaires.",
-    seek:["Architectes","Promoteurs","Bureaux d'études"], offer:["Gros œuvre","Rénovation","Second œuvre"],
-    desc:"Entreprise générale du bâtiment. On construit et rénove des locaux professionnels avec des délais tenus.", rel:"none" }),
-  seed({ id:12, name:"Maison Gaultier", sector:"Restauration & Traiteur", loc:"Lyon", size:"20 pers.", emp:"11–50",
-    founded:2009, ca:"500 k–2 M€", dispo:"Disponible", web:"maison-gaultier.fr", refs:130, rating:4.9,
-    certifs:["Écotable"], langues:["Français","Anglais"],
-    tag:"Traiteur événementiel local et de saison.",
-    seek:["Agences événementielles","Entreprises"], offer:["Cocktails","Repas assis","Petits-déjeuners"],
-    desc:"Traiteur lyonnais engagé. Des prestations soignées et locales, du petit-déjeuner d'équipe au dîner de gala.", rel:"none" }),
-  seed({ id:13, name:"Alpha Assurance", sector:"Finance & Assurance", loc:"Strasbourg", size:"40 pers.", emp:"11–50",
-    founded:2000, ca:"2–10 M€", dispo:"Disponible", web:"alpha-assurance.fr", refs:260, rating:4.5,
-    certifs:["ORIAS"], langues:["Français","Allemand","Anglais"],
-    tag:"Courtage en assurance des entreprises.",
-    seek:["TPE-PME","Experts-comptables"], offer:["RC pro","Multirisque","Prévoyance collective"],
-    desc:"Cabinet de courtage indépendant. On construit des couvertures sur mesure et on négocie pour vous auprès des assureurs.", rel:"none" }),
-  seed({ id:14, name:"Studio Onde", sector:"Média & Audiovisuel", loc:"Nice", size:"9 pers.", emp:"1–10",
-    founded:2018, ca:"< 500 k€", dispo:"Complet", web:"studio-onde.fr", refs:58, rating:4.8,
-    certifs:[], langues:["Français","Anglais","Italien"],
-    tag:"Production vidéo et motion design pour les marques.",
-    seek:["Agences de com","Annonceurs"], offer:["Films de marque","Motion design","Captation événement"],
-    desc:"Studio de production niçois. Du concept au montage, on raconte les marques en image, avec une vraie exigence esthétique.", rel:"none" }),
-  seed({ id:15, name:"Terroir Direct", sector:"Agroalimentaire", loc:"Angers", size:"26 pers.", emp:"11–50",
-    founded:2013, ca:"2–10 M€", dispo:"Disponible", web:"terroir-direct.fr", refs:145, rating:4.6,
-    certifs:["Bio","HVE"], langues:["Français","Anglais"],
-    tag:"Grossiste en produits locaux pour la restauration.",
-    seek:["Restaurateurs","Traiteurs","Épiceries"], offer:["Approvisionnement local","Logistique du frais"],
-    desc:"Plateforme d'approvisionnement en circuit court. On relie producteurs de l'Ouest et professionnels de la restauration.", rel:"none" }),
-  seed({ id:16, name:"Form'Action", sector:"Éducation & Formation", loc:"Rennes", size:"14 pers.", emp:"11–50",
-    founded:2016, ca:"500 k–2 M€", dispo:"Disponible", web:"formaction.fr", refs:200, rating:4.7,
-    certifs:["Qualiopi"], langues:["Français","Anglais"],
-    tag:"Formation professionnelle et montée en compétences.",
-    seek:["Entreprises","OPCO","RH"], offer:["Formation métiers","Bilan de compétences","Coaching"],
-    desc:"Organisme de formation certifié Qualiopi. Des parcours sur mesure pour faire progresser vos équipes.", rel:"none" }),
-];
-
-const SVC_MAP={
-  1:["Direction","Commercial","Technique","RH"], 2:["Direction","Commercial","Marketing & Com"],
-  3:["Direction","Commercial","Logistique","Achats"], 4:["Direction","Commercial","RH"],
-  5:["Direction","Comptabilité","RH"], 6:["Direction","Commercial","Marketing & Com"],
-  7:["Direction","Commercial","Marketing & Com"], 8:["Direction","Commercial","Technique","Achats","Logistique"],
-  9:["Direction","Commercial","Technique"], 10:["Direction","Commercial"],
-  11:["Direction","Commercial","Technique","Achats"], 12:["Direction","Commercial","Logistique"],
-  13:["Direction","Commercial","Comptabilité"], 14:["Direction","Commercial","Marketing & Com"],
-  15:["Direction","Commercial","Logistique","Achats"], 16:["Direction","Commercial","RH"],
-};
-const DIRECTORY=DIRECTORY_RAW.map((c)=>{const svcs=SVC_MAP[c.id]||["Direction","Commercial"];return {...c,services:svcs,receptionPole:svcs.includes("Commercial")?"Commercial":(svcs.includes("Direction")?"Direction":svcs[0]),siret:`${400+c.id} ${100+c.id} ${200+c.id*7} 000${10+c.id}`,verifiedSiren:c.verified};});
-
-/* ---- Blog central : actualités des entreprises ---- */
-const authorOf=(id)=>{const c=DIRECTORY.find((x)=>x.id===id);return{name:c.name,color:c.color,sector:c.sector,loc:c.loc};};
-const SEED_POSTS=[
-  {id:1001,author:authorOf(3),title:"Relais Nord ouvre un second entrepôt à Lille",tag:"Expansion",date:"Il y a 2 jours",likes:12,liked:false,
-   body:"Pour accompagner la croissance de nos partenaires e-commerçants, nous inaugurons 2000 m² supplémentaires et deux nouvelles lignes de préparation de commandes."},
-  {id:1002,author:authorOf(6),title:"Nouveau format : audit d'acquisition en 5 jours",tag:"Offre",date:"Il y a 3 jours",likes:8,liked:false,
-   body:"On lance un audit express pour les PME qui veulent y voir clair sur leurs canaux d'acquisition avant d'investir. Résultats concrets, sans engagement."},
-  {id:1003,author:authorOf(9),title:"Solstice Énergie certifié RGE QualiPV pour 2026",tag:"Certification",date:"Il y a 5 jours",likes:19,liked:false,
-   body:"Notre équipe conserve sa certification pour une année de plus — un gage de qualité pour tous nos chantiers photovoltaïques auprès des entreprises."},
-  {id:1004,author:authorOf(2),title:"Retour sur trois refontes de marque ce trimestre",tag:"Portfolio",date:"Il y a 1 semaine",likes:24,liked:false,
-   body:"Trois identités livrées ce trimestre. On partage les coulisses : recherche typographique, palette, déclinaisons. Merci à nos partenaires studios web."},
-  {id:1005,author:authorOf(12),title:"Maison Gaultier recrute un chef de partie",tag:"Recrutement",date:"Il y a 1 semaine",likes:6,liked:false,
-   body:"On agrandit l'équipe pour la saison des séminaires. Si vous connaissez un profil passionné et attaché au local, mettez-nous en relation !"},
-];
-
-/* ---- Mur de besoins ---- */
-const SEED_NEEDS=[
-  {id:2001,companyId:3,title:"Nous cherchons des e-commerçants pour du stockage et de la préparation de commandes",sought:"Commerce & Distribution",loc:"Lille",date:"Il y a 1 jour",responses:3},
-  {id:2002,companyId:6,title:"Agence de com cherche un studio de développement pour référer ses clients",sought:"Tech & Dév",loc:"Bordeaux",date:"Il y a 2 jours",responses:5},
-  {id:2003,companyId:9,title:"Recherche bureaux d'études / BTP pour nos projets photovoltaïques",sought:"BTP & Construction",loc:"Montpellier",date:"Il y a 3 jours",responses:1},
-  {id:2004,companyId:12,title:"Traiteur cherche des agences événementielles partenaires",sought:"Événementiel",loc:"Lyon",date:"Il y a 4 jours",responses:2},
-  {id:2005,companyId:16,title:"Organisme de formation cherche des entreprises pour leurs plans de formation",sought:"RH",loc:"Rennes",date:"Il y a 5 jours",responses:4},
-];
-
 const priceFmt=(n)=>n.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const urlBase64ToUint8Array=(base64String)=>{
   const padding="=".repeat((4-(base64String.length%4))%4);
@@ -900,6 +760,12 @@ const TRANSLATIONS={en:{
   "Gratuit":"Free",
   "Général":"General",
   "Activation de votre abonnement…":"Activating your subscription…",
+  "Le réseau démarre tout juste":"The network is just getting started",
+  "Aucune autre entreprise n'a encore rejoint Maillon. Revenez bientôt — votre page est déjà visible pour les prochaines qui s'inscriront.":"No other company has joined Maillon yet. Check back soon — your page is already visible to the next ones who sign up.",
+  "Aucune actualité pour l'instant":"No news yet",
+  "Les publications des entreprises du réseau apparaîtront ici.":"Posts from companies in the network will appear here.",
+  "Aucun besoin pour l'instant":"No needs yet",
+  "Soyez le premier à publier ce que vous recherchez.":"Be the first to post what you're looking for.",
   "Le réseau des entreprises qui se choisissent.":"The network where companies choose each other.",
   "Repérez les partenaires les plus complémentaires à votre activité, partout en France, et n'échangez qu'avec ceux qui vous ont dit oui.":"Spot the partners most complementary to your business, anywhere in France, and only talk to the ones who said yes to you.",
   "Mensuel":"Monthly",
@@ -1222,22 +1088,6 @@ const TRANSLATIONS={en:{
 const mapDirectoryCompany=(row)=>{const base=mapCompanyRow(row);return {...base,tag:base.desc,rel:"none",channels:{}};};
 const isRealCompany=(c)=>!!c&&typeof c.id==="string";
 
-const FIRST_NAMES=["Jérôme","Kevin","Nicolas","Anthony","Philippe","Yann","Camille","Julie","Sophie","Thomas","Marion","Alexandre","Claire","Mathieu","Laura","Vincent"];
-const LAST_NAMES=["Lesoudeer","Simon","Perennes","Garcia","Desaize","Parcheminier","Moreau","Girard","Lefebvre","Roussel","Faure","Marchand","Guillou","Le Goff","Bertin"];
-const slugify=(s)=>(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"");
-const genContacts=(c)=>{
-  const domain=c.web||`${slugify(c.name)}.fr`;
-  const n=1+Math.floor(Math.random()*2);
-  const used=new Set();const out=[];
-  while(out.length<n){
-    const first=FIRST_NAMES[Math.floor(Math.random()*FIRST_NAMES.length)];
-    const last=LAST_NAMES[Math.floor(Math.random()*LAST_NAMES.length)];
-    const key=first+last;if(used.has(key))continue;used.add(key);
-    out.push({name:`${first} ${last}`,email:`${slugify(first)}.${slugify(last)}@${domain}`});
-  }
-  return out;
-};
-
 function VisioRoom({me,company,services,url,onEnd,lang}){
   const t=(s)=>(TRANSLATIONS[lang]&&TRANSLATIONS[lang][s])||s;
   const [sec,setSec]=useState(0);
@@ -1266,12 +1116,6 @@ function VisioRoom({me,company,services,url,onEnd,lang}){
   );
 }
 
-const REPLIES = [
-  "Bonne question — on regarde ça de notre côté et on revient vers vous rapidement.",
-  "Ça nous intéresse. On peut échanger en visio cette semaine ?",
-  "Parfait, merci du message ! Je transmets à l'équipe.",
-  "Tout à fait aligné avec ce qu'on cherche. On avance ?",
-];
 export default function Maillon(){
   const [uiLang,setUiLang]=useState(()=>(typeof window!=="undefined"&&window.localStorage.getItem("maillon_lang"))||"fr");
   const t=(s)=>(TRANSLATIONS[uiLang]&&TRANSLATIONS[uiLang][s])||s;
@@ -1293,7 +1137,7 @@ export default function Maillon(){
     desc:"",seek:"",offer:"",founded:"",ca:CA[0],dispo:DISPO[0],web:"",certifs:"",langues:"",plan:"gratuit",billing:"Mensuelle",logo:null,services:["Direction","Commercial","Marketing & Com","RH","Comptabilité"],receptionPole:"Direction",siret:""});
   const [view,setView]=useState("discover");
   const [mode,setMode]=useState("list");           // list | map
-  const [companies,setCompanies]=useState(DIRECTORY);
+  const [companies,setCompanies]=useState([]);
   const [q,setQ]=useState("");
   const [fSector,setFSector]=useState("");
   const [fRadius,setFRadius]=useState(0);
@@ -1361,11 +1205,11 @@ export default function Maillon(){
   const [collabForm,setCollabForm]=useState({subject:"",budget:"",name:""});
   const [schedForm,setSchedForm]=useState({date:"",time:""});
   const [draft,setDraft]=useState("");
-  const [posts,setPosts]=useState(SEED_POSTS);
+  const [posts,setPosts]=useState([]);
   const [composeOpen,setComposeOpen]=useState(false);
   const [postForm,setPostForm]=useState({title:"",body:"",tag:"",photo:null});
   const [adhesion,setAdhesion]=useState(false);
-  const [needs,setNeeds]=useState(SEED_NEEDS);
+  const [needs,setNeeds]=useState([]);
   const [needOpen,setNeedOpen]=useState(false);
   const [needForm,setNeedForm]=useState({title:"",sought:SECTORS[0],loc:""});
   const [needFilter,setNeedFilter]=useState("all");
@@ -2055,35 +1899,12 @@ export default function Maillon(){
       `On aimerait explorer une collaboration autour de ${(c.seek&&c.seek[0])||"nos activités"}. Ouvert à en discuter ?`);};
   const sendProspect=()=>{
     const c=prospect;const target=c.receptionPole||"Direction";setProspectsUsed((n)=>n+1);update(c.id,{rel:"sent",sentTo:target});setProspect(null);logHist(`Demande de mise en relation envoyée à ${c.name} (pôle ${target})`,"demande");toast(`Demande envoyée à ${c.name} · pôle ${target}`);
-    if(isRealCompany(c)&&isRealCompany(me)){
-      supabase.from("connections").insert({from_company_id:me.id,to_company_id:c.id,status:"pending",service:target,message:pmsg}).select().single()
-        .then(({data,error})=>{if(!error&&data)update(c.id,{connectionId:data.id});});
-      return;
-    }
-    setTimeout(()=>{
-      const common=commonServices(c);const svc=common.includes(target)?target:(common[0]||"Direction");
-      const emailingConsent=Math.random()<0.65;
-      update(c.id,{rel:"connected",emailingConsent,channels:{[svc]:[{from:"sys",text:`${c.name} a accepté votre mise en relation · service ${svc}.`},
-        {from:"them",text:REPLIES[Math.floor(Math.random()*REPLIES.length)]}]}});
-      logHist(`${c.name} a accepté votre mise en relation`,"acceptation");toast(`✓ ${c.name} a accepté la mise en relation`);
-      setTimeout(()=>{
-        if(emailingConsent){update(c.id,{emailingContacts:genContacts(c)});logHist(`${c.name} a accepté de recevoir vos campagnes d'emailing`,"emailing");toast(`✓ ${c.name} a accepté de recevoir vos campagnes d'emailing`);}
-        else{logHist(`${c.name} n'a pas souhaité recevoir vos campagnes d'emailing`,"emailing");}
-      },1400);
-    },2600);
+    supabase.from("connections").insert({from_company_id:me.id,to_company_id:c.id,status:"pending",service:target,message:pmsg}).select().single()
+      .then(({data,error})=>{if(!error&&data)update(c.id,{connectionId:data.id});});
   };
 
   const accept=(c,emailingOptIn,emailingAddresses)=>{const pole=(me&&me.receptionPole)||"Direction";const common=commonServices(c);const svc=common.includes(pole)?pole:(common[0]||"Direction");const addrs=emailingOptIn?(emailingAddresses||[]).map((e)=>e.trim()).filter(Boolean):[];update(c.id,{rel:"connected",emailingOptIn:!!emailingOptIn,emailingAddresses:addrs,channels:{[svc]:[{from:"sys",text:`Vous avez accepté la demande de ${c.name} · service ${svc}.`},{from:"them",text:c.reqMsg}]}});setActiveConv(c.id);setActiveService(svc);logEvent(`Mise en relation acceptée — ${c.name}`);logHist(`Vous avez accepté la demande de ${c.name}${emailingOptIn?" · abonné à l'emailing":""}`,"acceptation");toast(`Connecté avec ${c.name}`);
-    if(isRealCompany(c)){
-      if(c.connectionId)supabase.from("connections").update({status:"accepted",service:svc,emailing_opt_in:!!emailingOptIn,emailing_addresses:addrs,responded_at:new Date().toISOString()}).eq("id",c.connectionId).then(()=>{});
-      return;
-    }
-    setTimeout(()=>{
-      const emailingConsent=Math.random()<0.65;
-      update(c.id,{emailingConsent,emailingContacts:emailingConsent?genContacts(c):undefined});
-      if(emailingConsent){logHist(`${c.name} a accepté de recevoir vos campagnes d'emailing`,"emailing");toast(`✓ ${c.name} a accepté de recevoir vos campagnes d'emailing`);}
-      else{logHist(`${c.name} n'a pas souhaité recevoir vos campagnes d'emailing`,"emailing");}
-    },1800);
+    if(c.connectionId)supabase.from("connections").update({status:"accepted",service:svc,emailing_opt_in:!!emailingOptIn,emailing_addresses:addrs,responded_at:new Date().toISOString()}).eq("id",c.connectionId).then(()=>{});
   };
   const decline=(c)=>{update(c.id,{rel:"declined"});logHist(`Demande de ${c.name} déclinée`,"refus");toast(`Demande de ${c.name} déclinée`);
     if(isRealCompany(c)&&c.connectionId)supabase.from("connections").update({status:"declined",responded_at:new Date().toISOString()}).eq("id",c.connectionId).then(()=>{});
@@ -2235,11 +2056,7 @@ export default function Maillon(){
     if(!svc)return;
     const push=(from,t)=>setCompanies((cs)=>cs.map((x)=>x.id===id?{...x,channels:{...(x.channels||{}),[svc]:[...((x.channels&&x.channels[svc])||[]),{from,text:t}]}}:x));
     push("me",text);
-    if(isRealCompany(c)&&c.connectionId){
-      supabase.from("messages").insert({connection_id:c.connectionId,sender_company_id:me.id,service:svc,body:text}).then(()=>{});
-      return;
-    }
-    setTimeout(()=>push("them",REPLIES[Math.floor(Math.random()*REPLIES.length)]),1400);
+    if(c.connectionId)supabase.from("messages").insert({connection_id:c.connectionId,sender_company_id:me.id,service:svc,body:text}).then(()=>{});
   };
 
   const pushCh=(id,svc,obj)=>setCompanies((cs)=>cs.map((x)=>x.id===id?{...x,channels:{...(x.channels||{}),[svc]:[...((x.channels&&x.channels[svc])||[]),obj]}}:x));
@@ -2793,6 +2610,13 @@ export default function Maillon(){
             </div>
           )}
 
+          {companies.length===0?(
+            <div className="empty">
+              <svg width="46" height="46" viewBox="0 0 24 24" fill="none"><path d="M4 21V8l8-5 8 5v13" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinejoin="round"/><path d="M9 21v-6h6v6M4 21h16" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinecap="round"/></svg>
+              <h3>{t("Le réseau démarre tout juste")}</h3>
+              <p>{t("Aucune autre entreprise n'a encore rejoint Maillon. Revenez bientôt — votre page est déjà visible pour les prochaines qui s'inscriront.")}</p>
+            </div>
+          ):(<>
           <div className="toolbar">
             <div className="search">
               <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6" stroke="var(--slate)" strokeWidth="1.8"/><path d="M14 14l4 4" stroke="var(--slate)" strokeWidth="1.8" strokeLinecap="round"/></svg>
@@ -2871,6 +2695,7 @@ export default function Maillon(){
               {filtered.length===0&&<div className="empty"><h3>{t("Aucune entreprise sur ces critères")}</h3><p>{t("Élargissez les filtres ou réinitialisez.")}</p></div>}
             </>
           )}
+          </>)}
         </div></div>
       )}
 
@@ -3423,7 +3248,12 @@ export default function Maillon(){
           </div>
 
           <div className="needwrap">
-            {needs.filter((n)=>needFilter==="all"||n.mine||n.sought===me.sector).map((n)=>{
+            {(()=>{const shownNeeds=needs.filter((n)=>needFilter==="all"||n.mine||n.sought===me.sector);return shownNeeds.length===0?(
+              <div className="empty">
+                <svg width="46" height="46" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h10M4 18h7" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinecap="round"/></svg>
+                <h3>{t("Aucun besoin pour l'instant")}</h3><p>{t("Soyez le premier à publier ce que vous recherchez.")}</p>
+              </div>
+            ):shownNeeds.map((n)=>{
               const a=needAuthor(n);const match=!n.mine&&n.sought===me.sector;
               return(
                 <div key={n.id} className="needcard">
@@ -3447,7 +3277,7 @@ export default function Maillon(){
                   </div>
                 </div>
               );
-            })}
+            });})()}
           </div>
         </div></div>
       )}
@@ -3743,6 +3573,12 @@ export default function Maillon(){
                     </div>
                   </div>
                 );})}
+                {posts.length===0&&(
+                  <div className="empty">
+                    <svg width="46" height="46" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4z" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinejoin="round"/><path d="M4 7l8 6 8-6" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <h3>{t("Aucune actualité pour l'instant")}</h3><p>{t("Les publications des entreprises du réseau apparaîtront ici.")}</p>
+                  </div>
+                )}
               </div>
             </div>
 
