@@ -418,6 +418,12 @@ const CSS = `
 
 .mln .empty{text-align:center;padding:70px 20px;color:var(--slate);}
 .mln .empty h3{font-family:'Bricolage Grotesque';font-weight:700;font-size:21px;color:var(--ink);margin:10px 0 6px;}
+.mln .emptynet{position:relative;max-width:480px;margin:48px auto;padding:56px 32px;text-align:center;}
+.mln .emptynet::before{content:"";position:absolute;top:-30px;left:50%;transform:translateX(-50%);width:280px;height:280px;background:radial-gradient(closest-side, rgba(15,132,107,.14), rgba(15,132,107,0) 72%);pointer-events:none;z-index:0;}
+.mln .emptynet-icon{position:relative;z-index:1;width:64px;height:64px;margin:0 auto 20px;border-radius:18px;background:linear-gradient(135deg,var(--emerald-wash),#fff);color:var(--emerald);display:flex;align-items:center;justify-content:center;box-shadow:0 14px 30px -18px rgba(15,132,107,.5);}
+.mln .emptynet h3{position:relative;z-index:1;font-family:'Bricolage Grotesque';font-weight:800;font-size:22px;color:var(--ink);margin:0 0 10px;}
+.mln .emptynet p{position:relative;z-index:1;font-size:14px;color:var(--slate);line-height:1.55;max-width:380px;margin:0 auto 24px;}
+.mln .emptynet-cta{position:relative;z-index:1;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
 .mln .foot{border-top:1px solid var(--line);padding:24px;text-align:center;font-size:12.5px;color:var(--slate-soft);}
 .mln .foot b{font-family:'Bricolage Grotesque';color:var(--slate);}
 
@@ -777,6 +783,8 @@ const TRANSLATIONS={en:{
   "Soyez le premier à publier ce que vous recherchez.":"Be the first to post what you're looking for.",
   "Le réseau des entreprises qui se choisissent.":"The network where companies choose each other.",
   "Le réseau des entreprises":"The network where companies",
+  "Voir ma page":"View my page",
+  "Copier le lien de Maillon":"Copy the Maillon link",
   "qui se choisissent.":"choose each other.",
   "Repérez les partenaires les plus complémentaires à votre activité, partout en France, et n'échangez qu'avec ceux qui vous ont dit oui.":"Spot the partners most complementary to your business, anywhere in France, and only talk to the ones who said yes to you.",
   "Mensuel":"Monthly",
@@ -2642,10 +2650,14 @@ export default function Maillon(){
           )}
 
           {companies.length===0?(
-            <div className="empty">
-              <svg width="46" height="46" viewBox="0 0 24 24" fill="none"><path d="M4 21V8l8-5 8 5v13" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinejoin="round"/><path d="M9 21v-6h6v6M4 21h16" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinecap="round"/></svg>
+            <div className="emptynet">
+              <div className="emptynet-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M4 21V8l8-5 8 5v13" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><path d="M9 21v-6h6v6M4 21h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg></div>
               <h3>{t("Le réseau démarre tout juste")}</h3>
               <p>{t("Aucune autre entreprise n'a encore rejoint Maillon. Revenez bientôt — votre page est déjà visible pour les prochaines qui s'inscriront.")}</p>
+              <div className="emptynet-cta">
+                <button className="btn-ghost sm" onClick={()=>setView("profile")}>{t("Voir ma page")}</button>
+                <button className="btn sm" onClick={()=>{const link=window.location.origin;navigator.clipboard&&navigator.clipboard.writeText(link).catch(()=>{});toast(t("Lien copié !"));}}>{t("Copier le lien de Maillon")}</button>
+              </div>
             </div>
           ):(<>
           <div className="toolbar">
