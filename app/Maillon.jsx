@@ -2702,6 +2702,10 @@ export default function Maillon(){
         <div className="wrap"><div className="page">
           <h2 className="ptitle disp">{t("Découvrir des entreprises")}</h2>
           <p className="psub">{t("Filtrez par secteur, rayon d'action et effectif. Basculez en carte pour situer les sociétés en France. Le score d'affinité estime la complémentarité avec")} {me.name}.</p>
+          <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
+            <button className="btn-ghost sm" onClick={()=>setView("profile")}>{t("Voir ma page")}</button>
+            <button className="btn-ghost sm" onClick={()=>setInviteCoOpen(true)}>{t("Inviter une entreprise")}</button>
+          </div>
           {me.planId==="gratuit"&&(
             <div className="memban">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2-6.3-4.6-6.3 4.6L8 13.8 2 9.4h7.6z" stroke="#7a5305" strokeWidth="1.3" strokeLinejoin="round"/></svg>
@@ -2733,10 +2737,6 @@ export default function Maillon(){
               <div className="emptynet-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M4 21V8l8-5 8 5v13" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><path d="M9 21v-6h6v6M4 21h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg></div>
               <h3>{t("Le réseau démarre tout juste")}</h3>
               <p>{t("Aucune autre entreprise n'a encore rejoint Maillon. Revenez bientôt — votre page est déjà visible pour les prochaines qui s'inscriront.")}</p>
-              <div className="emptynet-cta">
-                <button className="btn-ghost sm" onClick={()=>setView("profile")}>{t("Voir ma page")}</button>
-                <button className="btn sm" onClick={()=>setInviteCoOpen(true)}>{t("Inviter une entreprise")}</button>
-              </div>
             </div>
           ):(<>
           <div className="toolbar">
