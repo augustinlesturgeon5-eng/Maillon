@@ -587,6 +587,25 @@ const buildEmailSkeleton=(subject)=>`<!DOCTYPE html>
   </body>
 </html>`;
 
+const buildBrandedEmail=({heading,bodyHtml,ctaText,ctaHref})=>`<!DOCTYPE html>
+<html>
+  <body style="margin:0;padding:36px 16px;background:#F5F4F0;font-family:-apple-system,'Segoe UI',Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;">
+      <tr><td style="text-align:center;padding:0 0 26px;">
+        <img src="https://getmaillon.fr/logo-maillon-ink.png" alt="Maillon" height="26" style="display:inline-block;border:0;"/>
+      </td></tr>
+      <tr><td style="background:#ffffff;border-radius:20px;padding:40px 36px;">
+        <h1 style="margin:0 0 16px;font-family:-apple-system,'Segoe UI',Arial,sans-serif;font-size:22px;font-weight:800;color:#0F1826;">${heading}</h1>
+        <div style="font-size:15px;line-height:1.65;color:#3d4552;">${bodyHtml}</div>
+        ${ctaHref?`<table role="presentation" cellpadding="0" cellspacing="0" style="margin:32px auto 6px;"><tr><td style="border-radius:10px;background:#0F846B;"><a href="${ctaHref}" style="display:inline-block;padding:14px 30px;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;font-family:-apple-system,'Segoe UI',Arial,sans-serif;">${ctaText}</a></td></tr></table>`:""}
+      </td></tr>
+      <tr><td style="text-align:center;padding:26px 12px 0;font-size:12px;line-height:1.6;color:#8A929C;font-family:-apple-system,'Segoe UI',Arial,sans-serif;">
+        Maillon — le réseau B2B à double consentement<br/>getmaillon.fr
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
 const mapCompanyRow=(c)=>{
   const plan=PLANS.find((p)=>p.id===c.plan_id)||PLANS[0];
   return {
@@ -786,6 +805,12 @@ const TRANSLATIONS={en:{
   "Voir ma page":"View my page",
   "Copier le lien de Maillon":"Copy the Maillon link",
   "Inviter une entreprise":"Invite a company",
+  "Campagnes d'emailing":"Email campaigns",
+  "Autoriser":"Allow",
+  "à vous envoyer des campagnes d'emailing":"to send you email campaigns",
+  "a accepté de recevoir vos campagnes d'emailing.":"agreed to receive your email campaigns.",
+  "n'a pas souhaité recevoir vos campagnes d'emailing.":"did not want to receive your email campaigns.",
+  "Ne plus être connecté":"Disconnect",
   "Un email d'invitation sera envoyé en votre nom, avec un lien vers Maillon.":"An invitation email will be sent in your name, with a link to Maillon.",
   "Envoyer l'invitation":"Send invitation",
   "Invitation envoyée à":"Invitation sent to",
@@ -1556,16 +1581,20 @@ export default function Maillon(){
         if(!active||!conns)return;
         conns.forEach((row)=>{
           const otherId=row.from_company_id===me.id?row.to_company_id:row.from_company_id;
+          const connFromMe=row.from_company_id===me.id;
           let patch=null;
           if(row.status==="pending"){
-            patch=row.from_company_id===me.id?{rel:"sent",sentTo:row.service}:{rel:"incoming",reqMsg:row.message};
-          }else if(row.status==="accepted"){patch={rel:"connected"};}
+            patch=connFromMe?{rel:"sent",sentTo:row.service}:{rel:"incoming",reqMsg:row.message};
+          }else if(row.status==="accepted"){patch={rel:"connected",connFromMe};}
           else if(row.status==="declined"){patch={rel:"declined"};}
           if(patch)update(otherId,{...patch,connectionId:row.id});
         });
         conns.forEach((row)=>{
           if(row.status==="accepted"&&row.from_company_id===me.id&&row.emailing_opt_in){
             update(row.to_company_id,{emailingConsent:true,emailingContacts:(row.emailing_addresses||[]).map((addr)=>({name:addr.split("@")[0],email:addr}))});
+          }
+          if(row.status==="accepted"&&row.to_company_id===me.id){
+            update(row.from_company_id,{myEmailingOptIn:!!row.emailing_opt_in});
           }
         });
         const accepted=conns.filter((c)=>c.status==="accepted");
@@ -1991,7 +2020,11 @@ export default function Maillon(){
     const link=typeof window!=="undefined"?window.location.origin:"https://getmaillon.fr";
     const name=inviteCoForm.name.trim();
     const subject=`${me.name} vous invite à rejoindre Maillon`;
-    const html=`<p>Bonjour${name?` ${name}`:""},</p><p><b>${me.name}</b> utilise Maillon, le réseau B2B à double consentement, et pense que votre entreprise pourrait y trouver sa place.</p><p style="text-align:center;margin:28px 0;"><a href="${link}" style="background:#0F846B;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;">Découvrir Maillon</a></p>`;
+    const html=buildBrandedEmail({
+      heading:`${me.name} vous invite sur Maillon`,
+      bodyHtml:`<p>Bonjour${name?` ${name}`:""},</p><p><b>${me.name}</b> utilise Maillon, le réseau B2B à double consentement, et pense que votre entreprise pourrait y trouver sa place.</p><p>Vous démarchez qui vous intéresse, vous décidez qui vous répond — aucun contact ne s'ouvre sans accord des deux côtés.</p>`,
+      ctaText:"Découvrir Maillon",ctaHref:link,
+    });
     try{
       const res=await fetch("/api/send-campaign",{method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({subject,html,fromName:me.name,replyTo:session&&session.user&&session.user.email,recipients:[{email,name}]})});
@@ -2018,13 +2051,25 @@ export default function Maillon(){
     setPmsg(`Bonjour ${c.name}, je suis ${(me&&me.name)||"une entreprise"} (${(me&&me.sector)||form.sector}). `+
       `On aimerait explorer une collaboration autour de ${(c.seek&&c.seek[0])||"nos activités"}. Ouvert à en discuter ?`);};
   const sendProspect=()=>{
-    const c=prospect;const target=c.receptionPole||"Direction";setProspectsUsed((n)=>n+1);update(c.id,{rel:"sent",sentTo:target});setProspect(null);logHist(`Demande de mise en relation envoyée à ${c.name} (pôle ${target})`,"demande");toast(`Demande envoyée à ${c.name} · pôle ${target}`);
-    supabase.from("connections").insert({from_company_id:me.id,to_company_id:c.id,status:"pending",service:target,message:pmsg}).select().single()
+    const c=prospect;const target=c.receptionPole||"Direction";setProspectsUsed((n)=>n+1);update(c.id,{rel:"sent",sentTo:target,connFromMe:true});setProspect(null);logHist(`Demande de mise en relation envoyée à ${c.name} (pôle ${target})`,"demande");toast(`Demande envoyée à ${c.name} · pôle ${target}`);
+    supabase.from("connections").upsert({from_company_id:me.id,to_company_id:c.id,status:"pending",service:target,message:pmsg,responded_at:null},{onConflict:"from_company_id,to_company_id"}).select().single()
       .then(({data,error})=>{if(!error&&data)update(c.id,{connectionId:data.id});});
   };
 
-  const accept=(c,emailingOptIn,emailingAddresses)=>{const pole=(me&&me.receptionPole)||"Direction";const common=commonServices(c);const svc=common.includes(pole)?pole:(common[0]||"Direction");const addrs=emailingOptIn?(emailingAddresses||[]).map((e)=>e.trim()).filter(Boolean):[];update(c.id,{rel:"connected",emailingOptIn:!!emailingOptIn,emailingAddresses:addrs,channels:{[svc]:[{from:"sys",text:`Vous avez accepté la demande de ${c.name} · service ${svc}.`},{from:"them",text:c.reqMsg}]}});setActiveConv(c.id);setActiveService(svc);logEvent(`Mise en relation acceptée — ${c.name}`);logHist(`Vous avez accepté la demande de ${c.name}${emailingOptIn?" · abonné à l'emailing":""}`,"acceptation");toast(`Connecté avec ${c.name}`);
+  const accept=(c,emailingOptIn,emailingAddresses)=>{const pole=(me&&me.receptionPole)||"Direction";const common=commonServices(c);const svc=common.includes(pole)?pole:(common[0]||"Direction");const addrs=emailingOptIn?(emailingAddresses||[]).map((e)=>e.trim()).filter(Boolean):[];update(c.id,{rel:"connected",connFromMe:false,myEmailingOptIn:!!emailingOptIn,emailingOptIn:!!emailingOptIn,emailingAddresses:addrs,channels:{[svc]:[{from:"sys",text:`Vous avez accepté la demande de ${c.name} · service ${svc}.`},{from:"them",text:c.reqMsg}]}});setActiveConv(c.id);setActiveService(svc);logEvent(`Mise en relation acceptée — ${c.name}`);logHist(`Vous avez accepté la demande de ${c.name}${emailingOptIn?" · abonné à l'emailing":""}`,"acceptation");toast(`Connecté avec ${c.name}`);
     if(c.connectionId)supabase.from("connections").update({status:"accepted",service:svc,emailing_opt_in:!!emailingOptIn,emailing_addresses:addrs,responded_at:new Date().toISOString()}).eq("id",c.connectionId).then(()=>{});
+  };
+  const setMyEmailingOptIn=(c,val)=>{
+    update(c.id,{myEmailingOptIn:val});
+    if(c.connectionId)supabase.from("connections").update({emailing_opt_in:val,emailing_addresses:val?[session.user.email]:[]}).eq("id",c.connectionId).then(()=>{});
+    logHist(`${val?"Autorisation":"Retrait de l'autorisation"} des campagnes d'emailing de ${c.name}`,"emailing");
+  };
+  const disconnectCompany=(c)=>{
+    update(c.id,{rel:"none",connectionId:null,channels:{},emailingConsent:false,myEmailingOptIn:false});
+    if(c.connectionId)supabase.from("connections").update({status:"ended",responded_at:new Date().toISOString()}).eq("id",c.connectionId).then(()=>{});
+    logHist(`Connexion terminée avec ${c.name}`,"refus");
+    toast(`Vous n'êtes plus connecté avec ${c.name}`);
+    setOpenC(null);
   };
   const decline=(c)=>{update(c.id,{rel:"declined"});logHist(`Demande de ${c.name} déclinée`,"refus");toast(`Demande de ${c.name} déclinée`);
     if(isRealCompany(c)&&c.connectionId)supabase.from("connections").update({status:"declined",responded_at:new Date().toISOString()}).eq("id",c.connectionId).then(()=>{});
@@ -3725,11 +3770,28 @@ export default function Maillon(){
             <div className="psec"><h5>{t("Réception des demandes")}</h5>
               <p style={{fontSize:14,color:"var(--slate)"}}>{t("Les demandes de mise en relation arrivent au pôle")} <b style={{color:"var(--ink)"}}>{t(detail.receptionPole)}</b>.</p>
               <button className="linkbtn" style={{marginTop:10,color:"var(--coral)"}} onClick={()=>toast(`${detail.name} ${t("signalée — notre équipe va examiner")}`)}>⚑ {t("Signaler cette entreprise")}</button></div>
+            {detail.rel==="connected"&&(
+              <div className="psec"><h5>{t("Campagnes d'emailing")}</h5>
+                {detail.connFromMe===false?(
+                  <label className="consentrow" style={{margin:0}}>
+                    <input type="checkbox" checked={!!detail.myEmailingOptIn} onChange={(e)=>setMyEmailingOptIn(detail,e.target.checked)}/>
+                    {t("Autoriser")} {detail.name} {t("à vous envoyer des campagnes d'emailing")}
+                  </label>
+                ):(
+                  <p style={{fontSize:13.5,color:"var(--slate)",margin:0}}>
+                    {detail.emailingConsent?`${detail.name} ${t("a accepté de recevoir vos campagnes d'emailing.")}`:`${detail.name} ${t("n'a pas souhaité recevoir vos campagnes d'emailing.")}`}
+                  </p>
+                )}
+              </div>
+            )}
             <div className="pcta">
               {detail.rel==="none"?(
                 <button className="btn block" onClick={()=>openProspect(detail)}>{t("Démarcher")} {detail.name}</button>
               ):detail.rel==="connected"?(
-                <button className="btn block" onClick={()=>{setActiveConv(detail.id);setView("messages");setOpenC(null);}}>{t("Ouvrir la discussion")}</button>
+                <>
+                  <button className="btn" style={{flex:1}} onClick={()=>{setActiveConv(detail.id);setView("messages");setOpenC(null);}}>{t("Ouvrir la discussion")}</button>
+                  <button className="btn-ghost" style={{flex:1,color:"var(--coral)"}} onClick={()=>disconnectCompany(detail)}>{t("Ne plus être connecté")}</button>
+                </>
               ):detail.rel==="incoming"?(
                 <button className="btn block" onClick={()=>{setView("requests");setOpenC(null);}}>{t("Répondre à sa demande")}</button>
               ):detail.rel==="sent"?(
