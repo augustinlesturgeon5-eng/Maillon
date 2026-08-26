@@ -606,6 +606,99 @@ const buildBrandedEmail=({heading,bodyHtml,ctaText,ctaHref})=>`<!DOCTYPE html>
   </body>
 </html>`;
 
+const buildInviteEmail=({inviterCompany,link})=>`<!DOCTYPE html>
+<html lang="fr" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <title>Invitation à rejoindre Maillon</title>
+  <!--[if mso]>
+  <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+  <![endif]-->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Inter:wght@400;500;600&display=swap');
+    body, table, td, a { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+    table, td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
+    img { -ms-interpolation-mode:bicubic; border:0; height:auto; line-height:100%; outline:none; text-decoration:none; }
+    body { margin:0; padding:0; width:100%!important; background-color:#FBFAF7; }
+    a { color:#0F846B; }
+    .btn-a:hover { background-color:#0c6d59 !important; }
+    @media only screen and (max-width:600px){
+      .container { width:100%!important; }
+      .px { padding-left:24px!important; padding-right:24px!important; }
+      .h1 { font-size:24px!important; line-height:31px!important; }
+    }
+  </style>
+</head>
+<body style="margin:0; padding:0; background-color:#FBFAF7;">
+  <div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#FBFAF7; opacity:0;">
+    ${inviterCompany} vous invite à rejoindre Maillon, le réseau des entreprises qui se choisissent.
+  </div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#FBFAF7;">
+    <tbody><tr>
+      <td align="center" style="padding:28px 12px;">
+        <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" style="width:600px; max-width:600px;">
+          <tbody><tr>
+            <td style="padding:8px 8px 22px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tbody><tr>
+                  <td width="42" height="42" align="center" valign="middle" bgcolor="#0F846B" style="width:42px; height:42px; border-radius:11px; color:#ffffff; font-family:'Bricolage Grotesque',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:22px; font-weight:800;">M</td>
+                  <td style="padding-left:11px; font-family:'Bricolage Grotesque',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:21px; font-weight:800; color:#0F1826; letter-spacing:-0.3px;">Maillon</td>
+                </tr>
+              </tbody></table>
+            </td>
+          </tr>
+          <tr>
+            <td class="px" style="background-color:#ffffff; border:1px solid #ECEAE4; border-radius:20px; padding:40px 44px;">
+              <p style="margin:0 0 14px 0; font-family:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:12px; font-weight:600; letter-spacing:1.2px; text-transform:uppercase; color:#0F846B;">Invitation</p>
+              <h1 class="h1" style="margin:0 0 16px 0; font-family:'Bricolage Grotesque',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:28px; line-height:35px; font-weight:800; color:#0F1826; letter-spacing:-0.5px;">
+                ${inviterCompany} vous invite à rejoindre&nbsp;Maillon.
+              </h1>
+              <p style="margin:0 0 18px 0; font-family:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:16px; line-height:26px; color:#42505F;">
+                Maillon est le réseau qui relie les entreprises entre elles&nbsp;: trouvez les sociétés complémentaires près de chez vous, démarchez-les en un clic, et échangez en toute confiance — service par service, et uniquement si les deux parties acceptent.
+              </p>
+              <p style="margin:0 0 30px 0; font-family:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:16px; line-height:25px; font-weight:600; color:#0F846B;">
+                Ne soyez plus le maillon faible&nbsp;: devenez un maillon fort de votre écosystème.
+              </p>
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 8px 0;">
+                <tbody><tr>
+                  <td align="center" bgcolor="#0F846B" style="border-radius:12px;">
+                    <a class="btn-a" href="${link}" target="_blank" style="display:inline-block; padding:15px 34px; font-family:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:16px; font-weight:700; color:#ffffff; text-decoration:none; border-radius:12px;">
+                      Rejoindre le réseau&nbsp;→
+                    </a>
+                  </td>
+                </tr>
+              </tbody></table>
+              <p style="margin:22px 0 0 0; font-family:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:20px; color:#8A94A0;">
+                Le bouton ne fonctionne pas&nbsp;? Copiez ce lien dans votre navigateur&nbsp;:<br>
+                <a href="${link}" target="_blank" style="color:#0F846B; word-break:break-all;">${link}</a>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="px" style="padding:20px 44px 0 44px;">
+              <p style="margin:0; font-family:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:20px; color:#8A94A0;">
+                Cette invitation vous est personnellement adressée. Si vous ne l'attendiez pas, vous pouvez simplement ignorer cet e-mail.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 44px 8px 44px;">
+              <hr style="border:none; border-top:1px solid #ECEAE4; margin:0 0 18px 0;">
+              <p style="margin:0 0 6px 0; font-family:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:20px; color:#0F1826; font-weight:600;">Maillon</p>
+              <p style="margin:0; font-family:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:12px; line-height:19px; color:#8A94A0;">
+                Le réseau de mise en relation entre entreprises — local, service par service, sur double accord.
+              </p>
+            </td>
+          </tr>
+        </tbody></table>
+      </td>
+    </tr>
+  </tbody></table>
+</body></html>`;
+
 const mapCompanyRow=(c)=>{
   const plan=PLANS.find((p)=>p.id===c.plan_id)||PLANS[0];
   return {
@@ -2020,11 +2113,7 @@ export default function Maillon(){
     const link=typeof window!=="undefined"?window.location.origin:"https://getmaillon.fr";
     const name=inviteCoForm.name.trim();
     const subject=`${me.name} vous invite à rejoindre Maillon`;
-    const html=buildBrandedEmail({
-      heading:`${me.name} vous invite sur Maillon`,
-      bodyHtml:`<p>Bonjour${name?` ${name}`:""},</p><p><b>${me.name}</b> utilise Maillon, le réseau B2B à double consentement, et pense que votre entreprise pourrait y trouver sa place.</p><p>Vous démarchez qui vous intéresse, vous décidez qui vous répond — aucun contact ne s'ouvre sans accord des deux côtés.</p>`,
-      ctaText:"Découvrir Maillon",ctaHref:link,
-    });
+    const html=buildInviteEmail({inviterCompany:me.name,link});
     try{
       const res=await fetch("/api/send-campaign",{method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({subject,html,fromName:me.name,replyTo:session&&session.user&&session.user.email,recipients:[{email,name}]})});
