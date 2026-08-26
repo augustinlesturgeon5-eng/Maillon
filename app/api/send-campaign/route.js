@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
-  const { subject, html, text, recipients, fromName } = await req.json();
+  const { subject, html, text, recipients, fromName, replyTo } = await req.json();
   if (!subject || !Array.isArray(recipients) || recipients.length === 0) {
     return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
   }
@@ -9,7 +9,7 @@ export async function POST(req) {
   if (!apiKey) {
     return NextResponse.json({ error: "Clé Resend manquante côté serveur" }, { status: 500 });
   }
-  const from = `${fromName || "Maillon"} <onboarding@resend.dev>`;
+  const from = `${fromName || "Maillon"} <campagnes@getmaillon.fr>`;
 
   const results = await Promise.all(
     recipients.map(async (r) => {
@@ -25,6 +25,7 @@ export async function POST(req) {
             to: [r.email],
             subject,
             html: html && html.trim() ? html : `<p>${(text || "").replace(/\n/g, "<br/>")}</p>`,
+            ...(replyTo ? { reply_to: replyTo } : {}),
           }),
         });
         const data = await res.json();

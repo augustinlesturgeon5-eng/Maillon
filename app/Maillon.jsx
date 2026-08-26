@@ -2016,7 +2016,7 @@ export default function Maillon(){
     const mails=recipients.flatMap((c)=>(c.emailingContacts||[]).map((ct)=>({email:ct.email,name:ct.name})));
     if(mails.length){
       fetch("/api/send-campaign",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({subject:camp.subject,html:camp.html,text:camp.body,fromName:me.name,recipients:mails})})
+        body:JSON.stringify({subject:camp.subject,html:camp.html,text:camp.body,fromName:me.name,replyTo:session&&session.user&&session.user.email,recipients:mails})})
         .then((r)=>r.json()).then(({results,error})=>{
           if(error){toast("Erreur d'envoi : "+error);return;}
           const ok=(results||[]).filter((r)=>r.ok).length;const fail=(results||[]).length-ok;
