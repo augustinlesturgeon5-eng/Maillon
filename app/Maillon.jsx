@@ -785,6 +785,13 @@ const TRANSLATIONS={en:{
   "Le réseau des entreprises":"The network where companies",
   "Voir ma page":"View my page",
   "Copier le lien de Maillon":"Copy the Maillon link",
+  "Inviter une entreprise":"Invite a company",
+  "Un email d'invitation sera envoyé en votre nom, avec un lien vers Maillon.":"An invitation email will be sent in your name, with a link to Maillon.",
+  "Envoyer l'invitation":"Send invitation",
+  "Invitation envoyée à":"Invitation sent to",
+  "envoi impossible":"could not send",
+  "Erreur d'envoi de l'invitation":"Error sending the invitation",
+  "Invitations envoyées":"Invitations sent",
   "qui se choisissent.":"choose each other.",
   "Repérez les partenaires les plus complémentaires à votre activité, partout en France, et n'échangez qu'avec ceux qui vous ont dit oui.":"Spot the partners most complementary to your business, anywhere in France, and only talk to the ones who said yes to you.",
   "Mensuel":"Monthly",
@@ -1298,6 +1305,9 @@ export default function Maillon(){
   const [needs,setNeeds]=useState([]);
   const [needOpen,setNeedOpen]=useState(false);
   const [needForm,setNeedForm]=useState({title:"",sought:SECTORS[0],loc:""});
+  const [inviteCoOpen,setInviteCoOpen]=useState(false);
+  const [inviteCoForm,setInviteCoForm]=useState({email:"",name:""});
+  const [inviteCoBusy,setInviteCoBusy]=useState(false);
   const [needFilter,setNeedFilter]=useState("all");
   const [unreadChat,setUnreadChat]=useState({});
   const [toasts,setToasts]=useState([]);
@@ -1346,6 +1356,7 @@ export default function Maillon(){
     emailing:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.7"/><path d="M4 6l8 6 8-6" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>,
     liste:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"/></svg>,
     actualite:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.4 7.4H22l-6 4.4 2.3 7.2L12 17.6 5.7 22 8 14.8 2 10.4h7.6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>,
+    invitation:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H8l-4 3V5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M17 3v5M14.5 5.5h5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>,
     info:<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7"/><path d="M12 8v.4M12 11v5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
   }[k]||null);
   const HIST_CATEGORIES=[
@@ -1359,6 +1370,7 @@ export default function Maillon(){
     {kind:"document",label:"Documents partagés"},
     {kind:"besoin",label:"Besoins"},
     {kind:"actualite",label:"Actualités"},
+    {kind:"invitation",label:"Invitations envoyées"},
   ];
   const setReceptionPole=(pole)=>{setMe((m)=>({...m,receptionPole:pole}));if(me)supabase.from("companies").update({reception_pole:pole}).eq("id",me.id).then(()=>{});logEvent(`Pôle de réception changé → ${pole}`);toast(`Pôle de réception : ${pole}`);};
   const toggleAccount=(id)=>{
@@ -1971,6 +1983,28 @@ export default function Maillon(){
   const revokeInvite=(id)=>{
     setPendingInvites((p)=>p.filter((x)=>x.id!==id));
     supabase.from("invites").update({status:"revoked"}).eq("id",id).then(()=>{});
+  };
+  const sendCompanyInvite=async()=>{
+    const email=inviteCoForm.email.trim();
+    if(!email||!/@/.test(email)||!me)return;
+    setInviteCoBusy(true);
+    const link=typeof window!=="undefined"?window.location.origin:"https://getmaillon.fr";
+    const name=inviteCoForm.name.trim();
+    const subject=`${me.name} vous invite à rejoindre Maillon`;
+    const html=`<p>Bonjour${name?` ${name}`:""},</p><p><b>${me.name}</b> utilise Maillon, le réseau B2B à double consentement, et pense que votre entreprise pourrait y trouver sa place.</p><p style="text-align:center;margin:28px 0;"><a href="${link}" style="background:#0F846B;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;">Découvrir Maillon</a></p>`;
+    try{
+      const res=await fetch("/api/send-campaign",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({subject,html,fromName:me.name,replyTo:session&&session.user&&session.user.email,recipients:[{email,name}]})});
+      const data=await res.json();
+      const ok=data.results&&data.results[0]&&data.results[0].ok;
+      if(!ok){toast("Erreur : "+((data.results&&data.results[0]&&data.results[0].error)||data.error||t("envoi impossible")));setInviteCoBusy(false);return;}
+      logHist(`Invitation envoyée à ${email}`,"invitation");
+      toast(`${t("Invitation envoyée à")} ${email}`);
+      setInviteCoOpen(false);setInviteCoForm({email:"",name:""});
+    }catch(e){
+      toast(t("Erreur d'envoi de l'invitation"));
+    }
+    setInviteCoBusy(false);
   };
 
   const planCredits=()=>{const p=PLANS.find((x)=>x.id===(me&&me.planId));return p?p.credits:null;};
@@ -2656,7 +2690,7 @@ export default function Maillon(){
               <p>{t("Aucune autre entreprise n'a encore rejoint Maillon. Revenez bientôt — votre page est déjà visible pour les prochaines qui s'inscriront.")}</p>
               <div className="emptynet-cta">
                 <button className="btn-ghost sm" onClick={()=>setView("profile")}>{t("Voir ma page")}</button>
-                <button className="btn sm" onClick={()=>{const link=window.location.origin;navigator.clipboard&&navigator.clipboard.writeText(link).catch(()=>{});toast(t("Lien copié !"));}}>{t("Copier le lien de Maillon")}</button>
+                <button className="btn sm" onClick={()=>setInviteCoOpen(true)}>{t("Inviter une entreprise")}</button>
               </div>
             </div>
           ):(<>
@@ -3932,6 +3966,27 @@ export default function Maillon(){
               <div style={{display:"flex",gap:10,marginTop:4}}>
                 <button className="btn-ghost" onClick={()=>setNeedOpen(false)}>{t("Annuler")}</button>
                 <button className="btn block" onClick={publishNeed}>{t("Publier")}</button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* INVITER UNE ENTREPRISE */}
+      {inviteCoOpen&&(
+        <>
+          <div className="scrim" onClick={()=>setInviteCoOpen(false)}/>
+          <div className="modal" onClick={()=>setInviteCoOpen(false)}>
+            <div className="mbox" onClick={(e)=>e.stopPropagation()}>
+              <h3 className="disp">{t("Inviter une entreprise")}</h3>
+              <p className="mi" style={{marginBottom:16}}>{t("Un email d'invitation sera envoyé en votre nom, avec un lien vers Maillon.")}</p>
+              <div className="field"><label>{t("Nom de l'entreprise")} <span style={{textTransform:"none",letterSpacing:0}}>({t("optionnel")})</span></label>
+                <input value={inviteCoForm.name} onChange={(e)=>setInviteCoForm({...inviteCoForm,name:e.target.value})} placeholder="ex : Studio Kavan"/></div>
+              <div className="field"><label>{t("Email")}</label>
+                <input type="email" value={inviteCoForm.email} onChange={(e)=>setInviteCoForm({...inviteCoForm,email:e.target.value})} placeholder="contact@entreprise.fr" onKeyDown={(e)=>e.key==="Enter"&&sendCompanyInvite()}/></div>
+              <div style={{display:"flex",gap:10,marginTop:4}}>
+                <button className="btn-ghost" onClick={()=>setInviteCoOpen(false)}>{t("Annuler")}</button>
+                <button className="btn block" disabled={inviteCoBusy||!inviteCoForm.email.trim()} onClick={sendCompanyInvite}>{inviteCoBusy?t("Un instant…"):t("Envoyer l'invitation")}</button>
               </div>
             </div>
           </div>
