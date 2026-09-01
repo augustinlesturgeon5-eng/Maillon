@@ -699,17 +699,20 @@ const buildInviteEmail=({inviterCompany,link})=>`<!DOCTYPE html>
   </tbody></table>
 </body></html>`;
 
+const founderActive=(c)=>!!c.founder_free_until&&new Date(c.founder_free_until)>new Date();
 const mapCompanyRow=(c)=>{
   const plan=PLANS.find((p)=>p.id===c.plan_id)||PLANS[0];
+  const founderOn=founderActive(c);
   return {
     id:c.id,name:c.name,sector:c.sector||"Non précisé",loc:c.loc||"France",emp:c.emp,
     size:(c.emp||"")+" pers.",founded:c.founded||"—",ca:c.ca,dispo:c.dispo,web:c.web||"—",
     refs:0,rating:5.0,plan:plan.name,planId:plan.id,billing:c.billing||"Mensuelle",
-    membre:plan.id==="pro",logo:c.logo_url,color:c.color||"#0F846B",desc:c.description||"Présentation à compléter.",
+    membre:plan.id==="pro"||founderOn,logo:c.logo_url,color:c.color||"#0F846B",desc:c.description||"Présentation à compléter.",
     seek:c.seek||[],offer:c.offer||[],certifs:c.certifs||[],langues:c.langues&&c.langues.length?c.langues:["Français"],
     services:c.services&&c.services.length?c.services:["Direction","Commercial"],
     receptionPole:c.reception_pole||"Direction",siret:c.siret||"",verifiedSiren:!!c.verified_siren,verified:!!c.verified,
     adminServices:c.admin_services&&c.admin_services.length?c.admin_services:null,accessGrants:c.access_grants||{},
+    isFounder:!!c.is_founder,founderFreeUntil:c.founder_free_until||null,founderFreeActive:founderOn,founderMonthsGranted:c.founder_months_granted||0,invitedBy:c.invited_by||null,
   };
 };
 const mapProfileRow=(p,email)=>({id:p.id,name:p.full_name||"Vous",role:p.role||"Direction",status:p.status||"active",email:email||"",notifyEmail:p.notify_email!==false,language:p.language||"fr"});
@@ -898,6 +901,25 @@ const TRANSLATIONS={en:{
   "Voir ma page":"View my page",
   "Copier le lien de Maillon":"Copy the Maillon link",
   "Inviter une entreprise":"Invite a company",
+  "Acceptée":"Accepted",
+  "Accès Maillon Fort offert jusqu'au":"Free Maillon Fort access until",
+  "Aucune invitation envoyée pour l'instant.":"No invitation sent yet.",
+  "Entreprise Fondatrice":"Founding Company",
+  "Inscription en cours":"Signing up",
+  "Invitez des entreprises de votre réseau et gagnez 1 mois offert sur Maillon Fort pour chaque entreprise qui rejoint Maillon.":"Invite companies from your network and earn 1 free month of Maillon Fort for each company that joins Maillon.",
+  "Lien ouvert":"Link opened",
+  "Mes invitations":"My invitations",
+  "Offre Fondateur":"Founder Offer",
+  "Un lien d'invitation personnel est créé — l'entreprise qui l'utilise pour s'inscrire vous fait gagner 1 mois offert.":"A personal invite link is created — the company that uses it to sign up earns you 1 free month.",
+  "Votre avantage":"Your benefit",
+  "Vous ne pouvez pas vous inviter vous-même.":"You can't invite yourself.",
+  "acceptées":"accepted",
+  "entreprises ont rejoint Maillon grâce à vous":"companies joined Maillon thanks to you",
+  "envoyées":"sent",
+  "inscrites":"signed up",
+  "invitez une entreprise à rejoindre Maillon et obtenez 1 mois supplémentaire.":"invite a company to join Maillon and get 1 extra month.",
+  "mois offert":"free month",
+  "mois offerts":"free months",
   "Campagnes d'emailing":"Email campaigns",
   "Autoriser":"Allow",
   "à vous envoyer des campagnes d'emailing":"to send you email campaigns",
@@ -1331,7 +1353,7 @@ export default function Maillon(){
   const [uiLang,setUiLang]=useState(()=>(typeof window!=="undefined"&&window.localStorage.getItem("maillon_lang"))||"fr");
   const t=(s)=>(TRANSLATIONS[uiLang]&&TRANSLATIONS[uiLang][s])||s;
   const toggleGuestLang=()=>{const next=uiLang==="fr"?"en":"fr";setUiLang(next);if(typeof window!=="undefined")window.localStorage.setItem("maillon_lang",next);};
-  const [preAuthView,setPreAuthView]=useState(()=>(typeof window!=="undefined"&&new URLSearchParams(window.location.search).get("invite"))?"auth":"landing");
+  const [preAuthView,setPreAuthView]=useState(()=>{if(typeof window==="undefined")return "landing";const p=new URLSearchParams(window.location.search);return p.get("invite")||p.get("ref")?"auth":"landing";});
   const [me,setMe]=useState(null);
   const [session,setSession]=useState(null);
   const [authReady,setAuthReady]=useState(false);
@@ -1386,6 +1408,8 @@ export default function Maillon(){
   const [inviteToken,setInviteToken]=useState(null);
   const [inviteInfo,setInviteInfo]=useState(null);
   const [inviteChecked,setInviteChecked]=useState(false);
+  const [referralCode,setReferralCode]=useState(null);
+  const [referralInfo,setReferralInfo]=useState(null);
   const [joinName,setJoinName]=useState("");
   const [access,setAccess]=useState({admins:["Direction"],grants:{}});
   const [savedAccess,setSavedAccess]=useState({admins:["Direction"],grants:{}});
@@ -1426,6 +1450,7 @@ export default function Maillon(){
   const [inviteCoOpen,setInviteCoOpen]=useState(false);
   const [inviteCoForm,setInviteCoForm]=useState({email:"",name:""});
   const [inviteCoBusy,setInviteCoBusy]=useState(false);
+  const [referrals,setReferrals]=useState([]);
   const [needFilter,setNeedFilter]=useState("all");
   const [unreadChat,setUnreadChat]=useState({});
   const [toasts,setToasts]=useState([]);
@@ -1617,6 +1642,18 @@ export default function Maillon(){
       const row=Array.isArray(data)?data[0]:data;
       setInviteInfo(row&&row.status==="pending"?row:null);
       setInviteChecked(true);
+    });
+  },[]);
+  useEffect(()=>{
+    const code=new URLSearchParams(window.location.search).get("ref");
+    if(!code)return;
+    setReferralCode(code);
+    supabase.rpc("get_referral",{ref_code:code}).then(({data})=>{
+      const row=Array.isArray(data)?data[0]:data;
+      if(row){
+        setReferralInfo({inviterCompanyId:row.inviter_company_id,inviterName:row.inviter_name,status:row.status});
+        if(row.status==="pending")supabase.rpc("mark_referral_clicked",{ref_code:code}).then(()=>{});
+      }
     });
   },[]);
   useEffect(()=>{
@@ -1882,6 +1919,16 @@ export default function Maillon(){
 
   useEffect(()=>{
     if(!me)return;
+    let active=true;
+    supabase.from("referrals").select("*").eq("inviter_company_id",me.id).order("created_at",{ascending:false}).then(({data})=>{
+      if(!active||!data)return;
+      setReferrals(data);
+    });
+    return ()=>{active=false;};
+  },[me&&me.id]);
+
+  useEffect(()=>{
+    if(!me)return;
     const channel=supabase.channel("needs-feed")
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"needs"},(payload)=>{
         const row=payload.new;
@@ -2036,6 +2083,9 @@ export default function Maillon(){
         services,reception_pole:receptionPole,plan_id:"gratuit",billing:null,
       }).select().single();
       if(error){toast("Erreur : "+error.message);return;}
+      if(referralInfo&&referralCode){
+        supabase.rpc("accept_referral",{ref_code:referralCode,new_company_id:company.id}).then(()=>{});
+      }
       const {data:profile,error:profErr}=await supabase.from("profiles").update({
         company_id:company.id,full_name:form.ownerName.trim()||form.name,role:receptionPole,status:"active",
       }).eq("id",session.user.id).select().single();
@@ -2106,22 +2156,45 @@ export default function Maillon(){
     setPendingInvites((p)=>p.filter((x)=>x.id!==id));
     supabase.from("invites").update({status:"revoked"}).eq("id",id).then(()=>{});
   };
-  const sendCompanyInvite=async()=>{
+  const genReferralCode=()=>{const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let i=0;i<5;i++)s+=chars[Math.floor(Math.random()*chars.length)];return `MAIL-${s}`;};
+  const createReferral=async()=>{
     const email=inviteCoForm.email.trim();
-    if(!email||!/@/.test(email)||!me)return;
-    setInviteCoBusy(true);
-    const link=typeof window!=="undefined"?window.location.origin:"https://getmaillon.fr";
+    if(!email||!/@/.test(email)||!me)return null;
+    if(session&&session.user&&session.user.email&&email.toLowerCase()===session.user.email.toLowerCase()){toast(t("Vous ne pouvez pas vous inviter vous-même."));return null;}
     const name=inviteCoForm.name.trim();
+    const code=genReferralCode();
+    const {data,error}=await supabase.from("referrals").insert({inviter_company_id:me.id,invited_email:email,invited_name:name||null,code}).select().single();
+    if(error){toast("Erreur : "+error.message);return null;}
+    setReferrals((rs)=>[data,...rs]);
+    return {code,email,name};
+  };
+  const referralLink=(code)=>`${typeof window!=="undefined"?window.location.origin:"https://getmaillon.fr"}/?ref=${code}`;
+  const copyReferralLink=async()=>{
+    setInviteCoBusy(true);
+    const r=await createReferral();
+    if(!r){setInviteCoBusy(false);return;}
+    const link=referralLink(r.code);
+    navigator.clipboard&&navigator.clipboard.writeText(link).catch(()=>{});
+    logHist(`Lien d'invitation créé pour ${r.email}`,"invitation");
+    toast(t("Lien copié !"));
+    setInviteCoOpen(false);setInviteCoForm({email:"",name:""});
+    setInviteCoBusy(false);
+  };
+  const sendCompanyInvite=async()=>{
+    setInviteCoBusy(true);
+    const r=await createReferral();
+    if(!r){setInviteCoBusy(false);return;}
+    const link=referralLink(r.code);
     const subject=`${me.name} vous invite à rejoindre Maillon`;
     const html=buildInviteEmail({inviterCompany:me.name,link});
     try{
       const res=await fetch("/api/send-campaign",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({subject,html,fromName:me.name,replyTo:session&&session.user&&session.user.email,recipients:[{email,name}]})});
+        body:JSON.stringify({subject,html,fromName:me.name,replyTo:session&&session.user&&session.user.email,recipients:[{email:r.email,name:r.name}]})});
       const data=await res.json();
       const ok=data.results&&data.results[0]&&data.results[0].ok;
       if(!ok){toast("Erreur : "+((data.results&&data.results[0]&&data.results[0].error)||data.error||t("envoi impossible")));setInviteCoBusy(false);return;}
-      logHist(`Invitation envoyée à ${email}`,"invitation");
-      toast(`${t("Invitation envoyée à")} ${email}`);
+      logHist(`Invitation envoyée à ${r.email}`,"invitation");
+      toast(`${t("Invitation envoyée à")} ${r.email}`);
       setInviteCoOpen(false);setInviteCoForm({email:"",name:""});
     }catch(e){
       toast(t("Erreur d'envoi de l'invitation"));
@@ -2129,7 +2202,7 @@ export default function Maillon(){
     setInviteCoBusy(false);
   };
 
-  const planCredits=()=>{const p=PLANS.find((x)=>x.id===(me&&me.planId));return p?p.credits:null;};
+  const planCredits=()=>{if(me&&me.founderFreeActive)return null;const p=PLANS.find((x)=>x.id===(me&&me.planId));return p?p.credits:null;};
   const remaining=()=>{const c=planCredits();return c==null?null:Math.max(0,c-prospectsUsed);};
   const canProspect=()=>{const c=planCredits();return c==null||prospectsUsed<c;};
   const upgradeTo=(planId,billing)=>{setLimitOpen(false);setAdhesion(false);if(me)startCheckout(me.id,planId,billing||"Mensuelle");};
@@ -2794,6 +2867,10 @@ export default function Maillon(){
           <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
             <button className="btn-ghost sm" onClick={()=>setView("profile")}>{t("Voir ma page")}</button>
             <button className="btn-ghost sm" onClick={()=>setInviteCoOpen(true)}>{t("Inviter une entreprise")}</button>
+          </div>
+          <div className="memban">
+            <span>🏆 <b>{t("Offre Fondateur")}</b> — {t("invitez une entreprise à rejoindre Maillon et obtenez 1 mois supplémentaire.")}</span>
+            <button className="btn-ghost sm" onClick={()=>setInviteCoOpen(true)}>{t("Inviter une entreprise")} →</button>
           </div>
           {me.planId==="gratuit"&&(
             <div className="memban">
@@ -3569,7 +3646,8 @@ export default function Maillon(){
               <div className="profident">
                 <div className="proflogo" style={{background:me.color}}>{logoImg(me)}</div>
                 <div><div className="profname disp">{me.name}<Check className="verif" style={{width:18,height:18}}/></div>
-                  <div className="profmeta">{me.sector} · {me.loc} · {me.size}</div></div>
+                  <div className="profmeta">{me.sector} · {me.loc} · {me.size}</div>
+                  {me.isFounder&&<span className="pill seek" style={{marginTop:6,display:"inline-block"}}>⭐ {t("Entreprise Fondatrice")}</span>}</div>
               </div>
               <div className="pgrid" style={{marginTop:4}}>
                 <div className="pcell"><div className="k">{t("Création")}</div><div className="v">{me.founded}</div></div>
@@ -3723,11 +3801,47 @@ export default function Maillon(){
             <div className="profsec" style={{marginTop:0}}>
               <h5>{t("Offre actuelle")}</h5>
               <p className="d">{t("Vous êtes sur l'offre")} <b>{me.planId==="gratuit"?me.plan:`${me.plan} · ${me.billing}`}</b>.</p>
+              {me.founderFreeActive&&(
+                <p className="d" style={{color:"var(--emerald)",fontWeight:600}}>⭐ {t("Accès Maillon Fort offert jusqu'au")} {new Date(me.founderFreeUntil).toLocaleDateString("fr-FR")} ({t("Entreprise Fondatrice")}).</p>
+              )}
               {me.planId!=="gratuit"?(
                 <button className="btn-ghost sm" onClick={manageBilling}>{t("Gérer mon abonnement / facturation")}</button>
               ):(
                 <p style={{fontSize:12.5,color:"var(--slate-soft)"}}>{t("Aucun abonnement payant à gérer pour le moment.")}</p>
               )}
+            </div>
+          </div></div>
+
+          <h2 className="ptitle disp" style={{marginTop:36}}>🏆 {t("Offre Fondateur")}</h2>
+          <p className="psub">{t("Invitez des entreprises de votre réseau et gagnez 1 mois offert sur Maillon Fort pour chaque entreprise qui rejoint Maillon.")}</p>
+          <div className="prof"><div className="profbody">
+            <div className="profsec" style={{marginTop:0}}>
+              <h5>{t("Votre avantage")}</h5>
+              <p className="d" style={{fontSize:20,fontWeight:800,color:"var(--ink)"}}>{me.founderMonthsGranted} {me.founderMonthsGranted>1?t("mois offerts"):t("mois offert")}</p>
+              {me.isFounder&&<p className="d">⭐ {t("Entreprise Fondatrice")}</p>}
+              {referrals.filter((r)=>r.status==="accepted").length>0&&<p className="d">🤝 {referrals.filter((r)=>r.status==="accepted").length} {t("entreprises ont rejoint Maillon grâce à vous")}</p>}
+              <button className="btn sm" onClick={()=>setInviteCoOpen(true)} style={{marginTop:8}}>{t("Inviter une entreprise")}</button>
+            </div>
+            <div className="profsec">
+              <h5>{t("Mes invitations")}</h5>
+              {referrals.length===0?(
+                <p style={{fontSize:12.5,color:"var(--slate-soft)"}}>{t("Aucune invitation envoyée pour l'instant.")}</p>
+              ):(<>
+                <div style={{display:"flex",gap:16,flexWrap:"wrap",marginBottom:14,fontSize:12.5,color:"var(--slate)"}}>
+                  <span>{referrals.length} {t("envoyées")}</span>
+                  <span>{referrals.filter((r)=>r.status==="pending"||r.status==="clicked").length} {t("en attente")}</span>
+                  <span>{referrals.filter((r)=>r.status==="registered").length} {t("inscrites")}</span>
+                  <span>{referrals.filter((r)=>r.status==="accepted").length} {t("acceptées")}</span>
+                </div>
+                <div className="auditlist">
+                  {referrals.map((r)=>(
+                    <div key={r.id} className="auditrow">
+                      <span className="at">{{pending:t("En attente"),clicked:t("Lien ouvert"),registered:t("Inscription en cours"),accepted:t("Acceptée")}[r.status]||r.status}</span>
+                      {r.invited_name?`${r.invited_name} · `:""}{r.invited_email}
+                    </div>
+                  ))}
+                </div>
+              </>)}
             </div>
           </div></div>
         </div></div>
@@ -4130,14 +4244,15 @@ export default function Maillon(){
           <div className="modal" onClick={()=>setInviteCoOpen(false)}>
             <div className="mbox" onClick={(e)=>e.stopPropagation()}>
               <h3 className="disp">{t("Inviter une entreprise")}</h3>
-              <p className="mi" style={{marginBottom:16}}>{t("Un email d'invitation sera envoyé en votre nom, avec un lien vers Maillon.")}</p>
+              <p className="mi" style={{marginBottom:16}}>{t("Un lien d'invitation personnel est créé — l'entreprise qui l'utilise pour s'inscrire vous fait gagner 1 mois offert.")}</p>
               <div className="field"><label>{t("Nom de l'entreprise")} <span style={{textTransform:"none",letterSpacing:0}}>({t("optionnel")})</span></label>
                 <input value={inviteCoForm.name} onChange={(e)=>setInviteCoForm({...inviteCoForm,name:e.target.value})} placeholder="ex : Studio Kavan"/></div>
               <div className="field"><label>{t("Email")}</label>
                 <input type="email" value={inviteCoForm.email} onChange={(e)=>setInviteCoForm({...inviteCoForm,email:e.target.value})} placeholder="contact@entreprise.fr" onKeyDown={(e)=>e.key==="Enter"&&sendCompanyInvite()}/></div>
-              <div style={{display:"flex",gap:10,marginTop:4}}>
+              <div style={{display:"flex",gap:10,marginTop:4,flexWrap:"wrap"}}>
                 <button className="btn-ghost" onClick={()=>setInviteCoOpen(false)}>{t("Annuler")}</button>
-                <button className="btn block" disabled={inviteCoBusy||!inviteCoForm.email.trim()} onClick={sendCompanyInvite}>{inviteCoBusy?t("Un instant…"):t("Envoyer l'invitation")}</button>
+                <button className="btn-ghost" style={{flex:1}} disabled={inviteCoBusy||!inviteCoForm.email.trim()} onClick={copyReferralLink}>{t("Copier le lien")}</button>
+                <button className="btn" style={{flex:1}} disabled={inviteCoBusy||!inviteCoForm.email.trim()} onClick={sendCompanyInvite}>{inviteCoBusy?t("Un instant…"):t("Envoyer l'invitation")}</button>
               </div>
             </div>
           </div>
