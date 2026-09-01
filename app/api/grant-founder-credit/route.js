@@ -2,13 +2,19 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
-const FORT_PRICE_IDS = [
-  process.env.STRIPE_PRICE_FORT_MONTHLY,
-  process.env.STRIPE_PRICE_FORT_ANNUAL,
-  process.env.STRIPE_PRICE_FORT_NOCOMMIT,
-].filter(Boolean);
-
-const FORT_MONTHLY_CENTS = 3999; // 39,99 € — valeur d'un mois d'abonnement Maillon Fort
+// Pour chaque offre payante : ses price ids Stripe, la valeur d'un mois (centimes) à créditer, et son nom
+const PLAN_CREDITS = [
+  {
+    priceIds: [process.env.STRIPE_PRICE_FORT_MONTHLY, process.env.STRIPE_PRICE_FORT_ANNUAL, process.env.STRIPE_PRICE_FORT_NOCOMMIT].filter(Boolean),
+    cents: 3999, // 39,99 €
+    name: "Maillon Fort",
+  },
+  {
+    priceIds: [process.env.STRIPE_PRICE_CENTRAL_MONTHLY, process.env.STRIPE_PRICE_CENTRAL_ANNUAL, process.env.STRIPE_PRICE_CENTRAL_NOCOMMIT].filter(Boolean),
+    cents: 1999, // 19,99 €
+    name: "Maillon Central",
+  },
+];
 
 export async function POST(req) {
   try {
@@ -42,17 +48,18 @@ export async function POST(req) {
     });
     const active = subs.data.find((s) => s.status === "active" || s.status === "trialing");
     const priceId = active?.items?.data?.[0]?.price?.id;
-    if (!active || !FORT_PRICE_IDS.includes(priceId)) {
+    const matched = active && PLAN_CREDITS.find((p) => p.priceIds.includes(priceId));
+    if (!matched) {
       return NextResponse.json({ applied: false });
     }
 
     await stripe.customers.createBalanceTransaction(inviter.stripe_customer_id, {
-      amount: -FORT_MONTHLY_CENTS,
+      amount: -matched.cents,
       currency: "eur",
-      description: "Offre Fondateur Maillon — 1 mois offert (entreprise parrainée inscrite)",
+      description: `Offre Fondateur Maillon — 1 mois offert sur ${matched.name} (entreprise parrainée inscrite)`,
     });
 
-    return NextResponse.json({ applied: true });
+    return NextResponse.json({ applied: true, plan: matched.name });
   } catch (e) {
     return NextResponse.json({ error: e.message || "Erreur inattendue" }, { status: 500 });
   }
