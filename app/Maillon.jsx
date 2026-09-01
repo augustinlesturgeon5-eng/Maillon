@@ -907,6 +907,7 @@ const TRANSLATIONS={en:{
   "Entreprise Fondatrice":"Founding Company",
   "Inscription en cours":"Signing up",
   "Invitez des entreprises de votre réseau et gagnez 1 mois offert sur Maillon Fort pour chaque entreprise qui rejoint Maillon.":"Invite companies from your network and earn 1 free month of Maillon Fort for each company that joins Maillon.",
+  "Si vous n'êtes pas encore abonné, ce mois vous donne un accès gratuit à Maillon Fort. Si vous payez déjà Maillon Fort, il est directement déduit de votre prochaine facture.":"If you're not subscribed yet, this month gives you free access to Maillon Fort. If you're already paying for Maillon Fort, it's deducted directly from your next invoice.",
   "Lien ouvert":"Link opened",
   "Mes invitations":"My invitations",
   "Offre Fondateur":"Founder Offer",
@@ -2085,6 +2086,8 @@ export default function Maillon(){
       if(error){toast("Erreur : "+error.message);return;}
       if(referralInfo&&referralCode){
         supabase.rpc("accept_referral",{ref_code:referralCode,new_company_id:company.id}).then(()=>{});
+        fetch("/api/grant-founder-credit",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({inviterCompanyId:referralInfo.inviterCompanyId,accessToken:session.access_token})}).catch(()=>{});
       }
       const {data:profile,error:profErr}=await supabase.from("profiles").update({
         company_id:company.id,full_name:form.ownerName.trim()||form.name,role:receptionPole,status:"active",
@@ -3820,6 +3823,7 @@ export default function Maillon(){
               <p className="d" style={{fontSize:20,fontWeight:800,color:"var(--ink)"}}>{me.founderMonthsGranted} {me.founderMonthsGranted>1?t("mois offerts"):t("mois offert")}</p>
               {me.isFounder&&<p className="d">⭐ {t("Entreprise Fondatrice")}</p>}
               {referrals.filter((r)=>r.status==="accepted").length>0&&<p className="d">🤝 {referrals.filter((r)=>r.status==="accepted").length} {t("entreprises ont rejoint Maillon grâce à vous")}</p>}
+              <p style={{fontSize:12,color:"var(--slate-soft)",marginTop:6}}>{t("Si vous n'êtes pas encore abonné, ce mois vous donne un accès gratuit à Maillon Fort. Si vous payez déjà Maillon Fort, il est directement déduit de votre prochaine facture.")}</p>
               <button className="btn sm" onClick={()=>setInviteCoOpen(true)} style={{marginTop:8}}>{t("Inviter une entreprise")}</button>
             </div>
             <div className="profsec">
