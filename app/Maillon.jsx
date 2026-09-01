@@ -16,8 +16,8 @@ const RealFranceMap = dynamic(() => import("./RealFranceMap"), { ssr: false });
 
 /* ---- Secteurs (liste complète) + couleur par secteur ---- */
 const SECTOR_COLORS = {
-  "Tech & Dév":"#0A6E78", "Marketing & Com":"#C24B3A", "Design & Création":"#D98A12",
-  "Logistique & Transport":"#2C6E9E", "RH & Recrutement":"#8A5BC0", "Juridique & Compta":"#0C2233",
+  "Tech & Dév":"#1F3B63", "Marketing & Com":"#C24B3A", "Design & Création":"#D98A12",
+  "Logistique & Transport":"#3B6FB0", "RH & Recrutement":"#8A5BC0", "Juridique & Compta":"#16223B",
   "Finance & Assurance":"#1E7A6B", "Conseil & Stratégie":"#B0472F", "Industrie & Production":"#4A7A3B",
   "BTP & Construction":"#C08A2E", "Immobilier":"#5B6EA8", "Commerce & Distribution":"#C0417E",
   "Restauration & Traiteur":"#D2691E", "Événementiel":"#A0439E", "Santé & Bien-être":"#2E9E8A",
@@ -25,7 +25,7 @@ const SECTOR_COLORS = {
   "Tourisme & Hôtellerie":"#C75B4A", "Média & Audiovisuel":"#6A5BC0",
 };
 const SECTORS = Object.keys(SECTOR_COLORS);
-const COLORS = ["#0A6E78","#C24B3A","#2C6E9E","#D98A12","#8A5BC0","#C0417E","#0C2233","#4A7A3B"];
+const COLORS = ["#1F3B63","#C24B3A","#3B6FB0","#D98A12","#8A5BC0","#C0417E","#16223B","#4A7A3B"];
 const EMP = ["1–10","11–50","51–200","200+"];
 const CA = ["< 500 k€","500 k–2 M€","2–10 M€","> 10 M€"];
 const DISPO = ["Disponible","Sur devis","Complet"];
@@ -45,10 +45,10 @@ const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;450;500;600;700&display=swap');
 .mln * { box-sizing:border-box; }
 .mln {
-  --ink:#0C2233; --paper:#F6F8F9; --surface:#FFFFFF;
-  --line:#DCE3E6; --line-soft:#EEF2F3; --slate:#4C5D68; --slate-soft:#7C8D97;
-  --emerald:#0A6E78; --emerald-bright:#128A96; --emerald-wash:#E3F0F1;
-  --amber:#D98A12; --amber-wash:#FBF0DC; --coral:#C24B3A; --coral-wash:#F7E7E3; --blue:#2C6E9E; --sea:#EAF1F3;
+  --ink:#16223B; --paper:#F4EEE3; --surface:#FFFFFF;
+  --line:#E3DACB; --line-soft:#EFE8DC; --slate:#5B6472; --slate-soft:#8B93A0;
+  --emerald:#1F3B63; --emerald-bright:#2C4F80; --emerald-wash:#E7EBF2;
+  --amber:#D98A12; --amber-wash:#FBF0DC; --coral:#C24B3A; --coral-wash:#F7E7E3; --blue:#3B6FB0; --sea:#EFF2F6;
   font-family:'Inter',system-ui,sans-serif; color:var(--ink); background:var(--paper);
   min-height:100vh; -webkit-font-smoothing:antialiased; line-height:1.5;
 }
@@ -557,7 +557,7 @@ const XI=(p)=><svg viewBox="0 0 16 16" width="14" height="14" {...p}><path d="M4
 
 function Ring({score,size=52}){
   const r=size/2-4,c=2*Math.PI*r;
-  const col=score>=82?"#0A6E78":score>=68?"#D98A12":"#8A929C";
+  const col=score>=82?"#1F3B63":score>=68?"#D98A12":"#8A929C";
   return(<svg width={size} height={size} style={{display:"block",flex:"0 0 auto"}}>
     <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#D4E8E1" strokeWidth="4"/>
     <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={col} strokeWidth="4" strokeLinecap="round"
@@ -707,7 +707,7 @@ const mapCompanyRow=(c)=>{
     id:c.id,name:c.name,sector:c.sector||"Non précisé",loc:c.loc||"France",emp:c.emp,
     size:(c.emp||"")+" pers.",founded:c.founded||"—",ca:c.ca,dispo:c.dispo,web:c.web||"—",
     refs:0,rating:5.0,plan:plan.name,planId:plan.id,billing:c.billing||"Mensuelle",
-    membre:plan.id==="pro"||founderOn,logo:c.logo_url,color:c.color||"#0A6E78",desc:c.description||"Présentation à compléter.",
+    membre:plan.id==="pro"||founderOn,logo:c.logo_url,color:c.color||"#1F3B63",desc:c.description||"Présentation à compléter.",
     seek:c.seek||[],offer:c.offer||[],certifs:c.certifs||[],langues:c.langues&&c.langues.length?c.langues:["Français"],
     services:c.services&&c.services.length?c.services:["Direction","Commercial"],
     receptionPole:c.reception_pole||"Direction",siret:c.siret||"",verifiedSiren:!!c.verified_siren,verified:!!c.verified,
@@ -2431,7 +2431,7 @@ export default function Maillon(){
   const authorFromId=(id)=>{
     if(me&&id===me.id)return{name:me.name,color:me.color,sector:me.sector,loc:me.loc,logo:me.logo,isMe:true};
     const c=companies.find((x)=>x.id===id);
-    return c?{name:c.name,color:c.color,sector:c.sector,loc:c.loc,logo:c.logo,isMe:false}:{name:"Entreprise",color:"#0A6E78",sector:"",loc:"",logo:null,isMe:false};
+    return c?{name:c.name,color:c.color,sector:c.sector,loc:c.loc,logo:c.logo,isMe:false}:{name:"Entreprise",color:"#1F3B63",sector:"",loc:"",logo:null,isMe:false};
   };
   const postAuthor=(p)=>p.author||authorFromId(p.companyId);
   const postRepostOf=(p)=>p.repostOf||(p.repostOfCompanyId?authorFromId(p.repostOfCompanyId):null);
@@ -2782,7 +2782,7 @@ export default function Maillon(){
           </>)}
 
           <div style={{textAlign:"center",marginTop:18}}>
-            <button className="linkbtn" onClick={()=>{setForm((f)=>({...f,ownerName:f.ownerName||"Camille Dubois",name:"Studio Kavan",sector:"Tech & Dév",loc:"Rennes",emp:"1–10",color:"#0A6E78",radius:100,desc:"Studio produit qui conçoit et développe des interfaces sur mesure pour les entreprises.",seek:"partenaires design, apporteurs d'affaires",offer:"développement web, applications métier",founded:"2020",ca:"< 500 k€",web:"studiokavan.fr",certifs:"RGPD",siret:"902 445 178 00021",plan:"pro",billing:"Mensuelle",services:["Direction","Commercial","Technique","RH"],receptionPole:"Direction"}));setObStep(2);}}>
+            <button className="linkbtn" onClick={()=>{setForm((f)=>({...f,ownerName:f.ownerName||"Camille Dubois",name:"Studio Kavan",sector:"Tech & Dév",loc:"Rennes",emp:"1–10",color:"#1F3B63",radius:100,desc:"Studio produit qui conçoit et développe des interfaces sur mesure pour les entreprises.",seek:"partenaires design, apporteurs d'affaires",offer:"développement web, applications métier",founded:"2020",ca:"< 500 k€",web:"studiokavan.fr",certifs:"RGPD",siret:"902 445 178 00021",plan:"pro",billing:"Mensuelle",services:["Direction","Commercial","Technique","RH"],receptionPole:"Direction"}));setObStep(2);}}>
               {t("Remplir avec un exemple")}
             </button>
           </div>
