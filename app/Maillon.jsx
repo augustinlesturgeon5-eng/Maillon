@@ -260,6 +260,24 @@ const CSS = `
 .mln .agevent .aginfo b{font-size:14.5px;}
 .mln .agsvcs{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
 .mln .agevent .btn{margin-left:auto;}
+.mln .calwrap{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 18px 14px;margin-bottom:24px;}
+.mln .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;}
+.mln .calhead h4{font-family:'Bricolage Grotesque';font-weight:700;font-size:16px;text-transform:capitalize;margin:0;min-width:150px;text-align:center;}
+.mln .calnav{display:flex;align-items:center;gap:6px;}
+.mln .calnavbtn{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--slate);}
+.mln .calnavbtn:hover{background:var(--sea);color:var(--ink);}
+.mln .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+.mln .calweekday{text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--slate-soft);padding-bottom:6px;}
+.mln .calcell{position:relative;aspect-ratio:1;border:1px solid transparent;border-radius:11px;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:6px 2px 4px;cursor:pointer;font-family:'Inter';font-size:12.5px;color:var(--ink);}
+.mln .calcell:hover{background:var(--sea);}
+.mln .calcell.out{color:var(--slate-soft);}
+.mln .calcell.today{border-color:var(--emerald);font-weight:700;}
+.mln .calcell.sel{background:var(--emerald);color:#fff;}
+.mln .calcell.sel.today{border-color:#fff;}
+.mln .caldots{display:flex;gap:3px;margin-top:4px;flex-wrap:wrap;justify-content:center;}
+.mln .caldot{width:5px;height:5px;border-radius:50%;flex:0 0 auto;}
+.mln .calcell.sel .caldot{background:#fff !important;}
+.mln .calmore{font-size:9px;line-height:1;color:inherit;opacity:.7;}
 .mln .rolepick{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 10px 5px 12px;margin-right:8px;}
 .mln .rolepick svg{color:var(--emerald);flex:0 0 auto;}
 .mln .rolepick select{border:none;background:none;font-family:inherit;font-size:13px;font-weight:600;color:var(--ink);outline:none;cursor:pointer;max-width:120px;}
@@ -702,6 +720,8 @@ const buildInviteEmail=({inviterCompany,link})=>`<!DOCTYPE html>
 </body></html>`;
 
 const founderActive=(c)=>!!c.founder_free_until&&new Date(c.founder_free_until)>new Date();
+const pad2=(n)=>String(n).padStart(2,"0");
+const ymd=(dt)=>`${dt.getFullYear()}-${pad2(dt.getMonth()+1)}-${pad2(dt.getDate())}`;
 /* Les messages "devis"/"document"/"visio planifiée" sont stockés en JSON dans messages.body ; un message texte classique reste une simple chaîne. */
 const decodeMsg=(body)=>{
   if(typeof body==="string"&&body[0]==="{"){
@@ -895,6 +915,10 @@ const TRANSLATIONS={en:{
   "Espace de collaboration — dans la vraie application, devis et fichiers seraient réellement transmis et stockés.":"Collaboration space — in the real application, quotes and files would actually be sent and stored.",
   "Estimée sur la complémentarité de vos activités, ce que vous cherchez de part et d'autre, et la proximité.":"Estimated from how your businesses complement each other, what you're each looking for, and proximity.",
   "Exporter (.ics)":"Export (.ics)",
+  "Aujourd'hui":"Today",
+  "Mois précédent":"Previous month",
+  "Mois suivant":"Next month",
+  "Aucun événement ce jour.":"No events on this day.",
   "Aucun événement à exporter":"No events to export",
   "Le fichier .ics s'importe dans Google Agenda, Outlook ou Apple Calendar (menu « Importer un calendrier »).":"The .ics file can be imported into Google Calendar, Outlook or Apple Calendar (\"Import calendar\" menu).",
   "Exprimez ce que vous cherchez, ou proposez vos services aux entreprises qui cherchent. La mise en relation vient à vous.":"Say what you're looking for, or offer your services to companies who are searching. The connection comes to you.",
@@ -1388,6 +1412,8 @@ export default function Maillon(){
   const [form,setForm]=useState({name:"",ownerName:"",sector:"",loc:"",emp:EMP[0],color:COLORS[0],radius:50,
     desc:"",seek:"",offer:"",founded:"",ca:CA[0],dispo:DISPO[0],web:"",certifs:"",langues:"",plan:"gratuit",billing:"Mensuelle",logo:null,services:["Direction","Commercial","Marketing & Com","RH","Comptabilité"],receptionPole:"Direction",siret:""});
   const [view,setView]=useState("discover");
+  const [calMonth,setCalMonth]=useState(()=>{const d=new Date();return {y:d.getFullYear(),m:d.getMonth()};});
+  const [calSelected,setCalSelected]=useState(null);
   const [mode,setMode]=useState("list");           // list | map
   const [companies,setCompanies]=useState([]);
   const [q,setQ]=useState("");
@@ -2888,10 +2914,15 @@ export default function Maillon(){
   const matchingNeeds=needs.filter((n)=>!n.mine&&me&&n.sought===me.sector);
   const totalChatUnread=Object.values(unreadChat).reduce((a,b)=>a+b,0);
   const eventsByDate={};roleEvents.forEach((e)=>{(eventsByDate[e.date]=eventsByDate[e.date]||[]).push(e);});
+  const calFirst=new Date(calMonth.y,calMonth.m,1);
+  const calStartOffset=(calFirst.getDay()+6)%7;
+  const calCells=Array.from({length:42},(_,i)=>{const dt=new Date(calMonth.y,calMonth.m,1-calStartOffset+i);return {dt,key:ymd(dt),out:dt.getMonth()!==calMonth.m};});
+  const todayKey=ymd(new Date());
+  const calSelectedKey=calSelected||(eventsByDate[todayKey]?todayKey:(roleEvents[0]&&roleEvents[0].date)||todayKey);
+  const calSelectedEvents=eventsByDate[calSelectedKey]||[];
   const icsEscape=(s)=>String(s||"").replace(/[\\,;]/g,(c)=>"\\"+c).replace(/\n/g,"\\n");
   const exportIcs=()=>{
     if(!roleEvents.length){toast(t("Aucun événement à exporter"));return;}
-    const pad2=(n)=>String(n).padStart(2,"0");
     const stamp=(d)=>d.split("-").join("");
     const lines=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Maillon//Agenda//FR","CALSCALE:GREGORIAN"];
     roleEvents.forEach((e)=>{
@@ -3294,37 +3325,68 @@ export default function Maillon(){
         );})()}
 
       {/* AGENDA */}
-      {view==="agenda"&&(
+      {view==="agenda"&&(()=>{
+        const calWeekdays=uiLang==="fr"?["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]:["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+        const calMonthLabel=calFirst.toLocaleDateString(uiLang==="fr"?"fr-FR":"en-US",{month:"long",year:"numeric"});
+        const calPrevMonth=()=>setCalMonth(({y,m})=>m===0?{y:y-1,m:11}:{y,m:m-1});
+        const calNextMonth=()=>setCalMonth(({y,m})=>m===11?{y:y+1,m:0}:{y,m:m+1});
+        const calGoToday=()=>{const d=new Date();setCalMonth({y:d.getFullYear(),m:d.getMonth()});setCalSelected(ymd(d));};
+        return (
         <div className="wrap"><div className="page">
           <h2 className="ptitle disp">{t("Événements")}</h2>
           <p className="psub">{t("Toutes vos visios à venir avec les entreprises connectées, classées par date. Une visio de groupe apparaît avec tous ses services.")}{!isAdmin&&` ${t("En tant que")} ${t(role)}, ${t("vous ne voyez que les visios de votre service.")}`}</p>
           <div style={{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap"}}>
+            <button className="btn-ghost sm" onClick={calGoToday}>{t("Aujourd'hui")}</button>
             <button className="btn-ghost sm" onClick={exportIcs}>{t("Exporter (.ics)")}</button>
           </div>
           {roleEvents.length>0&&<p className="uphint" style={{marginTop:-10,marginBottom:16}}>{t("Le fichier .ics s'importe dans Google Agenda, Outlook ou Apple Calendar (menu « Importer un calendrier »).")}</p>}
-          {roleEvents.length===0?(
-            <div className="empty">
-              <svg width="46" height="46" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="var(--slate-soft)" strokeWidth="1.6"/><path d="M3 9h18M8 3v4M16 3v4" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinecap="round"/></svg>
-              <h3>{t("Aucune visio planifiée")}</h3><p>{t("Planifiez une visio depuis une conversation pour la retrouver ici.")}</p>
+
+          <div className="calwrap">
+            <div className="calhead">
+              <button className="calnavbtn" onClick={calPrevMonth} aria-label={t("Mois précédent")}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M15 4 7 12l8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </button>
+              <h4>{calMonthLabel}</h4>
+              <button className="calnavbtn" onClick={calNextMonth} aria-label={t("Mois suivant")}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M9 4v16l8-8L9 4Z" fill="currentColor"/></svg>
+              </button>
             </div>
-          ):(
-            Object.keys(eventsByDate).map((date)=>(
-              <div key={date} className="agday">
-                <div className="agdate">{fmtDate(date)}</div>
-                {eventsByDate[date].map((e,i)=>(
-                  <div key={i} className="agevent">
-                    <div className="agtime">{e.time}</div>
-                    <div className="aglogo" style={{background:e.c.color}}>{logoImg(e.c)}</div>
-                    <div className="aginfo"><b>{e.c.name}{e.services.length>1?` · ${t("visio de groupe")}`:""}</b>
-                      <div className="agsvcs">{e.services.map((s)=><span key={s} className="pill offer">{t(s)}</span>)}</div></div>
-                    <button className="btn sm" onClick={()=>startVisio(e.c,e.services)}>{t("Rejoindre")}</button>
-                  </div>
-                ))}
+            <div className="calgrid">
+              {calWeekdays.map((w)=><div key={w} className="calweekday">{w}</div>)}
+              {calCells.map((cell,i)=>{
+                const evs=eventsByDate[cell.key]||[];
+                return (
+                  <button key={i} type="button"
+                    className={"calcell"+(cell.out?" out":"")+(cell.key===todayKey?" today":"")+(cell.key===calSelectedKey?" sel":"")}
+                    onClick={()=>setCalSelected(cell.key)}>
+                    {cell.dt.getDate()}
+                    {evs.length>0&&<div className="caldots">
+                      {evs.slice(0,3).map((e,j)=><span key={j} className="caldot" style={{background:e.c.color}}/>)}
+                      {evs.length>3&&<span className="calmore">+{evs.length-3}</span>}
+                    </div>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="agday">
+            <div className="agdate">{calSelectedKey===todayKey?t("Aujourd'hui"):fmtDate(calSelectedKey)}</div>
+            {calSelectedEvents.length===0?(
+              <p className="psub" style={{margin:0}}>{t("Aucun événement ce jour.")}</p>
+            ):calSelectedEvents.map((e,i)=>(
+              <div key={i} className="agevent">
+                <div className="agtime">{e.time}</div>
+                <div className="aglogo" style={{background:e.c.color}}>{logoImg(e.c)}</div>
+                <div className="aginfo"><b>{e.c.name}{e.services.length>1?` · ${t("visio de groupe")}`:""}</b>
+                  <div className="agsvcs">{e.services.map((s)=><span key={s} className="pill offer">{t(s)}</span>)}</div></div>
+                <button className="btn sm" onClick={()=>startVisio(e.c,e.services)}>{t("Rejoindre")}</button>
               </div>
-            ))
-          )}
+            ))}
+          </div>
         </div></div>
-      )}
+        );
+      })()}
 
       {/* BIBLIOTHÈQUE — registre de toutes les actions */}
       {view==="library"&&(
