@@ -895,6 +895,8 @@ const TRANSLATIONS={en:{
   "Espace de collaboration — dans la vraie application, devis et fichiers seraient réellement transmis et stockés.":"Collaboration space — in the real application, quotes and files would actually be sent and stored.",
   "Estimée sur la complémentarité de vos activités, ce que vous cherchez de part et d'autre, et la proximité.":"Estimated from how your businesses complement each other, what you're each looking for, and proximity.",
   "Exporter (.ics)":"Export (.ics)",
+  "Aucun événement à exporter":"No events to export",
+  "Le fichier .ics s'importe dans Google Agenda, Outlook ou Apple Calendar (menu « Importer un calendrier »).":"The .ics file can be imported into Google Calendar, Outlook or Apple Calendar (\"Import calendar\" menu).",
   "Exprimez ce que vous cherchez, ou proposez vos services aux entreprises qui cherchent. La mise en relation vient à vous.":"Say what you're looking for, or offer your services to companies who are searching. The connection comes to you.",
   "Filtrez par secteur, rayon d'action et effectif. Basculez en carte pour situer les sociétés en France. Le score d'affinité estime la complémentarité avec":"Filter by sector, reach and headcount. Switch to map view to locate companies across France. The affinity score estimates how well you'd complement",
   "Forte complémentarité":"Strong complementarity",
@@ -2886,6 +2888,30 @@ export default function Maillon(){
   const matchingNeeds=needs.filter((n)=>!n.mine&&me&&n.sought===me.sector);
   const totalChatUnread=Object.values(unreadChat).reduce((a,b)=>a+b,0);
   const eventsByDate={};roleEvents.forEach((e)=>{(eventsByDate[e.date]=eventsByDate[e.date]||[]).push(e);});
+  const icsEscape=(s)=>String(s||"").replace(/[\\,;]/g,(c)=>"\\"+c).replace(/\n/g,"\\n");
+  const exportIcs=()=>{
+    if(!roleEvents.length){toast(t("Aucun événement à exporter"));return;}
+    const pad2=(n)=>String(n).padStart(2,"0");
+    const stamp=(d)=>d.split("-").join("");
+    const lines=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Maillon//Agenda//FR","CALSCALE:GREGORIAN"];
+    roleEvents.forEach((e)=>{
+      if(!e.date||!e.time)return;
+      const [hh,mm]=e.time.split(":").map(Number);
+      const start=`${stamp(e.date)}T${pad2(hh)}${pad2(mm)}00`;
+      const endD=new Date(2000,0,1,hh,mm);endD.setMinutes(endD.getMinutes()+60);
+      const end=`${stamp(e.date)}T${pad2(endD.getHours())}${pad2(endD.getMinutes())}00`;
+      const uid=`${e.c.id}-${e.date}-${e.time}`.replace(/[^a-zA-Z0-9\-]/g,"")+"@getmaillon.fr";
+      lines.push("BEGIN:VEVENT",`UID:${uid}`,`DTSTART:${start}`,`DTEND:${end}`,
+        `SUMMARY:${icsEscape(`Visio Maillon avec ${e.c.name}`)}`,
+        `DESCRIPTION:${icsEscape(`Services concernés : ${e.services.map((s)=>t(s)).join(", ")}`)}`,
+        "END:VEVENT");
+    });
+    lines.push("END:VCALENDAR");
+    const blob=new Blob([lines.join("\r\n")],{type:"text/calendar;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download="maillon-agenda.ics";document.body.appendChild(a);a.click();a.remove();
+    URL.revokeObjectURL(url);
+  };
   const detail=openC?companies.find((c)=>c.id===openC):null;
   const dAff=detail?affinity(detail):0;
 
@@ -3273,10 +3299,9 @@ export default function Maillon(){
           <h2 className="ptitle disp">{t("Événements")}</h2>
           <p className="psub">{t("Toutes vos visios à venir avec les entreprises connectées, classées par date. Une visio de groupe apparaît avec tous ses services.")}{!isAdmin&&` ${t("En tant que")} ${t(role)}, ${t("vous ne voyez que les visios de votre service.")}`}</p>
           <div style={{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap"}}>
-            <button className="btn-ghost sm" onClick={()=>toast(t("Événements exportés (.ics) — démo"))}>{t("Exporter (.ics)")}</button>
-            <button className="btn-ghost sm" onClick={()=>toast(t("Connexion à Google Agenda — démo"))}>{t("Connecter Google Agenda")}</button>
-            <button className="btn-ghost sm" onClick={()=>toast(t("Connexion à Outlook — démo"))}>{t("Connecter Outlook")}</button>
+            <button className="btn-ghost sm" onClick={exportIcs}>{t("Exporter (.ics)")}</button>
           </div>
+          {roleEvents.length>0&&<p className="uphint" style={{marginTop:-10,marginBottom:16}}>{t("Le fichier .ics s'importe dans Google Agenda, Outlook ou Apple Calendar (menu « Importer un calendrier »).")}</p>}
           {roleEvents.length===0?(
             <div className="empty">
               <svg width="46" height="46" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="var(--slate-soft)" strokeWidth="1.6"/><path d="M3 9h18M8 3v4M16 3v4" stroke="var(--slate-soft)" strokeWidth="1.6" strokeLinecap="round"/></svg>
