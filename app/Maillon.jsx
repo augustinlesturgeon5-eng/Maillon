@@ -3411,6 +3411,8 @@ export default function Maillon(){
           <h2 className="ptitle disp">{t("Événements")}</h2>
           <p className="psub">{t("Toutes vos visios à venir avec les entreprises connectées, ainsi que vos événements libres, classés par date.")}{!isAdmin&&` ${t("En tant que")} ${t(role)}, ${t("vous ne voyez que les visios de votre service.")}`}</p>
           <div style={{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap"}}>
+            <button className="btn sm" onClick={openAddNote}>+ {t("Rappel")}</button>
+            {connected.length>0&&<button className="btn sm" onClick={openAddVisio}>+ {t("Visio")}</button>}
             <button className="btn-ghost sm" onClick={calGoToday}>{t("Aujourd'hui")}</button>
             <button className="btn-ghost sm" onClick={exportIcs}>{t("Exporter (.ics)")}</button>
           </div>
@@ -3451,10 +3453,6 @@ export default function Maillon(){
           <div className="agday">
             <div className="agdayhead">
               <div className="agdate">{calSelectedKey===todayKey?t("Aujourd'hui"):fmtDate(calSelectedKey)}</div>
-              <div style={{display:"flex",gap:8}}>
-                <button className="btn-ghost sm" onClick={openAddNote}>+ {t("Rappel")}</button>
-                {connected.length>0&&<button className="btn-ghost sm" onClick={openAddVisio}>+ {t("Visio")}</button>}
-              </div>
             </div>
             {calSelectedItems.length===0?(
               <p className="psub" style={{margin:0}}>{t("Aucun événement ce jour.")}</p>
