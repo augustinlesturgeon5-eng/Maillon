@@ -916,6 +916,11 @@ const TRANSLATIONS={en:{
   "Estimée sur la complémentarité de vos activités, ce que vous cherchez de part et d'autre, et la proximité.":"Estimated from how your businesses complement each other, what you're each looking for, and proximity.",
   "Exporter (.ics)":"Export (.ics)",
   "Aujourd'hui":"Today",
+  "Ajouter un événement":"Add an event",
+  "Entreprise":"Company",
+  "Choisir une entreprise…":"Choose a company…",
+  "Nouvel événement":"New event",
+  "Sélectionnez une entreprise connectée pour planifier un événement.":"Select a connected company to schedule an event.",
   "Mois précédent":"Previous month",
   "Mois suivant":"Next month",
   "Aucun événement ce jour.":"No events on this day.",
@@ -1433,6 +1438,7 @@ export default function Maillon(){
   const [activeService,setActiveService]=useState("Direction");
   const [visio,setVisio]=useState(null);
   const [visioSetup,setVisioSetup]=useState(false);
+  const [visioCompanyId,setVisioCompanyId]=useState(null);
   const [incomingVisio,setIncomingVisio]=useState(null);
   const [visioSvcs,setVisioSvcs]=useState([]);
   const [team,setTeam]=useState([]);
@@ -2492,16 +2498,17 @@ export default function Maillon(){
     logHist(`Visio rejointe avec ${incomingVisio.fromName} · ${(incomingVisio.services||[]).join(", ")}`,"visio");
     setIncomingVisio(null);
   };
-  const scheduleVisio=()=>{
-    if(!schedForm.date||!schedForm.time||!active||!visioSvcs.length)return;
-    const d=schedForm.date,t=schedForm.time;
-    const obj={kind:"meeting",date:d,time:t,services:visioSvcs};
+  const scheduleVisio=(company)=>{
+    const target=company||active;
+    if(!schedForm.date||!schedForm.time||!target||!visioSvcs.length)return;
+    const d=schedForm.date,tm=schedForm.time;
+    const obj={kind:"meeting",date:d,time:tm,services:visioSvcs};
     visioSvcs.forEach((svc)=>{
-      pushCh(active.id,svc,{from:"me",...obj});
-      if(active.connectionId)supabase.from("messages").insert({connection_id:active.connectionId,sender_company_id:me.id,service:svc,body:JSON.stringify(obj)}).then(()=>{});
+      pushCh(target.id,svc,{from:"me",...obj});
+      if(target.connectionId)supabase.from("messages").insert({connection_id:target.connectionId,sender_company_id:me.id,service:svc,body:JSON.stringify(obj)}).then(()=>{});
     });
-    logHist(`Visio planifiée avec ${active.name} le ${d} à ${t}`,"visio");
-    setVisioSetup(false);setSchedForm({date:"",time:""});setActiveService(visioSvcs[0]);toast("Visio planifiée");
+    logHist(`Visio planifiée avec ${target.name} le ${d} à ${tm}`,"visio");
+    setVisioSetup(false);setSchedForm({date:"",time:""});setVisioCompanyId(null);if(active&&active.id===target.id)setActiveService(visioSvcs[0]);toast("Visio planifiée");
   };
 
   const clearFilters=()=>{setFSector("");setFRadius(0);setFEmp("");setFVerif(false);setQ("");};
@@ -3211,7 +3218,7 @@ export default function Maillon(){
                   <div className="chathead">
                     <div className="logo" style={{background:active.color}}>{logoImg(active)}</div>
                     <div><b style={{fontSize:15}}>{active.name}</b><div className="chansub">{mServices.length} {mServices.length>1?t("services en commun"):t("service en commun")} — {t("choisissez un canal")}</div></div>
-                    <button className="btn-ghost sm" style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:6}} onClick={()=>{const d=mSvc||commonServices(active)[0]||(active.services&&active.services[0])||"Direction";setVisioSvcs([d]);setVisioSetup(true);}}>
+                    <button className="btn-ghost sm" style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:6}} onClick={()=>{const d=mSvc||commonServices(active)[0]||(active.services&&active.services[0])||"Direction";setVisioSvcs([d]);setVisioCompanyId(active.id);setSchedForm({date:"",time:""});setVisioSetup(true);}}>
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="12" height="12" rx="2.5" stroke="currentColor" strokeWidth="1.9"/><path d="M15 10l6-3v10l-6-3" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round"/></svg>{t("Visio")}</button>
                     {mSvc&&<button className="btn-ghost sm" onClick={()=>{setCollab("quote");setCollabForm({subject:"",budget:""});setCollabFile(null);}}>{t("Devis")}</button>}
                     {mSvc&&<button className="btn-ghost sm" onClick={()=>{setCollab("doc");setCollabForm({subject:"",budget:""});setCollabFile(null);}}>{t("Document")}</button>}
@@ -3331,11 +3338,18 @@ export default function Maillon(){
         const calPrevMonth=()=>setCalMonth(({y,m})=>m===0?{y:y-1,m:11}:{y,m:m-1});
         const calNextMonth=()=>setCalMonth(({y,m})=>m===11?{y:y+1,m:0}:{y,m:m+1});
         const calGoToday=()=>{const d=new Date();setCalMonth({y:d.getFullYear(),m:d.getMonth()});setCalSelected(ymd(d));};
+        const openAddEvent=()=>{
+          setVisioCompanyId(connected.length===1?connected[0].id:null);
+          setVisioSvcs([]);
+          setSchedForm({date:calSelectedKey,time:""});
+          setVisioSetup(true);
+        };
         return (
         <div className="wrap"><div className="page">
           <h2 className="ptitle disp">{t("Événements")}</h2>
           <p className="psub">{t("Toutes vos visios à venir avec les entreprises connectées, classées par date. Une visio de groupe apparaît avec tous ses services.")}{!isAdmin&&` ${t("En tant que")} ${t(role)}, ${t("vous ne voyez que les visios de votre service.")}`}</p>
           <div style={{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap"}}>
+            {connected.length>0&&<button className="btn sm" onClick={openAddEvent}>+ {t("Ajouter un événement")}</button>}
             <button className="btn-ghost sm" onClick={calGoToday}>{t("Aujourd'hui")}</button>
             <button className="btn-ghost sm" onClick={exportIcs}>{t("Exporter (.ics)")}</button>
           </div>
@@ -4235,34 +4249,53 @@ export default function Maillon(){
       )}
 
       {/* VISIO SETUP */}
-      {visioSetup&&active&&(
+      {visioSetup&&(()=>{
+        const visioTarget=companies.find((c)=>c.id===visioCompanyId)||null;
+        const targetSvcs=visioTarget?(isAdmin?[...new Set([...(me.services||[]),...(visioTarget.services||[])])]:[role,...(access.grants[role]||[])]):[];
+        return (
         <>
           <div className="scrim" onClick={()=>setVisioSetup(false)}/>
           <div className="modal" onClick={()=>setVisioSetup(false)}>
             <div className="mbox" onClick={(e)=>e.stopPropagation()}>
-              <h3 className="disp">{t("Visio avec")} {active.name}</h3>
-              <p className="mi" style={{marginBottom:14}}>{t("Choisissez un ou plusieurs services — vous pouvez inviter plusieurs services à la même visio.")}</p>
-              <div className="field"><label>{t("Services concernés")}</label>
-                <div className="svcwrap">
-                  {(isAdmin?[...new Set([...(me.services||[]),...(active.services||[])])]:[role,...(access.grants[role]||[])]).map((s)=>(
-                    <button key={s} type="button" className={"svcchip"+(visioSvcs.includes(s)?" on":"")}
-                      onClick={()=>setVisioSvcs((v)=>v.includes(s)?v.filter((x)=>x!==s):[...v,s])}>{t(s)}</button>
-                  ))}
+              <h3 className="disp">{visioTarget?`${t("Visio avec")} ${visioTarget.name}`:t("Nouvel événement")}</h3>
+              {connected.length>1&&(
+                <div className="field" style={{marginBottom:14}}>
+                  <label>{t("Entreprise")}</label>
+                  <select value={visioCompanyId||""} onChange={(e)=>{setVisioCompanyId(e.target.value||null);setVisioSvcs([]);}}>
+                    <option value="">{t("Choisir une entreprise…")}</option>
+                    {connected.map((c)=><option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
                 </div>
-                <div className="uphint">{isAdmin?(visioSvcs.length>1?`${t("Visio de groupe")} · ${visioSvcs.length} ${t("services")}`:t("Sélectionnez un ou plusieurs services")):`${t("En tant que")} ${t(role)}, ${t("vous ne pouvez lancer une visio que pour votre service.")}`}</div>
-              </div>
-              <button className="btn block" onClick={()=>startVisio(active,visioSvcs)} style={visioSvcs.length?{}:{opacity:.5,pointerEvents:"none"}}>{t("Démarrer la visio maintenant")}</button>
-              <div style={{display:"flex",alignItems:"center",gap:10,margin:"16px 0",color:"var(--slate-soft)",fontSize:12}}><div style={{flex:1,height:1,background:"var(--line)"}}/>{t("ou planifier")}<div style={{flex:1,height:1,background:"var(--line)"}}/></div>
-              <div className="grid2">
-                <div className="field"><label>{t("Date")}</label><input type="date" value={schedForm.date} onChange={(e)=>setSchedForm({...schedForm,date:e.target.value})}/></div>
-                <div className="field"><label>{t("Heure")}</label><input type="time" value={schedForm.time} onChange={(e)=>setSchedForm({...schedForm,time:e.target.value})}/></div>
-              </div>
-              <button className="btn-ghost" style={{width:"100%",...(visioSvcs.length?{}:{opacity:.5,pointerEvents:"none"})}} onClick={scheduleVisio}>{t("Planifier la visio")}</button>
-              <p className="simnote">{t("Visio sécurisée, hébergée par notre prestataire Daily.co.")}</p>
+              )}
+              {visioTarget?(
+                <>
+                  <p className="mi" style={{marginBottom:14}}>{t("Choisissez un ou plusieurs services — vous pouvez inviter plusieurs services à la même visio.")}</p>
+                  <div className="field"><label>{t("Services concernés")}</label>
+                    <div className="svcwrap">
+                      {targetSvcs.map((s)=>(
+                        <button key={s} type="button" className={"svcchip"+(visioSvcs.includes(s)?" on":"")}
+                          onClick={()=>setVisioSvcs((v)=>v.includes(s)?v.filter((x)=>x!==s):[...v,s])}>{t(s)}</button>
+                      ))}
+                    </div>
+                    <div className="uphint">{isAdmin?(visioSvcs.length>1?`${t("Visio de groupe")} · ${visioSvcs.length} ${t("services")}`:t("Sélectionnez un ou plusieurs services")):`${t("En tant que")} ${t(role)}, ${t("vous ne pouvez lancer une visio que pour votre service.")}`}</div>
+                  </div>
+                  <button className="btn block" onClick={()=>startVisio(visioTarget,visioSvcs)} style={visioSvcs.length?{}:{opacity:.5,pointerEvents:"none"}}>{t("Démarrer la visio maintenant")}</button>
+                  <div style={{display:"flex",alignItems:"center",gap:10,margin:"16px 0",color:"var(--slate-soft)",fontSize:12}}><div style={{flex:1,height:1,background:"var(--line)"}}/>{t("ou planifier")}<div style={{flex:1,height:1,background:"var(--line)"}}/></div>
+                  <div className="grid2">
+                    <div className="field"><label>{t("Date")}</label><input type="date" value={schedForm.date} onChange={(e)=>setSchedForm({...schedForm,date:e.target.value})}/></div>
+                    <div className="field"><label>{t("Heure")}</label><input type="time" value={schedForm.time} onChange={(e)=>setSchedForm({...schedForm,time:e.target.value})}/></div>
+                  </div>
+                  <button className="btn-ghost" style={{width:"100%",...(visioSvcs.length?{}:{opacity:.5,pointerEvents:"none"})}} onClick={()=>scheduleVisio(visioTarget)}>{t("Planifier la visio")}</button>
+                  <p className="simnote">{t("Visio sécurisée, hébergée par notre prestataire Daily.co.")}</p>
+                </>
+              ):(
+                <p className="mi">{t("Sélectionnez une entreprise connectée pour planifier un événement.")}</p>
+              )}
             </div>
           </div>
         </>
-      )}
+        );
+      })()}
 
       {/* VISIO ROOM */}
       {visio&&(()=>{const c=companies.find((x)=>x.id===visio.companyId);if(!c)return null;return <VisioRoom me={me} company={c} services={visio.services} url={visio.url} onEnd={endVisio} lang={uiLang}/>;})()}
