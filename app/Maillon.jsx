@@ -426,6 +426,8 @@ const CSS = `
 .mln .emptynet-cta{position:relative;z-index:1;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
 .mln .foot{border-top:1px solid var(--line);padding:24px;text-align:center;font-size:12.5px;color:var(--slate-soft);}
 .mln .foot b{font-family:'Bricolage Grotesque';color:var(--slate);}
+.mln .foot a{color:var(--slate-soft);text-decoration:underline;text-underline-offset:2px;}
+.mln .foot a:hover{color:var(--emerald);}
 
 /* blog central + adhésion */
 .mln .blog{display:grid;grid-template-columns:1fr 288px;gap:30px;align-items:start;}
@@ -700,6 +702,13 @@ const buildInviteEmail=({inviterCompany,link})=>`<!DOCTYPE html>
 </body></html>`;
 
 const founderActive=(c)=>!!c.founder_free_until&&new Date(c.founder_free_until)>new Date();
+/* Les messages "devis"/"document"/"visio planifiée" sont stockés en JSON dans messages.body ; un message texte classique reste une simple chaîne. */
+const decodeMsg=(body)=>{
+  if(typeof body==="string"&&body[0]==="{"){
+    try{const parsed=JSON.parse(body);if(parsed&&["quote","doc","meeting"].includes(parsed.kind))return parsed;}catch(e){/* pas du JSON structuré, message texte normal */}
+  }
+  return {text:body};
+};
 const mapCompanyRow=(c)=>{
   const plan=PLANS.find((p)=>p.id===c.plan_id)||PLANS[0];
   const founderOn=founderActive(c);
@@ -845,6 +854,9 @@ const TRANSLATIONS={en:{
   "Direction":"Management",
   "Disponibilité":"Availability",
   "Document":"Document",
+  "Document indisponible":"Document unavailable",
+  "Envoyé directement à":"Sent directly to",
+  "4 Mo maximum pour l'instant.":"4 MB maximum for now.",
   "Document partagé":"Document shared",
   "Donner le rôle Direction à":"Giving the Management role to",
   "Double authentification (2FA)":"Two-factor authentication (2FA)",
@@ -1048,6 +1060,9 @@ const TRANSLATIONS={en:{
   "Propose ce que vous cherchez":"Offers what you're looking for",
   "Proposer mes services":"Offer my services",
   "Prototype":"Prototype",
+  "Mentions légales":"Legal notice",
+  "Confidentialité":"Privacy",
+  "CGU/CGV":"Terms",
   "Préciser le service":"Specify the department",
   "Précisez le service…":"Specify the department…",
   "Prénom et nom":"First and last name",
@@ -1142,6 +1157,7 @@ const TRANSLATIONS={en:{
   "Visio entrante":"Incoming video call",
   "Visio planifiée":"Video call scheduled",
   "Visio simulée — aucune vidéo réelle n'est établie dans la maquette.":"Simulated video call — no real video connection is made in this prototype.",
+  "Visio sécurisée, hébergée par notre prestataire Daily.co.":"Secure video calls, hosted by our provider Daily.co.",
   "Visios à venir · par service":"Upcoming video calls · by department",
   "Voir l'offre Maillon Fort":"View the Maillon Fort plan",
   "Voir la fiche":"View profile",
@@ -1316,7 +1332,7 @@ function Landing({t,uiLang,toggleGuestLang,onAuth}){
           <p>{t("Publiez votre page en quelques minutes et commencez à explorer le réseau.")}</p>
           <button className="btn" onClick={()=>onAuth("signup")}>{t("Créer mon compte")}</button>
         </div>
-        <div className="foot">{t("Prototype")} <b>Maillon</b> — {t("maquette cliquable · données fictives")}</div>
+        <div className="foot">© {new Date().getFullYear()} <b>Maillon</b> — <a href="/mentions-legales">{t("Mentions légales")}</a> · <a href="/cgu-cgv">{t("CGU/CGV")}</a> · <a href="/confidentialite">{t("Confidentialité")}</a></div>
       </div>
     </div>
   );
@@ -1438,7 +1454,9 @@ export default function Maillon(){
   const [mfaLoginError,setMfaLoginError]=useState("");
   const [mfaLoginBusy,setMfaLoginBusy]=useState(false);
   const [collab,setCollab]=useState(null);
-  const [collabForm,setCollabForm]=useState({subject:"",budget:"",name:""});
+  const [collabForm,setCollabForm]=useState({subject:"",budget:""});
+  const [collabFile,setCollabFile]=useState(null);
+  const [collabBusy,setCollabBusy]=useState(false);
   const [schedForm,setSchedForm]=useState({date:"",time:""});
   const [draft,setDraft]=useState("");
   const [posts,setPosts]=useState([]);
@@ -1524,7 +1542,39 @@ export default function Maillon(){
     supabase.from("profiles").update({status:nextStatus}).eq("id",id).then(()=>{});
     logEvent(`Compte ${m?m.name:""} ${nextStatus==="active"?"réactivé":"désactivé"}`);
   };
-  const postCollab=()=>{if(!active||!mSvc)return;if(collab==="quote"){if(!collabForm.subject.trim())return;pushCh(active.id,mSvc,{from:"me",kind:"quote",subject:collabForm.subject.trim(),budget:collabForm.budget.trim()});logHist(`Devis demandé à ${active.name}`,"devis");toast("Demande de devis envoyée");}else if(collab==="doc"){if(!collabForm.name.trim())return;pushCh(active.id,mSvc,{from:"me",kind:"doc",name:collabForm.name.trim()});logHist(`Document partagé avec ${active.name}`,"document");toast("Document partagé");}setCollab(null);setCollabForm({subject:"",budget:"",name:""});};
+  const sendCollabMsg=(obj)=>{
+    pushCh(active.id,mSvc,{from:"me",...obj});
+    if(active.connectionId)supabase.from("messages").insert({connection_id:active.connectionId,sender_company_id:me.id,service:mSvc,body:JSON.stringify(obj)}).then(()=>{});
+  };
+  const postCollab=async()=>{
+    if(!active||!mSvc||collabBusy)return;
+    if(collab==="quote"){
+      if(!collabForm.subject.trim())return;
+      sendCollabMsg({kind:"quote",subject:collabForm.subject.trim(),budget:collabForm.budget.trim()});
+      logHist(`Devis demandé à ${active.name}`,"devis");
+      toast("Demande de devis envoyée");
+    }else if(collab==="doc"){
+      if(!collabFile)return;
+      if(collabFile.size>4*1024*1024){toast("Fichier trop volumineux (4 Mo max pour l'instant)");return;}
+      setCollabBusy(true);
+      try{
+        const dataUrl=await new Promise((resolve,reject)=>{
+          const reader=new FileReader();
+          reader.onload=()=>resolve(reader.result);
+          reader.onerror=reject;
+          reader.readAsDataURL(collabFile);
+        });
+        sendCollabMsg({kind:"doc",name:collabFile.name,dataUrl});
+        logHist(`Document partagé avec ${active.name}`,"document");
+        toast("Document partagé");
+      }catch(e){
+        toast("Impossible de lire le fichier");
+      }finally{
+        setCollabBusy(false);
+      }
+    }
+    setCollab(null);setCollabForm({subject:"",budget:""});setCollabFile(null);
+  };
 
   const incoming=companies.filter((c)=>c.rel==="incoming");
   const sent=companies.filter((c)=>c.rel==="sent");
@@ -1737,7 +1787,7 @@ export default function Maillon(){
           msgs.forEach((m)=>{
             const otherId=otherOf[m.connection_id];if(!otherId)return;
             byCompany[otherId]=byCompany[otherId]||{};
-            (byCompany[otherId][m.service]=byCompany[otherId][m.service]||[]).push({from:m.sender_company_id===me.id?"me":"them",text:m.body,id:m.id});
+            (byCompany[otherId][m.service]=byCompany[otherId][m.service]||[]).push({from:m.sender_company_id===me.id?"me":"them",...decodeMsg(m.body),id:m.id});
           });
           Object.keys(byCompany).forEach((otherId)=>update(otherId,{channels:byCompany[otherId]}));
         });
@@ -1755,7 +1805,7 @@ export default function Maillon(){
         setCompanies((cs)=>cs.map((c)=>{
           if(c.connectionId!==m.connection_id)return c;
           const arr=(c.channels&&c.channels[m.service])||[];
-          return {...c,channels:{...(c.channels||{}),[m.service]:[...arr,{from:"them",text:m.body,id:m.id}]}};
+          return {...c,channels:{...(c.channels||{}),[m.service]:[...arr,{from:"them",...decodeMsg(m.body),id:m.id}]}};
         }));
         toast("💬 Nouveau message reçu");
         notifyByEmail("Nouveau message sur Maillon","Vous avez reçu un nouveau message sur votre messagerie Maillon.");
@@ -2414,7 +2464,17 @@ export default function Maillon(){
     logHist(`Visio rejointe avec ${incomingVisio.fromName} · ${(incomingVisio.services||[]).join(", ")}`,"visio");
     setIncomingVisio(null);
   };
-  const scheduleVisio=()=>{if(!schedForm.date||!schedForm.time||!active||!visioSvcs.length)return;const d=schedForm.date,t=schedForm.time;visioSvcs.forEach((svc)=>pushCh(active.id,svc,{from:"sys",kind:"meeting",date:d,time:t,services:visioSvcs}));logHist(`Visio planifiée avec ${active.name} le ${d} à ${t}`,"visio");setVisioSetup(false);setSchedForm({date:"",time:""});setActiveService(visioSvcs[0]);toast("Visio planifiée");};
+  const scheduleVisio=()=>{
+    if(!schedForm.date||!schedForm.time||!active||!visioSvcs.length)return;
+    const d=schedForm.date,t=schedForm.time;
+    const obj={kind:"meeting",date:d,time:t,services:visioSvcs};
+    visioSvcs.forEach((svc)=>{
+      pushCh(active.id,svc,{from:"me",...obj});
+      if(active.connectionId)supabase.from("messages").insert({connection_id:active.connectionId,sender_company_id:me.id,service:svc,body:JSON.stringify(obj)}).then(()=>{});
+    });
+    logHist(`Visio planifiée avec ${active.name} le ${d} à ${t}`,"visio");
+    setVisioSetup(false);setSchedForm({date:"",time:""});setActiveService(visioSvcs[0]);toast("Visio planifiée");
+  };
 
   const clearFilters=()=>{setFSector("");setFRadius(0);setFEmp("");setFVerif(false);setQ("");};
 
@@ -2787,7 +2847,7 @@ export default function Maillon(){
             </button>
           </div>
         </div>
-        <div className="foot">{t("Prototype")} <b>Maillon</b> — {t("maquette cliquable · données fictives")}</div>
+        <div className="foot">© {new Date().getFullYear()} <b>Maillon</b> — <a href="/mentions-legales">{t("Mentions légales")}</a> · <a href="/cgu-cgv">{t("CGU/CGV")}</a> · <a href="/confidentialite">{t("Confidentialité")}</a></div>
       </div>
     );
   }
@@ -3096,8 +3156,8 @@ export default function Maillon(){
                     <div><b style={{fontSize:15}}>{active.name}</b><div className="chansub">{mServices.length} {mServices.length>1?t("services en commun"):t("service en commun")} — {t("choisissez un canal")}</div></div>
                     <button className="btn-ghost sm" style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:6}} onClick={()=>{const d=mSvc||commonServices(active)[0]||(active.services&&active.services[0])||"Direction";setVisioSvcs([d]);setVisioSetup(true);}}>
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="12" height="12" rx="2.5" stroke="currentColor" strokeWidth="1.9"/><path d="M15 10l6-3v10l-6-3" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round"/></svg>{t("Visio")}</button>
-                    {mSvc&&<button className="btn-ghost sm" onClick={()=>{setCollab("quote");setCollabForm({subject:"",budget:"",name:""});}}>{t("Devis")}</button>}
-                    {mSvc&&<button className="btn-ghost sm" onClick={()=>{setCollab("doc");setCollabForm({subject:"",budget:"",name:""});}}>{t("Document")}</button>}
+                    {mSvc&&<button className="btn-ghost sm" onClick={()=>{setCollab("quote");setCollabForm({subject:"",budget:""});setCollabFile(null);}}>{t("Devis")}</button>}
+                    {mSvc&&<button className="btn-ghost sm" onClick={()=>{setCollab("doc");setCollabForm({subject:"",budget:""});setCollabFile(null);}}>{t("Document")}</button>}
                   </div>
                   {mServices.length>0?(
                     <>
@@ -3123,7 +3183,7 @@ export default function Maillon(){
                           <div key={i} className="meetcard">
                             <div className="meetico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 2h8l4 4v16H6z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M14 2v4h4" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg></div>
                             <div><b>{t("Document partagé")}</b><small>{m.name}</small></div>
-                            <button className="btn-ghost sm" onClick={()=>toast(t("Téléchargement (démo)"))}>{t("Ouvrir")}</button>
+                            <button className="btn-ghost sm" onClick={()=>{if(!m.dataUrl){toast(t("Document indisponible"));return;}const a=document.createElement("a");a.href=m.dataUrl;a.download=m.name||"document";document.body.appendChild(a);a.click();a.remove();}}>{t("Ouvrir")}</button>
                           </div>);
                           return <div key={i} className={"bub "+m.from}>{m.text}</div>;
                         })}
@@ -4111,7 +4171,7 @@ export default function Maillon(){
                 <div className="field"><label>{t("Heure")}</label><input type="time" value={schedForm.time} onChange={(e)=>setSchedForm({...schedForm,time:e.target.value})}/></div>
               </div>
               <button className="btn-ghost" style={{width:"100%",...(visioSvcs.length?{}:{opacity:.5,pointerEvents:"none"})}} onClick={scheduleVisio}>{t("Planifier la visio")}</button>
-              <p className="simnote">{t("Visio simulée — aucune vidéo réelle n'est établie dans la maquette.")}</p>
+              <p className="simnote">{t("Visio sécurisée, hébergée par notre prestataire Daily.co.")}</p>
             </div>
           </div>
         </>
@@ -4277,13 +4337,18 @@ export default function Maillon(){
                   <div className="field"><label>{t("Budget indicatif (optionnel)")}</label><input value={collabForm.budget} onChange={(e)=>setCollabForm({...collabForm,budget:e.target.value})} placeholder="ex : 5 000 – 8 000 €"/></div>
                 </>
               ):(
-                <div className="field"><label>{t("Nom du document")}</label><input value={collabForm.name} onChange={(e)=>setCollabForm({...collabForm,name:e.target.value})} placeholder="Proposition_commerciale.pdf"/></div>
+                <div className="field">
+                  <label>{t("Document")}</label>
+                  <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onChange={(e)=>setCollabFile((e.target.files&&e.target.files[0])||null)}/>
+                  {collabFile&&<div className="uphint">{collabFile.name} · {(collabFile.size/1024).toFixed(0)} Ko</div>}
+                  <div className="uphint">{t("4 Mo maximum pour l'instant.")}</div>
+                </div>
               )}
               <div style={{display:"flex",gap:10,marginTop:4}}>
                 <button className="btn-ghost" onClick={()=>setCollab(null)}>{t("Annuler")}</button>
-                <button className="btn block" onClick={postCollab}>{collab==="quote"?t("Envoyer la demande"):t("Partager")}</button>
+                <button className="btn block" disabled={collabBusy||(collab==="doc"&&!collabFile)} style={collabBusy||(collab==="doc"&&!collabFile)?{opacity:.5,pointerEvents:"none"}:{}} onClick={postCollab}>{collabBusy?t("Un instant…"):collab==="quote"?t("Envoyer la demande"):t("Partager")}</button>
               </div>
-              <p className="simnote">{t("Espace de collaboration — dans la vraie application, devis et fichiers seraient réellement transmis et stockés.")}</p>
+              <p className="simnote">{t("Envoyé directement à")} {active.name}.</p>
             </div>
           </div>
         </>
@@ -4293,7 +4358,7 @@ export default function Maillon(){
         {toasts.map((ts)=><div key={ts.id} className="toast">{ts.t.startsWith("✓")?<span className="tk"><Check/></span>:null}{ts.t.replace("✓ ","")}</div>)}
       </div>
 
-      <div className="foot">{t("Prototype")} <b>Maillon</b> — {t("tous secteurs · carte · affinité · double consentement · messagerie par service · visio · blog & adhésion · données fictives")}</div>
+      <div className="foot">© {new Date().getFullYear()} <b>Maillon</b> — <a href="/mentions-legales">{t("Mentions légales")}</a> · <a href="/cgu-cgv">{t("CGU/CGV")}</a> · <a href="/confidentialite">{t("Confidentialité")}</a></div>
     </div>
   );
 }
