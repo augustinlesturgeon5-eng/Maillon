@@ -254,7 +254,8 @@ const CSS = `
 .mln .aginfo b{font-size:13.5px;display:block;}
 .mln .aginfo small{font-size:12px;color:var(--slate);}
 .mln .agday{margin-bottom:22px;}
-.mln .agdate{font-family:'Bricolage Grotesque';font-weight:700;font-size:17px;text-transform:capitalize;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line);}
+.mln .agdate{font-family:'Bricolage Grotesque';font-weight:700;font-size:17px;text-transform:capitalize;}
+.mln .agdayhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
 .mln .agevent{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;}
 .mln .agtime{font-family:'Inter';font-weight:700;font-size:15px;color:var(--ink);min-width:50px;}
 .mln .agevent .aginfo b{font-size:14.5px;}
@@ -921,6 +922,12 @@ const TRANSLATIONS={en:{
   "Choisir une entreprise…":"Choose a company…",
   "Nouvel événement":"New event",
   "Sélectionnez une entreprise connectée pour planifier un événement.":"Select a connected company to schedule an event.",
+  "Rappel":"Reminder",
+  "ex : Renouvellement du SIRET":"e.g. SIRET renewal",
+  "Heure (optionnel)":"Time (optional)",
+  "Note (optionnel)":"Note (optional)",
+  "Ajouter l'événement":"Add event",
+  "Toutes vos visios à venir avec les entreprises connectées, ainsi que vos événements libres, classés par date.":"All your upcoming video calls with connected companies, plus your own reminders, sorted by date.",
   "Mois précédent":"Previous month",
   "Mois suivant":"Next month",
   "Aucun événement ce jour.":"No events on this day.",
@@ -1439,6 +1446,10 @@ export default function Maillon(){
   const [visio,setVisio]=useState(null);
   const [visioSetup,setVisioSetup]=useState(false);
   const [visioCompanyId,setVisioCompanyId]=useState(null);
+  const [genEvents,setGenEvents]=useState([]);
+  const [noteModalOpen,setNoteModalOpen]=useState(false);
+  const [noteForm,setNoteForm]=useState({title:"",date:"",time:"",note:""});
+  const [noteBusy,setNoteBusy]=useState(false);
   const [incomingVisio,setIncomingVisio]=useState(null);
   const [visioSvcs,setVisioSvcs]=useState([]);
   const [team,setTeam]=useState([]);
@@ -1949,6 +1960,29 @@ export default function Maillon(){
       .subscribe();
     return ()=>{supabase.removeChannel(channel);};
   },[me&&me.id,currentUser&&currentUser.id]);
+
+  useEffect(()=>{
+    if(!me)return;
+    let active=true;
+    supabase.from("calendar_events").select("*").eq("company_id",me.id).order("date",{ascending:true}).then(({data})=>{
+      if(!active||!data)return;
+      setGenEvents(data);
+    });
+    return ()=>{active=false;};
+  },[me&&me.id]);
+
+  useEffect(()=>{
+    if(!me)return;
+    const channel=supabase.channel("calendar-events-"+me.id)
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"calendar_events",filter:`company_id=eq.${me.id}`},(payload)=>{
+        setGenEvents((g)=>g.some((e)=>e.id===payload.new.id)?g:[...g,payload.new]);
+      })
+      .on("postgres_changes",{event:"DELETE",schema:"public",table:"calendar_events",filter:`company_id=eq.${me.id}`},(payload)=>{
+        setGenEvents((g)=>g.filter((e)=>e.id!==payload.old.id));
+      })
+      .subscribe();
+    return ()=>{supabase.removeChannel(channel);};
+  },[me&&me.id]);
 
   useEffect(()=>{
     if(!me)return;
@@ -2511,6 +2545,24 @@ export default function Maillon(){
     setVisioSetup(false);setSchedForm({date:"",time:""});setVisioCompanyId(null);if(active&&active.id===target.id)setActiveService(visioSvcs[0]);toast("Visio planifiée");
   };
 
+  const addGenericEvent=async()=>{
+    if(!me||noteBusy)return;
+    const title=noteForm.title.trim();
+    if(!title||!noteForm.date)return;
+    setNoteBusy(true);
+    const row={company_id:me.id,title,note:noteForm.note.trim()||null,date:noteForm.date,time:noteForm.time||null,created_by:currentUser&&currentUser.id};
+    const {data,error}=await supabase.from("calendar_events").insert(row).select().single();
+    setNoteBusy(false);
+    if(error){toast("Erreur : "+error.message);return;}
+    setGenEvents((g)=>[...g,data]);
+    setNoteModalOpen(false);setNoteForm({title:"",date:"",time:"",note:""});
+    toast("Événement ajouté");
+  };
+  const deleteGenericEvent=async(id)=>{
+    setGenEvents((g)=>g.filter((e)=>e.id!==id));
+    await supabase.from("calendar_events").delete().eq("id",id);
+  };
+
   const clearFilters=()=>{setFSector("");setFRadius(0);setFEmp("");setFVerif(false);setQ("");};
 
   // blog central + adhésion (adhésion simulée dans la maquette)
@@ -2921,12 +2973,18 @@ export default function Maillon(){
   const matchingNeeds=needs.filter((n)=>!n.mine&&me&&n.sought===me.sector);
   const totalChatUnread=Object.values(unreadChat).reduce((a,b)=>a+b,0);
   const eventsByDate={};roleEvents.forEach((e)=>{(eventsByDate[e.date]=eventsByDate[e.date]||[]).push(e);});
+  const genEventsByDate={};genEvents.forEach((e)=>{(genEventsByDate[e.date]=genEventsByDate[e.date]||[]).push(e);});
   const calFirst=new Date(calMonth.y,calMonth.m,1);
   const calStartOffset=(calFirst.getDay()+6)%7;
   const calCells=Array.from({length:42},(_,i)=>{const dt=new Date(calMonth.y,calMonth.m,1-calStartOffset+i);return {dt,key:ymd(dt),out:dt.getMonth()!==calMonth.m};});
   const todayKey=ymd(new Date());
-  const calSelectedKey=calSelected||(eventsByDate[todayKey]?todayKey:(roleEvents[0]&&roleEvents[0].date)||todayKey);
-  const calSelectedEvents=eventsByDate[calSelectedKey]||[];
+  const calSelectedKey=calSelected||(eventsByDate[todayKey]||genEventsByDate[todayKey]?todayKey:(roleEvents[0]&&roleEvents[0].date)||todayKey);
+  const calSelectedVisio=eventsByDate[calSelectedKey]||[];
+  const calSelectedNotes=genEventsByDate[calSelectedKey]||[];
+  const calSelectedItems=[
+    ...calSelectedVisio.map((e)=>({type:"visio",time:e.time,data:e})),
+    ...calSelectedNotes.map((e)=>({type:"note",time:e.time,data:e})),
+  ].sort((a,b)=>(a.time||"99:99").localeCompare(b.time||"99:99"));
   const icsEscape=(s)=>String(s||"").replace(/[\\,;]/g,(c)=>"\\"+c).replace(/\n/g,"\\n");
   const exportIcs=()=>{
     if(!roleEvents.length){toast(t("Aucun événement à exporter"));return;}
@@ -3338,18 +3396,21 @@ export default function Maillon(){
         const calPrevMonth=()=>setCalMonth(({y,m})=>m===0?{y:y-1,m:11}:{y,m:m-1});
         const calNextMonth=()=>setCalMonth(({y,m})=>m===11?{y:y+1,m:0}:{y,m:m+1});
         const calGoToday=()=>{const d=new Date();setCalMonth({y:d.getFullYear(),m:d.getMonth()});setCalSelected(ymd(d));};
-        const openAddEvent=()=>{
+        const openAddVisio=()=>{
           setVisioCompanyId(connected.length===1?connected[0].id:null);
           setVisioSvcs([]);
           setSchedForm({date:calSelectedKey,time:""});
           setVisioSetup(true);
         };
+        const openAddNote=()=>{
+          setNoteForm({title:"",date:calSelectedKey,time:"",note:""});
+          setNoteModalOpen(true);
+        };
         return (
         <div className="wrap"><div className="page">
           <h2 className="ptitle disp">{t("Événements")}</h2>
-          <p className="psub">{t("Toutes vos visios à venir avec les entreprises connectées, classées par date. Une visio de groupe apparaît avec tous ses services.")}{!isAdmin&&` ${t("En tant que")} ${t(role)}, ${t("vous ne voyez que les visios de votre service.")}`}</p>
+          <p className="psub">{t("Toutes vos visios à venir avec les entreprises connectées, ainsi que vos événements libres, classés par date.")}{!isAdmin&&` ${t("En tant que")} ${t(role)}, ${t("vous ne voyez que les visios de votre service.")}`}</p>
           <div style={{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap"}}>
-            {connected.length>0&&<button className="btn sm" onClick={openAddEvent}>+ {t("Ajouter un événement")}</button>}
             <button className="btn-ghost sm" onClick={calGoToday}>{t("Aujourd'hui")}</button>
             <button className="btn-ghost sm" onClick={exportIcs}>{t("Exporter (.ics)")}</button>
           </div>
@@ -3368,15 +3429,18 @@ export default function Maillon(){
             <div className="calgrid">
               {calWeekdays.map((w)=><div key={w} className="calweekday">{w}</div>)}
               {calCells.map((cell,i)=>{
-                const evs=eventsByDate[cell.key]||[];
+                const dotColors=[
+                  ...(eventsByDate[cell.key]||[]).map((e)=>e.c.color),
+                  ...(genEventsByDate[cell.key]||[]).map(()=>"#8A8C90"),
+                ];
                 return (
                   <button key={i} type="button"
                     className={"calcell"+(cell.out?" out":"")+(cell.key===todayKey?" today":"")+(cell.key===calSelectedKey?" sel":"")}
                     onClick={()=>setCalSelected(cell.key)}>
                     <span className="calnum">{cell.dt.getDate()}</span>
-                    {evs.length>0&&<div className="caldots">
-                      {evs.slice(0,3).map((e,j)=><span key={j} className="caldot" style={{background:e.c.color}}/>)}
-                      {evs.length>3&&<span className="calmore">+{evs.length-3}</span>}
+                    {dotColors.length>0&&<div className="caldots">
+                      {dotColors.slice(0,3).map((color,j)=><span key={j} className="caldot" style={{background:color}}/>)}
+                      {dotColors.length>3&&<span className="calmore">+{dotColors.length-3}</span>}
                     </div>}
                   </button>
                 );
@@ -3385,16 +3449,34 @@ export default function Maillon(){
           </div>
 
           <div className="agday">
-            <div className="agdate">{calSelectedKey===todayKey?t("Aujourd'hui"):fmtDate(calSelectedKey)}</div>
-            {calSelectedEvents.length===0?(
+            <div className="agdayhead">
+              <div className="agdate">{calSelectedKey===todayKey?t("Aujourd'hui"):fmtDate(calSelectedKey)}</div>
+              <div style={{display:"flex",gap:8}}>
+                <button className="btn-ghost sm" onClick={openAddNote}>+ {t("Rappel")}</button>
+                {connected.length>0&&<button className="btn-ghost sm" onClick={openAddVisio}>+ {t("Visio")}</button>}
+              </div>
+            </div>
+            {calSelectedItems.length===0?(
               <p className="psub" style={{margin:0}}>{t("Aucun événement ce jour.")}</p>
-            ):calSelectedEvents.map((e,i)=>(
-              <div key={i} className="agevent" style={{borderLeft:`3px solid ${e.c.color}`}}>
-                <div className="agtime">{e.time}</div>
-                <div className="aglogo" style={{background:e.c.color}}>{logoImg(e.c)}</div>
-                <div className="aginfo"><b>{e.c.name}{e.services.length>1?` · ${t("visio de groupe")}`:""}</b>
-                  <div className="agsvcs">{e.services.map((s)=><span key={s} className="pill offer">{t(s)}</span>)}</div></div>
-                <button className="btn sm" onClick={()=>startVisio(e.c,e.services)}>{t("Rejoindre")}</button>
+            ):calSelectedItems.map((item,i)=>item.type==="visio"?(
+              <div key={i} className="agevent" style={{borderLeft:`3px solid ${item.data.c.color}`}}>
+                <div className="agtime">{item.data.time}</div>
+                <div className="aglogo" style={{background:item.data.c.color}}>{logoImg(item.data.c)}</div>
+                <div className="aginfo"><b>{item.data.c.name}{item.data.services.length>1?` · ${t("visio de groupe")}`:""}</b>
+                  <div className="agsvcs">{item.data.services.map((s)=><span key={s} className="pill offer">{t(s)}</span>)}</div></div>
+                <button className="btn sm" onClick={()=>startVisio(item.data.c,item.data.services)}>{t("Rejoindre")}</button>
+              </div>
+            ):(
+              <div key={i} className="agevent" style={{borderLeft:"3px solid #8A8C90"}}>
+                <div className="agtime">{item.data.time||"—"}</div>
+                <div className="aglogo" style={{background:"#8A8C90"}}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 3" stroke="#fff" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="12" r="9" stroke="#fff" strokeWidth="1.9"/></svg>
+                </div>
+                <div className="aginfo"><b>{item.data.title}</b>
+                  {item.data.note&&<small style={{display:"block",marginTop:2}}>{item.data.note}</small>}</div>
+                <button className="btn-ghost sm" onClick={()=>deleteGenericEvent(item.data.id)} aria-label={t("Supprimer")}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"/></svg>
+                </button>
               </div>
             ))}
           </div>
@@ -4296,6 +4378,29 @@ export default function Maillon(){
         </>
         );
       })()}
+
+      {/* ÉVÉNEMENT LIBRE */}
+      {noteModalOpen&&(
+        <>
+          <div className="scrim" onClick={()=>setNoteModalOpen(false)}/>
+          <div className="modal" onClick={()=>setNoteModalOpen(false)}>
+            <div className="mbox" onClick={(e)=>e.stopPropagation()}>
+              <h3 className="disp">{t("Nouvel événement")}</h3>
+              <div className="field"><label>{t("Titre")}</label>
+                <input value={noteForm.title} onChange={(e)=>setNoteForm({...noteForm,title:e.target.value})} placeholder={t("ex : Renouvellement du SIRET")} autoFocus/>
+              </div>
+              <div className="grid2">
+                <div className="field"><label>{t("Date")}</label><input type="date" value={noteForm.date} onChange={(e)=>setNoteForm({...noteForm,date:e.target.value})}/></div>
+                <div className="field"><label>{t("Heure (optionnel)")}</label><input type="time" value={noteForm.time} onChange={(e)=>setNoteForm({...noteForm,time:e.target.value})}/></div>
+              </div>
+              <div className="field"><label>{t("Note (optionnel)")}</label>
+                <textarea rows={3} value={noteForm.note} onChange={(e)=>setNoteForm({...noteForm,note:e.target.value})}/>
+              </div>
+              <button className="btn block" disabled={noteBusy||!noteForm.title.trim()||!noteForm.date} style={noteBusy||!noteForm.title.trim()||!noteForm.date?{opacity:.5,pointerEvents:"none"}:{}} onClick={addGenericEvent}>{noteBusy?t("Un instant…"):t("Ajouter l'événement")}</button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* VISIO ROOM */}
       {visio&&(()=>{const c=companies.find((x)=>x.id===visio.companyId);if(!c)return null;return <VisioRoom me={me} company={c} services={visio.services} url={visio.url} onEnd={endVisio} lang={uiLang}/>;})()}
