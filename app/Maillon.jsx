@@ -260,24 +260,24 @@ const CSS = `
 .mln .agevent .aginfo b{font-size:14.5px;}
 .mln .agsvcs{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
 .mln .agevent .btn{margin-left:auto;}
-.mln .calwrap{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 18px 14px;margin-bottom:24px;}
-.mln .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;}
-.mln .calhead h4{font-family:'Bricolage Grotesque';font-weight:700;font-size:16px;text-transform:capitalize;margin:0;min-width:150px;text-align:center;}
+.mln .calwrap{background:var(--surface);border:1px solid var(--line);border-radius:18px;margin-bottom:26px;overflow:hidden;box-shadow:0 1px 2px rgba(16,20,25,.03);}
+.mln .calhead{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line-soft);background:linear-gradient(180deg,var(--sea),transparent);}
+.mln .calhead h4{font-family:'Bricolage Grotesque';font-weight:700;font-size:18px;letter-spacing:-.01em;text-transform:capitalize;margin:0;min-width:170px;text-align:center;}
 .mln .calnav{display:flex;align-items:center;gap:6px;}
-.mln .calnavbtn{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--slate);}
-.mln .calnavbtn:hover{background:var(--sea);color:var(--ink);}
-.mln .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
-.mln .calweekday{text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--slate-soft);padding-bottom:6px;}
-.mln .calcell{position:relative;aspect-ratio:1;border:1px solid transparent;border-radius:11px;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:6px 2px 4px;cursor:pointer;font-family:'Inter';font-size:12.5px;color:var(--ink);}
+.mln .calnavbtn{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--slate);transition:background .15s ease,color .15s ease,transform .15s ease;}
+.mln .calnavbtn:hover{background:var(--emerald-wash);color:var(--emerald);transform:scale(1.06);}
+.mln .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:14px 12px 16px;}
+.mln .calweekday{text-align:center;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--slate-soft);padding-bottom:10px;}
+.mln .calcell{position:relative;aspect-ratio:1;border:none;border-radius:12px;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:4px 2px;cursor:pointer;font-family:'Inter';gap:3px;transition:background .15s ease;}
 .mln .calcell:hover{background:var(--sea);}
-.mln .calcell.out{color:var(--slate-soft);}
-.mln .calcell.today{border-color:var(--emerald);font-weight:700;}
-.mln .calcell.sel{background:var(--emerald);color:#fff;}
-.mln .calcell.sel.today{border-color:#fff;}
-.mln .caldots{display:flex;gap:3px;margin-top:4px;flex-wrap:wrap;justify-content:center;}
+.mln .calnum{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ink);transition:background .15s ease,color .15s ease,transform .15s ease;}
+.mln .calcell:hover .calnum{transform:scale(1.06);}
+.mln .calcell.out .calnum{color:var(--slate-soft);opacity:.55;}
+.mln .calcell.today .calnum{background:var(--emerald-wash);color:var(--emerald);font-weight:700;}
+.mln .calcell.sel .calnum{background:var(--emerald);color:#fff;font-weight:700;box-shadow:0 3px 10px -2px rgba(15,132,107,.5);}
+.mln .caldots{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;max-width:36px;}
 .mln .caldot{width:5px;height:5px;border-radius:50%;flex:0 0 auto;}
-.mln .calcell.sel .caldot{background:#fff !important;}
-.mln .calmore{font-size:9px;line-height:1;color:inherit;opacity:.7;}
+.mln .calmore{font-size:9px;line-height:1;color:var(--slate-soft);font-weight:600;}
 .mln .rolepick{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 10px 5px 12px;margin-right:8px;}
 .mln .rolepick svg{color:var(--emerald);flex:0 0 auto;}
 .mln .rolepick select{border:none;background:none;font-family:inherit;font-size:13px;font-weight:600;color:var(--ink);outline:none;cursor:pointer;max-width:120px;}
@@ -3359,7 +3359,7 @@ export default function Maillon(){
                   <button key={i} type="button"
                     className={"calcell"+(cell.out?" out":"")+(cell.key===todayKey?" today":"")+(cell.key===calSelectedKey?" sel":"")}
                     onClick={()=>setCalSelected(cell.key)}>
-                    {cell.dt.getDate()}
+                    <span className="calnum">{cell.dt.getDate()}</span>
                     {evs.length>0&&<div className="caldots">
                       {evs.slice(0,3).map((e,j)=><span key={j} className="caldot" style={{background:e.c.color}}/>)}
                       {evs.length>3&&<span className="calmore">+{evs.length-3}</span>}
@@ -3375,7 +3375,7 @@ export default function Maillon(){
             {calSelectedEvents.length===0?(
               <p className="psub" style={{margin:0}}>{t("Aucun événement ce jour.")}</p>
             ):calSelectedEvents.map((e,i)=>(
-              <div key={i} className="agevent">
+              <div key={i} className="agevent" style={{borderLeft:`3px solid ${e.c.color}`}}>
                 <div className="agtime">{e.time}</div>
                 <div className="aglogo" style={{background:e.c.color}}>{logoImg(e.c)}</div>
                 <div className="aginfo"><b>{e.c.name}{e.services.length>1?` · ${t("visio de groupe")}`:""}</b>
