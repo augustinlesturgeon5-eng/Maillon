@@ -696,12 +696,7 @@ const buildInviteEmail=({inviterCompany,link})=>`<!DOCTYPE html>
         <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" style="width:600px; max-width:600px;">
           <tbody><tr>
             <td style="padding:8px 8px 22px 8px;">
-              <table role="presentation" cellpadding="0" cellspacing="0">
-                <tbody><tr>
-                  <td width="42" height="42" align="center" valign="middle" bgcolor="#0F846B" style="width:42px; height:42px; border-radius:11px; color:#ffffff; font-family:'Bricolage Grotesque',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:22px; font-weight:800;">M</td>
-                  <td style="padding-left:11px; font-family:'Bricolage Grotesque',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:21px; font-weight:800; color:#0F1826; letter-spacing:-0.3px;">Maillon</td>
-                </tr>
-              </tbody></table>
+              <img src="https://getmaillon.fr/logo-maillon-ink.png" alt="Maillon" height="28" style="display:block; border:0;"/>
             </td>
           </tr>
           <tr>
