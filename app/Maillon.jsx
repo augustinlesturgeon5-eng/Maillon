@@ -561,9 +561,12 @@ const CSS = `
   .mln .maptoggle button{padding:7px 11px;font-size:12px;}
   .mln .comptable .planname{font-size:15px;}
   .mln .comptable .prc{font-size:19px;}
-  .mln .bar{gap:6px;}
-  .mln .nav{max-width:50vw;}
-  .mln .rolepick select{max-width:60px;}
+  .mln .bar{flex-wrap:wrap;row-gap:10px;gap:6px;}
+  .mln .bar .brand img{height:28px !important;}
+  .mln .bar .rolepick{display:none;}
+  .mln .bar .gearbtn{order:2;margin-left:auto;margin-right:0;}
+  .mln .bar .me{order:2;}
+  .mln .bar .nav{order:3;flex:1 1 100%;max-width:100%;}
 }
 `;
 
