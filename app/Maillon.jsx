@@ -532,6 +532,39 @@ const CSS = `
   .mln .maplegend{width:100%;}
   .mln .dash{grid-template-columns:repeat(2,1fr);}
 }
+.mln .landbar{flex-wrap:wrap;row-gap:8px;}
+@media (max-width:480px){
+  .mln .wrap{padding:0 16px;}
+  .mln .page{padding:20px 0 60px;}
+  .mln .ptitle{font-size:21px;}
+  .mln .onb{padding:32px 16px;}
+  .mln .modal{padding:12px;}
+  .mln .mbox{padding:20px;border-radius:16px;}
+  .mln .pgrid{grid-template-columns:1fr;}
+  .mln .pcell{border-right:none !important;}
+  .mln .dash{grid-template-columns:1fr;}
+  .mln .pident,.mln .profident{flex-wrap:wrap;}
+  .mln .plogo{width:60px;height:60px;font-size:24px;}
+  .mln .proflogo{width:64px;height:64px;font-size:26px;}
+  .mln .pname{font-size:20px;}
+  .mln .profname{font-size:21px;}
+  .mln .pcta{flex-wrap:wrap;padding:12px 16px;}
+  .mln .reqact{flex-wrap:wrap;}
+  .mln .landbar{padding:14px 16px;gap:8px;}
+  .mln .landbar .actions{gap:8px;}
+  .mln .landbar .actions .btn,.mln .landbar .actions .btn-ghost{padding:9px 14px;font-size:13px;}
+  .mln .landhero{padding:48px 16px 36px;}
+  .mln .landbanner{margin-left:16px;margin-right:16px;padding:28px 20px;}
+  .mln .login{padding:20px 14px;}
+  .mln .loginbox{padding:22px;}
+  .mln .mapview{height:360px;}
+  .mln .maptoggle button{padding:7px 11px;font-size:12px;}
+  .mln .comptable .planname{font-size:15px;}
+  .mln .comptable .prc{font-size:19px;}
+  .mln .bar{gap:6px;}
+  .mln .nav{max-width:50vw;}
+  .mln .rolepick select{max-width:60px;}
+}
 `;
 
 const priceFmt=(n)=>n.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2});
