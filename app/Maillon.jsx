@@ -102,6 +102,8 @@ const CSS = `
 .mln .featcard .fi{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--emerald-wash),#fff);color:var(--emerald);display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
 .mln .featcard h4{font-family:'Bricolage Grotesque';font-weight:700;font-size:16px;margin:0 0 8px;}
 .mln .featcard p{font-size:13.5px;color:var(--slate);line-height:1.5;margin:0;}
+.mln .videowrap{position:relative;aspect-ratio:16/9;border-radius:18px;overflow:hidden;box-shadow:0 30px 70px -30px rgba(15,24,38,.35);border:1px solid var(--line);background:#000;}
+.mln .videowrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
 .mln .landbanner{position:relative;overflow:hidden;max-width:760px;margin:0 auto 72px;padding:40px 32px;border-radius:20px;background:radial-gradient(130% 180% at 50% -30%, rgba(22,168,134,.4), transparent 62%),var(--ink);text-align:center;}
 .mln .landbanner h3{position:relative;font-family:'Bricolage Grotesque';color:#fff;font-weight:800;font-size:clamp(20px,3vw,26px);margin:0 0 10px;}
 .mln .landbanner p{position:relative;color:#c7ccd4;font-size:14px;margin:0 0 22px;}
@@ -969,6 +971,7 @@ const TRANSLATIONS={en:{
   "Le réseau des entreprises qui se choisissent.":"The network where companies choose each other.",
   "Le réseau des entreprises":"The network where companies",
   "Voir ma page":"View my page",
+  "Voir la vidéo":"Watch the video",
   "Copier le lien de Maillon":"Copy the Maillon link",
   "Inviter une entreprise":"Invite a company",
   "Acceptée":"Accepted",
@@ -1526,6 +1529,7 @@ export default function Maillon(){
   const [needOpen,setNeedOpen]=useState(false);
   const [needForm,setNeedForm]=useState({title:"",sought:SECTORS[0],loc:""});
   const [inviteCoOpen,setInviteCoOpen]=useState(false);
+  const [videoOpen,setVideoOpen]=useState(false);
   const [inviteCoForm,setInviteCoForm]=useState({email:"",name:""});
   const [inviteCoBusy,setInviteCoBusy]=useState(false);
   const [referrals,setReferrals]=useState([]);
@@ -3066,6 +3070,7 @@ export default function Maillon(){
           <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
             <button className="btn-ghost sm" onClick={()=>setView("profile")}>{t("Voir ma page")}</button>
             <button className="btn-ghost sm" onClick={()=>setInviteCoOpen(true)}>{t("Inviter une entreprise")}</button>
+            <button className="btn-ghost sm" onClick={()=>setVideoOpen(true)}>▶ {t("Voir la vidéo")}</button>
           </div>
           <div className="memban">
             <span>🏆 <b>{t("Offre Fondateur")}</b> — {t("invitez une entreprise à rejoindre Maillon et obtenez 1 mois supplémentaire.")}</span>
@@ -4390,6 +4395,20 @@ export default function Maillon(){
         </>
         );
       })()}
+
+      {/* VIDÉO DE PRÉSENTATION */}
+      {videoOpen&&(
+        <>
+          <div className="scrim" onClick={()=>setVideoOpen(false)}/>
+          <div className="modal" onClick={()=>setVideoOpen(false)}>
+            <div className="mbox" style={{width:"min(720px,100%)",padding:20}} onClick={(e)=>e.stopPropagation()}>
+              <div className="videowrap">
+                <iframe src="https://www.youtube.com/embed/Zx-LsziRQFI?autoplay=1" title="Présentation de Maillon" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen/>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ÉVÉNEMENT LIBRE */}
       {noteModalOpen&&(
