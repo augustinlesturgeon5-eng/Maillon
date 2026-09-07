@@ -646,7 +646,7 @@ const buildBrandedEmail=({heading,bodyHtml,ctaText,ctaHref})=>`<!DOCTYPE html>
   <body style="margin:0;padding:36px 16px;background:#F5F4F0;font-family:-apple-system,'Segoe UI',Arial,sans-serif;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;">
       <tr><td style="text-align:center;padding:0 0 26px;">
-        <img src="https://getmaillon.fr/logo-maillon-ink.png" alt="Maillon" height="26" style="display:inline-block;border:0;"/>
+        <img src="https://getmaillon.fr/logo-maillon-ink.png" alt="Maillon" width="99" height="26" style="display:inline-block;border:0;width:99px;height:26px;"/>
       </td></tr>
       <tr><td style="background:#ffffff;border-radius:20px;padding:40px 36px;">
         <h1 style="margin:0 0 16px;font-family:-apple-system,'Segoe UI',Arial,sans-serif;font-size:22px;font-weight:800;color:#0F1826;">${heading}</h1>
@@ -696,7 +696,7 @@ const buildInviteEmail=({inviterCompany,link})=>`<!DOCTYPE html>
         <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" style="width:600px; max-width:600px;">
           <tbody><tr>
             <td style="padding:8px 8px 22px 8px;">
-              <img src="https://getmaillon.fr/logo-maillon-ink.png" alt="Maillon" height="28" style="display:block; border:0;"/>
+              <img src="https://getmaillon.fr/logo-maillon-ink.png" alt="Maillon" width="107" height="28" style="display:block; border:0; width:107px; height:28px;"/>
             </td>
           </tr>
           <tr>
@@ -706,7 +706,7 @@ const buildInviteEmail=({inviterCompany,link})=>`<!DOCTYPE html>
                 ${inviterCompany} vous invite à rejoindre&nbsp;Maillon.
               </h1>
               <p style="margin:0 0 18px 0; font-family:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:16px; line-height:26px; color:#42505F;">
-                Maillon est le réseau qui relie les entreprises entre elles&nbsp;: trouvez les sociétés complémentaires près de chez vous, démarchez-les en un clic, et échangez en toute confiance — service par service, et uniquement si les deux parties acceptent.
+                Maillon est le réseau qui relie les entreprises entre elles&nbsp;: trouvez les sociétés complémentaires près de chez vous, démarchez-les en un clic, et échangez en toute confiance, service par service, uniquement si les deux parties acceptent.
               </p>
               <p style="margin:0 0 30px 0; font-family:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:16px; line-height:25px; font-weight:600; color:#0F846B;">
                 Ne soyez plus le maillon faible&nbsp;: devenez un maillon fort de votre écosystème.
@@ -738,7 +738,7 @@ const buildInviteEmail=({inviterCompany,link})=>`<!DOCTYPE html>
               <hr style="border:none; border-top:1px solid #ECEAE4; margin:0 0 18px 0;">
               <p style="margin:0 0 6px 0; font-family:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:20px; color:#0F1826; font-weight:600;">Maillon</p>
               <p style="margin:0; font-family:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:12px; line-height:19px; color:#8A94A0;">
-                Le réseau de mise en relation entre entreprises — local, service par service, sur double accord.
+                Le réseau de mise en relation entre entreprises, local, service par service, sur double accord.
               </p>
             </td>
           </tr>
