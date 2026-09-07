@@ -675,7 +675,7 @@ const buildInviteEmail=({inviterCompany,link})=>`<!DOCTYPE html>
     @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Inter:wght@400;500;600&display=swap');
     body, table, td, a { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
     table, td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
-    img { -ms-interpolation-mode:bicubic; border:0; height:auto; line-height:100%; outline:none; text-decoration:none; }
+    img { -ms-interpolation-mode:bicubic; border:0; line-height:100%; outline:none; text-decoration:none; }
     body { margin:0; padding:0; width:100%!important; background-color:#FBFAF7; }
     a { color:#0F846B; }
     .btn-a:hover { background-color:#0c6d59 !important; }
@@ -696,7 +696,7 @@ const buildInviteEmail=({inviterCompany,link})=>`<!DOCTYPE html>
         <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" style="width:600px; max-width:600px;">
           <tbody><tr>
             <td class="px" style="background-color:#ffffff; border:1px solid #ECEAE4; border-radius:20px; padding:40px 44px;">
-              <img src="https://getmaillon.fr/logo-maillon-ink.png" alt="Maillon" width="107" height="28" style="display:block; border:0; width:107px; height:28px; margin:0 0 20px;"/>
+              <img src="https://getmaillon.fr/logo-maillon-ink.png" alt="Maillon" width="107" height="28" style="display:block !important; border:0; width:107px !important; height:28px !important; margin:0 0 20px;"/>
               <p style="margin:0 0 14px 0; font-family:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:12px; font-weight:600; letter-spacing:1.2px; text-transform:uppercase; color:#0F846B;">Invitation</p>
               <h1 class="h1" style="margin:0 0 16px 0; font-family:'Bricolage Grotesque',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:28px; line-height:35px; font-weight:800; color:#0F1826; letter-spacing:-0.5px;">
                 ${inviterCompany} vous invite à rejoindre&nbsp;Maillon.
