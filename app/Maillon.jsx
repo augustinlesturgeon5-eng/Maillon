@@ -7,11 +7,8 @@ import { supabase } from "@/lib/supabaseClient";
 const RealFranceMap = dynamic(() => import("./RealFranceMap"), { ssr: false });
 
 /* =========================================================================
-   MAILLON v4 — Prototype cliquable
-   Plateforme de mise en relation B2B à double consentement.
+   MAILLON — Plateforme de mise en relation B2B à double consentement.
    Parcours : page entreprise → démarchage → accepter/refuser → messagerie
-   v4 : tous les secteurs d'activité + vue carte (sociétés géolocalisées)
-   Données fictives · maquette navigable
    ========================================================================= */
 
 /* ---- Secteurs (liste complète) + couleur par secteur ---- */
@@ -579,7 +576,7 @@ const urlBase64ToUint8Array=(base64String)=>{
   for(let i=0;i<rawData.length;i++)outputArray[i]=rawData.charCodeAt(i);
   return outputArray;
 };
-/* ---- Offres d'abonnement (tarifs fictifs) ---- */
+/* ---- Offres d'abonnement ---- */
 const PLANS=[
   {id:"gratuit",name:"Premier Maillon",monthly:0,annual:0,credits:5,tagline:"Pour tester et rejoindre le réseau, sans carte bancaire."},
   {id:"essentiel",name:"Maillon Central",monthly:19.99,annual:199.9,noCommit:29.99,credits:null,tagline:"Pour prospecter activement et être trouvé."},
@@ -872,13 +869,9 @@ const TRANSLATIONS={en:{
   "Confirmer et activer":"Confirm and enable",
   "Confirmer le nouveau mot de passe":"Confirm new password",
   "Confirmé":"Confirmed",
-  "Connecter Google Agenda":"Connect Google Calendar",
-  "Connecter Outlook":"Connect Outlook",
   "Connectez-vous pour accéder à votre espace.":"Log in to access your workspace.",
   "Connexion":"Log in",
   "Connexion réussie":"Logged in successfully",
-  "Connexion à Google Agenda — démo":"Google Calendar connection — demo",
-  "Connexion à Outlook — démo":"Outlook connection — demo",
   "Connexion à la visio…":"Connecting to the call…",
   "Continuer":"Continue",
   "Conversation d'équipe":"Team conversation",
@@ -1133,7 +1126,6 @@ const TRANSLATIONS={en:{
   "Pour continuer à démarcher, passez à une offre payante (démarchages illimités).":"To keep reaching out, switch to a paid plan (unlimited outreach).",
   "Propose ce que vous cherchez":"Offers what you're looking for",
   "Proposer mes services":"Offer my services",
-  "Prototype":"Prototype",
   "Mentions légales":"Legal notice",
   "Confidentialité":"Privacy",
   "CGU/CGV":"Terms",
@@ -1221,7 +1213,6 @@ const TRANSLATIONS={en:{
   "Toutes vos visios à venir avec les entreprises connectées, classées par date. Une visio de groupe apparaît avec tous ses services.":"All your upcoming video calls with connected companies, sorted by date. A group call appears with all of its departments.",
   "Transformer vos connexions en opportunités.":"Turn your connections into opportunities.",
   "Trier par":"Sort by",
-  "Téléchargement (démo)":"Download (demo)",
   "Un instant…":"One moment…",
   "Un lien d'invitation est créé et copié dans votre presse-papiers. Envoyez-le vous-même à votre collègue (email, message…) : en l'ouvrant, il/elle rejoint directement votre entreprise avec le rôle choisi.":"An invite link is created and copied to your clipboard. Send it yourself to your colleague (email, message…): opening it lets them join your company directly with the chosen role.",
   "Valider":"Confirm",
@@ -1230,7 +1221,6 @@ const TRANSLATIONS={en:{
   "Visio de groupe":"Group video call",
   "Visio entrante":"Incoming video call",
   "Visio planifiée":"Video call scheduled",
-  "Visio simulée — aucune vidéo réelle n'est établie dans la maquette.":"Simulated video call — no real video connection is made in this prototype.",
   "Visio sécurisée, hébergée par notre prestataire Daily.co.":"Secure video calls, hosted by our provider Daily.co.",
   "Visios à venir · par service":"Upcoming video calls · by department",
   "Voir l'offre Maillon Fort":"View the Maillon Fort plan",
@@ -1294,7 +1284,6 @@ const TRANSLATIONS={en:{
   "km de vous":"km from you",
   "lien bouton tracké":"tracked button link",
   "lui donnera aussi le contrôle total des droits d'accès et du cloisonnement de votre entreprise. Confirmer ?":"will also give them full control over your company's access rights and segmentation. Confirm?",
-  "maquette cliquable · données fictives":"clickable mockup · fictional data",
   "mois":"month",
   "n'est disponible qu'avec un engagement d'un an.":"is only available with a 1-year commitment.",
   "n'inclut pas la publication. Passez à Maillon Fort pour publier vos news et gagner en visibilité.":"does not include posting. Switch to Maillon Fort to post your news and gain visibility.",
@@ -1315,7 +1304,6 @@ const TRANSLATIONS={en:{
   "services":"departments",
   "services en commun":"shared departments",
   "signalée — notre équipe va examiner":"reported — our team will review it",
-  "tous secteurs · carte · affinité · double consentement · messagerie par service · visio · blog & adhésion · données fictives":"all sectors · map · affinity · double consent · department messaging · video calls · blog & membership · fictional data",
   "virgules":"comma-separated",
   "visio de groupe":"group call",
   "voici les règles en vigueur (lecture seule).":"here are the current rules (read-only).",
@@ -1339,7 +1327,6 @@ const TRANSLATIONS={en:{
   "Élargissez les filtres ou réinitialisez.":"Widen the filters or reset them.",
   "Étape":"Step",
   "Événements":"Events",
-  "Événements exportés (.ics) — démo":"Events exported (.ics) — demo",
   "à":"at",
 }};
 const mapDirectoryCompany=(row)=>{const base=mapCompanyRow(row);return {...base,tag:base.desc,rel:"none",channels:{}};};
