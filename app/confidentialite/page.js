@@ -1,6 +1,6 @@
 import LegalLayout from "../_components/LegalLayout";
 
-export const metadata = { title: "Politique de confidentialité — Maillon" };
+export const metadata = { title: "Politique de confidentialité" };
 
 export default function Confidentialite() {
   return (

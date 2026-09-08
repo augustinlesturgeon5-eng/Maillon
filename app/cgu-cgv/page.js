@@ -1,6 +1,6 @@
 import LegalLayout from "../_components/LegalLayout";
 
-export const metadata = { title: "CGU / CGV — Maillon" };
+export const metadata = { title: "CGU / CGV" };
 
 export default function CguCgv() {
   return (
