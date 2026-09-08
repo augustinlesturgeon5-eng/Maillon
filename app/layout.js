@@ -41,12 +41,46 @@ export const metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://getmaillon.fr/#organization",
+      name: "Maillon",
+      url: "https://getmaillon.fr",
+      logo: "https://getmaillon.fr/logo-maillon-ink.png",
+      description,
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://getmaillon.fr/#website",
+      name: "Maillon",
+      url: "https://getmaillon.fr",
+      publisher: { "@id": "https://getmaillon.fr/#organization" },
+      inLanguage: "fr-FR",
+    },
+    {
+      "@type": "Service",
+      name: "Maillon",
+      url: "https://getmaillon.fr",
+      description,
+      provider: { "@id": "https://getmaillon.fr/#organization" },
+      areaServed: "FR",
+      serviceType: "Réseau B2B à double consentement",
+    },
+  ],
+};
+
 export default function RootLayout({ children }) {
   return (
     <html
       lang="fr"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
