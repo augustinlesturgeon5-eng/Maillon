@@ -27,13 +27,13 @@ export const metadata = {
     siteName: "Maillon",
     locale: "fr_FR",
     type: "website",
-    images: [{ url: "/logo-maillon-ink.png", width: 1178, height: 308, alt: "Maillon" }],
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Maillon — Le réseau des entreprises qui se choisissent" }],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title,
     description,
-    images: ["/logo-maillon-ink.png"],
+    images: ["/og-image.png"],
   },
   robots: { index: true, follow: true },
   verification: {
