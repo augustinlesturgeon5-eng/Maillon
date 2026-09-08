@@ -69,6 +69,16 @@ const jsonLd = {
       areaServed: "FR",
       serviceType: "Réseau B2B à double consentement",
     },
+    {
+      "@type": "WebApplication",
+      name: "Maillon",
+      url: "https://getmaillon.fr",
+      description,
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+      publisher: { "@id": "https://getmaillon.fr/#organization" },
+    },
   ],
 };
 
