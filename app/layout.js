@@ -36,6 +36,9 @@ export const metadata = {
     images: ["/logo-maillon-ink.png"],
   },
   robots: { index: true, follow: true },
+  verification: {
+    other: { "msvalidate.01": "4A9F5621A6539E0F0859F2AD66D3D0B7" },
+  },
 };
 
 export default function RootLayout({ children }) {
