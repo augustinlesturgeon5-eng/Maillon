@@ -971,7 +971,6 @@ const TRANSLATIONS={en:{
   "Le réseau des entreprises qui se choisissent.":"The network where companies choose each other.",
   "Le réseau des entreprises":"The network where companies",
   "Voir ma page":"View my page",
-  "Voir la vidéo":"Watch the video",
   "Copier le lien de Maillon":"Copy the Maillon link",
   "Inviter une entreprise":"Invite a company",
   "Acceptée":"Accepted",
@@ -1529,7 +1528,6 @@ export default function Maillon(){
   const [needOpen,setNeedOpen]=useState(false);
   const [needForm,setNeedForm]=useState({title:"",sought:SECTORS[0],loc:""});
   const [inviteCoOpen,setInviteCoOpen]=useState(false);
-  const [videoOpen,setVideoOpen]=useState(false);
   const [inviteCoForm,setInviteCoForm]=useState({email:"",name:""});
   const [inviteCoBusy,setInviteCoBusy]=useState(false);
   const [referrals,setReferrals]=useState([]);
@@ -3070,7 +3068,6 @@ export default function Maillon(){
           <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
             <button className="btn-ghost sm" onClick={()=>setView("profile")}>{t("Voir ma page")}</button>
             <button className="btn-ghost sm" onClick={()=>setInviteCoOpen(true)}>{t("Inviter une entreprise")}</button>
-            <button className="btn-ghost sm" onClick={()=>setVideoOpen(true)}>▶ {t("Voir la vidéo")}</button>
           </div>
           <div className="memban">
             <span>🏆 <b>{t("Offre Fondateur")}</b> — {t("invitez une entreprise à rejoindre Maillon et obtenez 1 mois supplémentaire.")}</span>
@@ -3104,11 +3101,12 @@ export default function Maillon(){
 
           {companies.length===0?(
             <div className="emptynet" style={{maxWidth:560}}>
-              <div className="videowrap" style={{marginBottom:24}}>
-                <iframe src="https://www.youtube.com/embed/Zx-LsziRQFI" title="Présentation de Maillon" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen loading="lazy"/>
-              </div>
+              <div className="emptynet-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M4 21V8l8-5 8 5v13" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><path d="M9 21v-6h6v6M4 21h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg></div>
               <h3>{t("Le réseau démarre tout juste")}</h3>
               <p>{t("Aucune autre entreprise n'a encore rejoint Maillon. Revenez bientôt — votre page est déjà visible pour les prochaines qui s'inscriront.")}</p>
+              <div className="videowrap" style={{marginTop:24}}>
+                <iframe src="https://www.youtube.com/embed/Zx-LsziRQFI" title="Présentation de Maillon" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen loading="lazy"/>
+              </div>
             </div>
           ):(<>
           <div className="toolbar">
@@ -4397,20 +4395,6 @@ export default function Maillon(){
         </>
         );
       })()}
-
-      {/* VIDÉO DE PRÉSENTATION */}
-      {videoOpen&&(
-        <>
-          <div className="scrim" onClick={()=>setVideoOpen(false)}/>
-          <div className="modal" onClick={()=>setVideoOpen(false)}>
-            <div className="mbox" style={{width:"min(720px,100%)",padding:20}} onClick={(e)=>e.stopPropagation()}>
-              <div className="videowrap">
-                <iframe src="https://www.youtube.com/embed/Zx-LsziRQFI?autoplay=1" title="Présentation de Maillon" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen/>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
 
       {/* ÉVÉNEMENT LIBRE */}
       {noteModalOpen&&(
