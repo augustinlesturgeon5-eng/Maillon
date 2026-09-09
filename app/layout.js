@@ -39,6 +39,13 @@ export const metadata = {
   verification: {
     other: { "msvalidate.01": "4A9F5621A6539E0F0859F2AD66D3D0B7" },
   },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 const jsonLd = {
