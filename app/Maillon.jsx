@@ -3103,8 +3103,10 @@ export default function Maillon(){
           )}
 
           {companies.length===0?(
-            <div className="emptynet">
-              <div className="emptynet-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M4 21V8l8-5 8 5v13" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><path d="M9 21v-6h6v6M4 21h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg></div>
+            <div className="emptynet" style={{maxWidth:560}}>
+              <div className="videowrap" style={{marginBottom:24}}>
+                <iframe src="https://www.youtube.com/embed/Zx-LsziRQFI" title="Présentation de Maillon" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen loading="lazy"/>
+              </div>
               <h3>{t("Le réseau démarre tout juste")}</h3>
               <p>{t("Aucune autre entreprise n'a encore rejoint Maillon. Revenez bientôt — votre page est déjà visible pour les prochaines qui s'inscriront.")}</p>
             </div>
