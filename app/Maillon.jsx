@@ -1605,8 +1605,9 @@ export default function Maillon(){
     const cur=(me&&me.receptionPoles)||["Direction"];
     const next=cur.includes(pole)?cur.filter((x)=>x!==pole):[...cur,pole];
     const finalPoles=next.length?next:cur;
-    setMe((m)=>({...m,receptionPoles:finalPoles}));
-    if(me)supabase.from("companies").update({reception_poles:finalPoles}).eq("id",me.id).then(()=>{});
+    const finalServices=[...new Set([...(me&&me.services?me.services:[]),...finalPoles])];
+    setMe((m)=>({...m,receptionPoles:finalPoles,services:finalServices}));
+    if(me)supabase.from("companies").update({reception_poles:finalPoles,services:finalServices}).eq("id",me.id).then(()=>{});
     logEvent(`Pôles de réception modifiés → ${finalPoles.join(", ")}`);
     toast(`Pôles de réception : ${finalPoles.join(", ")}`);
   };
@@ -2220,9 +2221,9 @@ export default function Maillon(){
     setAuthBusy(true);
     try{
       const chosen=PLANS.find((p)=>p.id===form.plan)||PLANS[0];
-      const services=(form.services&&form.services.length)?form.services:["Direction","Commercial"];
-      const formPoles=(form.receptionPoles&&form.receptionPoles.length)?form.receptionPoles.filter((p)=>services.includes(p)):[];
-      const receptionPoles=formPoles.length?formPoles:(services.includes("Direction")?["Direction"]:[services[0]||"Direction"]);
+      const baseServices=(form.services&&form.services.length)?form.services:["Direction","Commercial"];
+      const receptionPoles=(form.receptionPoles&&form.receptionPoles.length)?form.receptionPoles:["Direction"];
+      const services=[...new Set([...baseServices,...receptionPoles])];
       const splitList=(s)=>s?s.split(",").map((x)=>x.trim()).filter(Boolean):[];
       const {data:company,error}=await supabase.from("companies").insert({
         name:form.name||"Mon Entreprise",sector:form.sector||"Non précisé",loc:form.loc||"France",emp:form.emp,
@@ -2943,7 +2944,7 @@ export default function Maillon(){
               </div>
               <div className="uphint">{t("Chaque service pourra échanger avec le même service des entreprises connectées.")}</div></div>
             <div className="field"><label>{t("Pôles qui reçoivent les demandes")}</label>
-              <div className="svcwrap">{(form.services.length?form.services:["Direction"]).map((s)=>(
+              <div className="svcwrap">{SERVICES.map((s)=>(
                 <button key={s} type="button" className={"svcchip"+((form.receptionPoles||[]).includes(s)?" on":"")}
                   onClick={()=>setForm((f)=>{const cur=f.receptionPoles||[];const next=cur.includes(s)?cur.filter((x)=>x!==s):[...cur,s];return {...f,receptionPoles:next.length?next:cur};})}>{t(s)}</button>
               ))}</div>
@@ -4048,7 +4049,7 @@ export default function Maillon(){
             <div className="accsec">
               <h5>{t("Pôle de réception des demandes")}</h5>
               <p className="d">{t("Les pôles qui reçoivent toutes les demandes de mise en relation adressées à votre entreprise.")}</p>
-              <div className="svcwrap">{(me.services||[]).map((s)=>(
+              <div className="svcwrap">{SERVICES.map((s)=>(
                 <button key={s} type="button" disabled={!isAdmin} className={"svcchip"+((me.receptionPoles||[]).includes(s)?" on":"")}
                   onClick={()=>isAdmin&&toggleReceptionPole(s)} style={!isAdmin?{opacity:.6,pointerEvents:"none"}:{}}>{t(s)}</button>
               ))}</div>
