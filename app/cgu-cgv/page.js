@@ -4,7 +4,7 @@ export const metadata = { title: "CGU / CGV" };
 
 export default function CguCgv() {
   return (
-    <LegalLayout title="CGU / CGV" updated="4 septembre 2026">
+    <LegalLayout title="CGU / CGV" updated="14 septembre 2026">
       <h2>1. Objet</h2>
       <p>
         Les présentes conditions générales régissent l'accès et l'utilisation du service Maillon,
@@ -32,7 +32,7 @@ export default function CguCgv() {
 
       <h2>4. Offres et tarifs</h2>
       <ul>
-        <li><strong>Premier Maillon</strong> (gratuit) — 5 démarchages non renouvelables, sans carte bancaire.</li>
+        <li><strong>Premier Maillon</strong> (gratuit) — 10 démarchages non renouvelables, sans carte bancaire.</li>
         <li><strong>Maillon Central</strong> — 19,99&nbsp;€/mois, 199,90&nbsp;€/an, ou 29,99&nbsp;€/mois sans engagement.</li>
         <li><strong>Maillon Fort</strong> — 39,99&nbsp;€/mois, 399,90&nbsp;€/an, ou 49,99&nbsp;€/mois sans engagement.</li>
       </ul>

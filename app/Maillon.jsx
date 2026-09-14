@@ -580,7 +580,7 @@ const urlBase64ToUint8Array=(base64String)=>{
 };
 /* ---- Offres d'abonnement ---- */
 const PLANS=[
-  {id:"gratuit",name:"Premier Maillon",monthly:0,annual:0,credits:5,tagline:"Pour tester et rejoindre le réseau, sans carte bancaire."},
+  {id:"gratuit",name:"Premier Maillon",monthly:0,annual:0,credits:10,tagline:"Pour tester et rejoindre le réseau, sans carte bancaire."},
   {id:"essentiel",name:"Maillon Central",monthly:19.99,annual:199.9,noCommit:29.99,credits:null,tagline:"Pour prospecter activement et être trouvé."},
   {id:"pro",name:"Maillon Fort",monthly:39.99,annual:399.9,noCommit:49.99,credits:null,tagline:"Pour la visibilité et les équipes.",best:true},
 ];
@@ -588,7 +588,7 @@ const PLANS=[
 const FEATURE_MATRIX=[
   {label:"Fiche entreprise + badge SIREN",vals:[true,true,true]},
   {label:"Annuaire, carte & score d'affinité",vals:[true,true,true]},
-  {label:"Démarchages",vals:["5 (non renouvelables)","Illimités","Illimités"]},
+  {label:"Démarchages",vals:["10 (non renouvelables)","Illimités","Illimités"]},
   {label:"Messagerie cloisonnée par service",vals:[false,true,true]},
   {label:"Bibliothèque (historique)",vals:[true,true,true]},
   {label:"Mur de besoins",vals:[false,"Avec recommandations","Avec recommandations"]},
@@ -1037,6 +1037,7 @@ const TRANSLATIONS={en:{
   "L'adresse email ne peut pas être modifiée ici.":"The email address cannot be changed here.",
   "L'offre":"The",
   "L'offre Premier Maillon est limitée à 5 démarchages, non renouvelables":"The Premier Maillon plan is limited to 5 outreach credits, non-renewable",
+  "L'offre Premier Maillon est limitée à 10 démarchages, non renouvelables":"The Premier Maillon plan is limited to 10 outreach credits, non-renewable",
   "La double authentification est propre à votre compte personnel (elle vous protège, vous — pas toute l'entreprise).":"Two-factor authentication is specific to your personal account (it protects you, not the whole company).",
   "La langue utilisée pour vos communications et, à terme, l'interface de Maillon.":"The language used for your communications and, eventually, the Maillon interface.",
   "La personne invitée avec le rôle Direction aura le contrôle total des droits d'accès et du cloisonnement de votre entreprise. Confirmer ?":"The person invited with the Management role will have full control over your company's access rights and segmentation. Confirm?",
@@ -1307,6 +1308,9 @@ const TRANSLATIONS={en:{
   "visio de groupe":"group call",
   "voici les règles en vigueur (lecture seule).":"here are the current rules (read-only).",
   "vos 5 démarchages sont épuisés":"your 5 outreach credits are used up",
+  "vos 10 démarchages sont épuisés":"your 10 outreach credits are used up",
+  "démarchages restants sur 10":"credits left out of 10",
+  "démarchage restant sur 10":"credit left out of 10",
   "votre":"your",
   "vous":"you",
   "vous invite à une visio":"invites you to a video call",
@@ -3102,7 +3106,7 @@ export default function Maillon(){
           {me.planId==="gratuit"&&(
             <div className="memban">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2-6.3-4.6-6.3 4.6L8 13.8 2 9.4h7.6z" stroke="#7a5305" strokeWidth="1.3" strokeLinejoin="round"/></svg>
-              <span>{t("Offre")} <b>{PLANS[0].name}</b> — {remaining()>0?`${remaining()} ${t(remaining()>1?"démarchages restants sur 5":"démarchage restant sur 5")}`:t("vos 5 démarchages sont épuisés")}.</span>
+              <span>{t("Offre")} <b>{PLANS[0].name}</b> — {remaining()>0?`${remaining()} ${t(remaining()>1?"démarchages restants sur 10":"démarchage restant sur 10")}`:t("vos 10 démarchages sont épuisés")}.</span>
               <button className="btn" onClick={openLimitUpgrade}>{t("Passer au payant")}</button>
             </div>
           )}
@@ -4535,7 +4539,7 @@ export default function Maillon(){
           <div className="modal" onClick={()=>setLimitOpen(false)}>
             <div className="mbox" style={{width:"min(640px,100%)"}} onClick={(e)=>e.stopPropagation()}>
               <h3 className="disp">{t("Passez à la vitesse supérieure")}</h3>
-              <p className="mi" style={{marginBottom:18}}>{t("L'offre Premier Maillon est limitée à 5 démarchages, non renouvelables")}{remaining()===0?` — ${t("vous les avez tous utilisés")}`:""}. {t("Pour continuer à démarcher, passez à une offre payante (démarchages illimités).")}</p>
+              <p className="mi" style={{marginBottom:18}}>{t("L'offre Premier Maillon est limitée à 10 démarchages, non renouvelables")}{remaining()===0?` — ${t("vous les avez tous utilisés")}`:""}. {t("Pour continuer à démarcher, passez à une offre payante (démarchages illimités).")}</p>
               {renderPlanTable(PLANS.filter((pl)=>pl.id!=="gratuit"),upgradeBilling,setUpgradeBilling,upgradePlan,setUpgradePlan)}
               <p className="simnote" style={{marginTop:14}}>{t("Paiement sécurisé via Stripe.")}</p>
               <div style={{display:"flex",gap:10,marginTop:4}}>
