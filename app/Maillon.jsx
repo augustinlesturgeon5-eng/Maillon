@@ -766,7 +766,7 @@ const mapCompanyRow=(c)=>{
     membre:plan.id==="pro"||founderOn,logo:c.logo_url,color:c.color||"#0F846B",desc:c.description||"Présentation à compléter.",
     seek:c.seek||[],offer:c.offer||[],certifs:c.certifs||[],langues:c.langues&&c.langues.length?c.langues:["Français"],
     services:c.services&&c.services.length?c.services:["Direction","Commercial"],
-    receptionPole:c.reception_pole||"Direction",siret:c.siret||"",verifiedSiren:!!c.verified_siren,verified:!!c.verified,
+    receptionPoles:c.reception_poles&&c.reception_poles.length?c.reception_poles:["Direction"],siret:c.siret||"",verifiedSiren:!!c.verified_siren,verified:!!c.verified,
     adminServices:c.admin_services&&c.admin_services.length?c.admin_services:null,accessGrants:c.access_grants||{},
     isFounder:!!c.is_founder,founderFreeUntil:c.founder_free_until||null,founderFreeActive:founderOn,founderMonthsGranted:c.founder_months_granted||0,invitedBy:c.invited_by||null,
   };
@@ -828,6 +828,7 @@ const TRANSLATIONS={en:{
   "Blog inclus":"Blog included",
   "Budget indicatif (optionnel)":"Indicative budget (optional)",
   "C'est ce pôle qui recevra les demandes de mise en relation adressées à votre entreprise.":"This department will receive the connection requests addressed to your company.",
+  "Ces pôles recevront les demandes de mise en relation adressées à votre entreprise.":"These departments will receive the connection requests addressed to your company.",
   "Campagnes envoyées":"Sent campaigns",
   "Canal":"Channel",
   "Carte":"Map",
@@ -1048,10 +1049,13 @@ const TRANSLATIONS={en:{
   "Le fil commun des entreprises de Maillon. La lecture est ouverte à tous ; publier demande une adhésion.":"The shared feed for Maillon companies. Reading is open to everyone; posting requires membership.",
   "Le pixel d'ouverture est injecté automatiquement.":"The open-tracking pixel is injected automatically.",
   "Le pôle qui reçoit toutes les demandes de mise en relation adressées à votre entreprise.":"The department that receives every connection request addressed to your company.",
+  "Les pôles qui reçoivent toutes les demandes de mise en relation adressées à votre entreprise.":"The departments that receive every connection request addressed to your company.",
   "Le registre de toutes les actions effectuées sur votre espace : demandes envoyées, mises en relation, visios, publications…":"The log of every action on your workspace: requests sent, connections made, video calls, posts…",
   "Les autres services restent cloisonnés.":"Other departments remain restricted.",
   "Les demandes de mise en relation adressées à votre entreprise arrivent au pôle":"Connection requests to your company are routed to the",
+  "Les demandes de mise en relation adressées à votre entreprise arrivent aux pôles":"Connection requests to your company are routed to the",
   "Les demandes de mise en relation arrivent au pôle":"Connection requests are routed to the",
+  "Les demandes de mise en relation arrivent aux pôles":"Connection requests are routed to the",
   "Lien copié !":"Link copied!",
   "Liste":"List",
   "Liste de diffusion":"Mailing list",
@@ -1135,6 +1139,7 @@ const TRANSLATIONS={en:{
   "Publiez une page complète, démarchez les sociétés qui vous intéressent. Si elles acceptent, vous communiquez directement. Rien sans double accord.":"Publish a complete page, reach out to the companies you're interested in. If they accept, you communicate directly. Nothing happens without mutual consent.",
   "Pôle de réception des demandes":"Request-receiving department",
   "Pôle qui reçoit les demandes":"Request-receiving department",
+  "Pôles qui reçoivent les demandes":"Request-receiving departments",
   "Quel service pour":"Which department for",
   "Qui me correspondent":"That match me",
   "RH":"HR",
@@ -1290,6 +1295,7 @@ const TRANSLATIONS={en:{
   "qui décidera de l'accepter.":"who will decide whether to accept it.",
   "reliée aux bonnes.":"connected to the right ones.",
   "reçue par votre pôle":"received by your",
+  "reçue par vos pôles":"received by your",
   "réponse":"response",
   "réponses":"responses",
   "service":"department",
@@ -1438,7 +1444,7 @@ export default function Maillon(){
   const [checkoutPending,setCheckoutPending]=useState(()=>typeof window!=="undefined"&&new URLSearchParams(window.location.search).get("checkout")==="success");
   const [customService,setCustomService]=useState("");
   const [form,setForm]=useState({name:"",ownerName:"",sector:"",loc:"",emp:EMP[0],color:COLORS[0],radius:50,
-    desc:"",seek:"",offer:"",founded:"",ca:CA[0],dispo:DISPO[0],web:"",certifs:"",langues:"",plan:"gratuit",billing:"Mensuelle",logo:null,services:["Direction","Commercial","Marketing & Com","RH","Comptabilité"],receptionPole:"Direction",siret:""});
+    desc:"",seek:"",offer:"",founded:"",ca:CA[0],dispo:DISPO[0],web:"",certifs:"",langues:"",plan:"gratuit",billing:"Mensuelle",logo:null,services:["Direction","Commercial","Marketing & Com","RH","Comptabilité"],receptionPoles:["Direction"],siret:""});
   const [view,setView]=useState("discover");
   const [calMonth,setCalMonth]=useState(()=>{const d=new Date();return {y:d.getFullYear(),m:d.getMonth()};});
   const [calSelected,setCalSelected]=useState(null);
@@ -1595,7 +1601,15 @@ export default function Maillon(){
     {kind:"actualite",label:"Actualités"},
     {kind:"invitation",label:"Invitations envoyées"},
   ];
-  const setReceptionPole=(pole)=>{setMe((m)=>({...m,receptionPole:pole}));if(me)supabase.from("companies").update({reception_pole:pole}).eq("id",me.id).then(()=>{});logEvent(`Pôle de réception changé → ${pole}`);toast(`Pôle de réception : ${pole}`);};
+  const toggleReceptionPole=(pole)=>{
+    const cur=(me&&me.receptionPoles)||["Direction"];
+    const next=cur.includes(pole)?cur.filter((x)=>x!==pole):[...cur,pole];
+    const finalPoles=next.length?next:cur;
+    setMe((m)=>({...m,receptionPoles:finalPoles}));
+    if(me)supabase.from("companies").update({reception_poles:finalPoles}).eq("id",me.id).then(()=>{});
+    logEvent(`Pôles de réception modifiés → ${finalPoles.join(", ")}`);
+    toast(`Pôles de réception : ${finalPoles.join(", ")}`);
+  };
   const toggleAccount=(id)=>{
     const m=team.find((x)=>x.id===id);
     const nextStatus=m&&m.status==="disabled"?"active":"disabled";
@@ -1683,7 +1697,7 @@ export default function Maillon(){
     setMe(mappedCompany);
     setCurrentUser(mappedProfile);
     setTeam((teammates||[]).map((p)=>mapProfileRow(p,p.id===sess.user.id?sess.user.email:"")));
-    {const loadedAccess={admins:mappedCompany.adminServices||[mappedCompany.receptionPole],grants:mappedCompany.accessGrants||{}};setAccess(loadedAccess);setSavedAccess(loadedAccess);setAccessDirty(false);}
+    {const loadedAccess={admins:mappedCompany.adminServices||mappedCompany.receptionPoles||["Direction"],grants:mappedCompany.accessGrants||{}};setAccess(loadedAccess);setSavedAccess(loadedAccess);setAccessDirty(false);}
     setNotifEmail(mappedProfile.notifyEmail);
     setUiLang(mappedProfile.language||"fr");
     refreshMfaFactors();
@@ -2207,7 +2221,8 @@ export default function Maillon(){
     try{
       const chosen=PLANS.find((p)=>p.id===form.plan)||PLANS[0];
       const services=(form.services&&form.services.length)?form.services:["Direction","Commercial"];
-      const receptionPole=services.includes(form.receptionPole)?form.receptionPole:(services.includes("Direction")?"Direction":(services[0]||"Direction"));
+      const formPoles=(form.receptionPoles&&form.receptionPoles.length)?form.receptionPoles.filter((p)=>services.includes(p)):[];
+      const receptionPoles=formPoles.length?formPoles:(services.includes("Direction")?["Direction"]:[services[0]||"Direction"]);
       const splitList=(s)=>s?s.split(",").map((x)=>x.trim()).filter(Boolean):[];
       const {data:company,error}=await supabase.from("companies").insert({
         name:form.name||"Mon Entreprise",sector:form.sector||"Non précisé",loc:form.loc||"France",emp:form.emp,
@@ -2215,7 +2230,7 @@ export default function Maillon(){
         verified_siren:!!form.siret.trim(),color:form.color,logo_url:form.logo||null,
         description:form.desc||"Présentation à compléter.",seek:splitList(form.seek),offer:splitList(form.offer),
         certifs:splitList(form.certifs),langues:form.langues?splitList(form.langues):["Français"],
-        services,reception_pole:receptionPole,plan_id:"gratuit",billing:null,
+        services,reception_poles:receptionPoles,plan_id:"gratuit",billing:null,
       }).select().single();
       if(error){toast("Erreur : "+error.message);return;}
       if(referralInfo&&referralCode){
@@ -2224,7 +2239,7 @@ export default function Maillon(){
           body:JSON.stringify({inviterCompanyId:referralInfo.inviterCompanyId,accessToken:session.access_token})}).catch(()=>{});
       }
       const {data:profile,error:profErr}=await supabase.from("profiles").update({
-        company_id:company.id,full_name:form.ownerName.trim()||form.name,role:receptionPole,status:"active",
+        company_id:company.id,full_name:form.ownerName.trim()||form.name,role:receptionPoles[0],status:"active",
       }).eq("id",session.user.id).select().single();
       if(profErr){toast("Erreur : "+profErr.message);return;}
       if(chosen.id!=="gratuit"){
@@ -2235,7 +2250,7 @@ export default function Maillon(){
       setMe(mapCompanyRow(company));
       setCurrentUser(mapProfileRow(profile,session.user.email));
       setTeam([mapProfileRow(profile,session.user.email)]);
-      {const initAccess={admins:[receptionPole],grants:{}};setAccess(initAccess);setSavedAccess(initAccess);setAccessDirty(false);}
+      {const initAccess={admins:receptionPoles,grants:{}};setAccess(initAccess);setSavedAccess(initAccess);setAccessDirty(false);}
       setView("discover");
       setProspectsUsed(0);
       setJustOnboarded(true);
@@ -2350,12 +2365,12 @@ export default function Maillon(){
     setPmsg(`Bonjour ${c.name}, je suis ${(me&&me.name)||"une entreprise"} (${(me&&me.sector)||form.sector}). `+
       `On aimerait explorer une collaboration autour de ${(c.seek&&c.seek[0])||"nos activités"}. Ouvert à en discuter ?`);};
   const sendProspect=()=>{
-    const c=prospect;const target=c.receptionPole||"Direction";setProspectsUsed((n)=>n+1);update(c.id,{rel:"sent",sentTo:target,connFromMe:true});setProspect(null);logHist(`Demande de mise en relation envoyée à ${c.name} (pôle ${target})`,"demande");toast(`Demande envoyée à ${c.name} · pôle ${target}`);
+    const c=prospect;const target=(c.receptionPoles&&c.receptionPoles[0])||"Direction";setProspectsUsed((n)=>n+1);update(c.id,{rel:"sent",sentTo:target,connFromMe:true});setProspect(null);logHist(`Demande de mise en relation envoyée à ${c.name} (pôle ${target})`,"demande");toast(`Demande envoyée à ${c.name} · pôle ${target}`);
     supabase.from("connections").upsert({from_company_id:me.id,to_company_id:c.id,status:"pending",service:target,message:pmsg,responded_at:null},{onConflict:"from_company_id,to_company_id"}).select().single()
       .then(({data,error})=>{if(!error&&data)update(c.id,{connectionId:data.id});});
   };
 
-  const accept=(c,emailingOptIn,emailingAddresses)=>{const pole=(me&&me.receptionPole)||"Direction";const common=commonServices(c);const svc=common.includes(pole)?pole:(common[0]||"Direction");const addrs=emailingOptIn?(emailingAddresses||[]).map((e)=>e.trim()).filter(Boolean):[];update(c.id,{rel:"connected",connFromMe:false,myEmailingOptIn:!!emailingOptIn,emailingOptIn:!!emailingOptIn,emailingAddresses:addrs,channels:{[svc]:[{from:"sys",text:`Vous avez accepté la demande de ${c.name} · service ${svc}.`},{from:"them",text:c.reqMsg}]}});setActiveConv(c.id);setActiveService(svc);logEvent(`Mise en relation acceptée — ${c.name}`);logHist(`Vous avez accepté la demande de ${c.name}${emailingOptIn?" · abonné à l'emailing":""}`,"acceptation");toast(`Connecté avec ${c.name}`);
+  const accept=(c,emailingOptIn,emailingAddresses)=>{const myPoles=(me&&me.receptionPoles)||["Direction"];const common=commonServices(c);const svc=common.find((s)=>myPoles.includes(s))||common[0]||"Direction";const addrs=emailingOptIn?(emailingAddresses||[]).map((e)=>e.trim()).filter(Boolean):[];update(c.id,{rel:"connected",connFromMe:false,myEmailingOptIn:!!emailingOptIn,emailingOptIn:!!emailingOptIn,emailingAddresses:addrs,channels:{[svc]:[{from:"sys",text:`Vous avez accepté la demande de ${c.name} · service ${svc}.`},{from:"them",text:c.reqMsg}]}});setActiveConv(c.id);setActiveService(svc);logEvent(`Mise en relation acceptée — ${c.name}`);logHist(`Vous avez accepté la demande de ${c.name}${emailingOptIn?" · abonné à l'emailing":""}`,"acceptation");toast(`Connecté avec ${c.name}`);
     if(c.connectionId)supabase.from("connections").update({status:"accepted",service:svc,emailing_opt_in:!!emailingOptIn,emailing_addresses:addrs,responded_at:new Date().toISOString()}).eq("id",c.connectionId).then(()=>{});
   };
   const setMyEmailingOptIn=(c,val)=>{
@@ -2429,6 +2444,7 @@ export default function Maillon(){
   };
 
   const commonServices=(c)=>((me&&me.services)||[]).filter((s)=>(c.services||[]).includes(s));
+  const polesText=(arr)=>((arr&&arr.length?arr:["Direction"]).map((p)=>t(p)).join(", "));
   const getChan=(c,svc)=>(c.channels&&c.channels[svc])||[];
   const lastText=(c)=>{const ch=c.channels||{};let t=null;Object.keys(ch).forEach((k)=>{const arr=ch[k];for(let i=arr.length-1;i>=0;i--){if(arr[i].from!=="sys"){t=arr[i].text;break;}}});return t;};
   const canSee=(viewer,svc)=>{if(access.admins.includes(viewer))return true;if(viewer===svc)return true;return (access.grants[viewer]||[]).includes(svc);};
@@ -2926,9 +2942,12 @@ export default function Maillon(){
                 <button type="button" className="btn-ghost sm" onClick={addCustomService}>{t("Ajouter")}</button>
               </div>
               <div className="uphint">{t("Chaque service pourra échanger avec le même service des entreprises connectées.")}</div></div>
-            <div className="field"><label>{t("Pôle qui reçoit les demandes")}</label>
-              <select value={form.receptionPole} onChange={(e)=>setForm({...form,receptionPole:e.target.value})}>{(form.services.length?form.services:["Direction"]).map((s)=><option key={s} value={s}>{t(s)}</option>)}</select>
-              <div className="uphint">{t("C'est ce pôle qui recevra les demandes de mise en relation adressées à votre entreprise.")}</div></div>
+            <div className="field"><label>{t("Pôles qui reçoivent les demandes")}</label>
+              <div className="svcwrap">{(form.services.length?form.services:["Direction"]).map((s)=>(
+                <button key={s} type="button" className={"svcchip"+((form.receptionPoles||[]).includes(s)?" on":"")}
+                  onClick={()=>setForm((f)=>{const cur=f.receptionPoles||[];const next=cur.includes(s)?cur.filter((x)=>x!==s):[...cur,s];return {...f,receptionPoles:next.length?next:cur};})}>{t(s)}</button>
+              ))}</div>
+              <div className="uphint">{t("Ces pôles recevront les demandes de mise en relation adressées à votre entreprise.")}</div></div>
             <div style={{display:"flex",gap:10,marginTop:8}}>
               <button className="btn-ghost" onClick={()=>setObStep(1)}>{t("Retour")}</button>
               <button className="btn block" disabled={!(form.founded.trim()&&form.siret.trim()&&form.services.length>0)} onClick={()=>setObStep(3)}>{t("Continuer")}</button>
@@ -2945,7 +2964,7 @@ export default function Maillon(){
           </>)}
 
           <div style={{textAlign:"center",marginTop:18}}>
-            <button className="linkbtn" onClick={()=>{setForm((f)=>({...f,ownerName:f.ownerName||"Camille Dubois",name:"Studio Kavan",sector:"Tech & Dév",loc:"Rennes",emp:"1–10",color:"#0F846B",radius:100,desc:"Studio produit qui conçoit et développe des interfaces sur mesure pour les entreprises.",seek:"partenaires design, apporteurs d'affaires",offer:"développement web, applications métier",founded:"2020",ca:"< 500 k€",web:"studiokavan.fr",certifs:"RGPD",siret:"902 445 178 00021",plan:"pro",billing:"Mensuelle",services:["Direction","Commercial","Technique","RH"],receptionPole:"Direction"}));setObStep(2);}}>
+            <button className="linkbtn" onClick={()=>{setForm((f)=>({...f,ownerName:f.ownerName||"Camille Dubois",name:"Studio Kavan",sector:"Tech & Dév",loc:"Rennes",emp:"1–10",color:"#0F846B",radius:100,desc:"Studio produit qui conçoit et développe des interfaces sur mesure pour les entreprises.",seek:"partenaires design, apporteurs d'affaires",offer:"développement web, applications métier",founded:"2020",ca:"< 500 k€",web:"studiokavan.fr",certifs:"RGPD",siret:"902 445 178 00021",plan:"pro",billing:"Mensuelle",services:["Direction","Commercial","Technique","RH"],receptionPoles:["Direction"]}));setObStep(2);}}>
               {t("Remplir avec un exemple")}
             </button>
           </div>
@@ -2984,7 +3003,7 @@ export default function Maillon(){
   const evMap={};agenda.forEach((it)=>{const k=it.c.id+"|"+it.date+"|"+it.time;if(!evMap[k])evMap[k]={c:it.c,date:it.date,time:it.time,services:[]};if(!evMap[k].services.includes(it.svc))evMap[k].services.push(it.svc);});
   const events=Object.values(evMap).sort((a,b)=>((a.date||"")+(a.time||"")).localeCompare((b.date||"")+(b.time||"")));
   const roleEvents=events.filter((e)=>e.services.some((s)=>canSee(role,s)));
-  const visIncoming=canSee(role,(me&&me.receptionPole)||"Direction")?incoming:[];
+  const visIncoming=((me&&me.receptionPoles)||["Direction"]).some((p)=>canSee(role,p))?incoming:[];
   const recos=companies.filter((c)=>c.rel==="none").map((c)=>({...c,_aff:affinity(c)})).sort((a,b)=>b._aff-a._aff).slice(0,4);
   const matchingNeeds=needs.filter((n)=>!n.mine&&me&&n.sought===me.sector);
   const totalChatUnread=Object.values(unreadChat).reduce((a,b)=>a+b,0);
@@ -3204,7 +3223,7 @@ export default function Maillon(){
                 <div className="logo" style={{background:c.color}}>{logoImg(c)}</div>
                 <div style={{flex:1}}>
                   <div className="cname" onClick={()=>setOpenC(c.id)}>{c.name}{c.verified&&<Check className="verif"/>}</div>
-                  <div className="csector">{c.sector} · {c.loc} · {t("reçue par votre pôle")} <b>{t(me.receptionPole)}</b></div>
+                  <div className="csector">{c.sector} · {c.loc} · {t("reçue par vos pôles")} <b>{polesText(me.receptionPoles)}</b></div>
                 </div>
               </div>
               <div className="reqmsg"><span className="q">{t("Son message")}</span>{c.reqMsg}</div>
@@ -3920,7 +3939,7 @@ export default function Maillon(){
                 <div className="pcell"><div className="k">{t("SIRET")}</div><div className="v" style={{fontSize:12.5}}>{me.siret||"—"}{me.verifiedSiren&&<Check className="verif" style={{width:13,height:13,marginLeft:5}}/>}</div></div>
                 <div className="pcell"><div className="k">{t("Abonnement")}</div><div className="v" style={{color:me.membre?"var(--emerald)":"var(--ink)"}}>{me.planId==="gratuit"?me.plan:`${me.plan} · ${me.billing}`}</div></div>
               </div>
-              <div className="profsec"><h5>{t("Pôle de réception des demandes")}</h5><p>{t("Les demandes de mise en relation adressées à votre entreprise arrivent au pôle")} <b>{t(me.receptionPole)}</b>.</p></div>
+              <div className="profsec"><h5>{t("Pôle de réception des demandes")}</h5><p>{t("Les demandes de mise en relation adressées à votre entreprise arrivent aux pôles")} <b>{polesText(me.receptionPoles)}</b>.</p></div>
               <div className="profsec"><h5>{t("Présentation")}</h5><p>{me.desc}</p></div>
               <div className="profsec"><h5>{t("Ce que nous recherchons")}</h5>
                 <div className="seek" style={{marginTop:4}}>{me.seek.map((s)=><span key={s} className="pill seek">↳ {s}</span>)}</div></div>
@@ -4028,8 +4047,11 @@ export default function Maillon(){
 
             <div className="accsec">
               <h5>{t("Pôle de réception des demandes")}</h5>
-              <p className="d">{t("Le pôle qui reçoit toutes les demandes de mise en relation adressées à votre entreprise.")}</p>
-              <select value={me.receptionPole} onChange={(e)=>isAdmin&&setReceptionPole(e.target.value)} disabled={!isAdmin} style={{border:"1px solid var(--line)",borderRadius:10,padding:"8px 11px",fontSize:13.5,fontWeight:600,background:"#fff",color:"var(--ink)"}}>{(me.services||[]).map((s)=><option key={s} value={s}>{t(s)}</option>)}</select>
+              <p className="d">{t("Les pôles qui reçoivent toutes les demandes de mise en relation adressées à votre entreprise.")}</p>
+              <div className="svcwrap">{(me.services||[]).map((s)=>(
+                <button key={s} type="button" disabled={!isAdmin} className={"svcchip"+((me.receptionPoles||[]).includes(s)?" on":"")}
+                  onClick={()=>isAdmin&&toggleReceptionPole(s)} style={!isAdmin?{opacity:.6,pointerEvents:"none"}:{}}>{t(s)}</button>
+              ))}</div>
             </div>
 
             <div className="accsec">
@@ -4235,7 +4257,7 @@ export default function Maillon(){
             <div className="psec"><h5>{t("Services / départements")}</h5>
               <div className="seek">{(detail.services||[]).map((s)=><span key={s} className="pill offer">{t(s)}</span>)}</div></div>
             <div className="psec"><h5>{t("Réception des demandes")}</h5>
-              <p style={{fontSize:14,color:"var(--slate)"}}>{t("Les demandes de mise en relation arrivent au pôle")} <b style={{color:"var(--ink)"}}>{t(detail.receptionPole)}</b>.</p>
+              <p style={{fontSize:14,color:"var(--slate)"}}>{t("Les demandes de mise en relation arrivent aux pôles")} <b style={{color:"var(--ink)"}}>{polesText(detail.receptionPoles)}</b>.</p>
               <button className="linkbtn" style={{marginTop:10,color:"var(--coral)"}} onClick={()=>toast(`${detail.name} ${t("signalée — notre équipe va examiner")}`)}>⚑ {t("Signaler cette entreprise")}</button></div>
             {detail.rel==="connected"&&(
               <div className="psec"><h5>{t("Campagnes d'emailing")}</h5>
@@ -4280,7 +4302,7 @@ export default function Maillon(){
                 <div><h3 className="disp">{t("Démarcher")} {prospect.name}</h3>
                   <p className="mi">{t("Votre demande part avec votre message.")} {prospect.name} {t("accepte ou refuse la mise en relation.")}</p></div>
               </div>
-              <div className="accnote" style={{marginBottom:14}}>{t("Votre demande sera reçue par le pôle")} <b>{t(prospect.receptionPole)}</b> {t("de")} {prospect.name}, {t("qui décidera de l'accepter.")}</div>
+              <div className="accnote" style={{marginBottom:14}}>{t("Votre demande sera reçue par le pôle")} <b>{t((prospect.receptionPoles&&prospect.receptionPoles[0])||"Direction")}</b> {t("de")} {prospect.name}, {t("qui décidera de l'accepter.")}</div>
               <div className="field"><label>{t("Votre message d'introduction")}</label>
                 <textarea rows={4} value={pmsg} onChange={(e)=>setPmsg(e.target.value)}/></div>
               <div style={{display:"flex",gap:10,marginTop:4}}>
