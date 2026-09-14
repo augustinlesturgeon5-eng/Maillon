@@ -2695,6 +2695,12 @@ export default function Maillon(){
 
   const relLabel=(rel)=>{const m={sent:["En attente","var(--amber)"],incoming:["Vous a démarché","var(--blue)"],declined:["Décliné","var(--slate-soft)"]}[rel];return m&&[t(m[0]),m[1]];};
 
+  /* ============ PAGE D'ACCUEIL — rendue tout de suite, avant même la vérification de session, pour que les moteurs de recherche et le premier affichage aient du vrai contenu (titre, texte) au lieu d'un écran de chargement vide ============ */
+  if(!session&&preAuthView==="landing"&&!checkoutPending){
+    const goAuth=(mode)=>{setAuthMode(mode);setAuthError("");setPreAuthView("auth");};
+    return <Landing t={t} uiLang={uiLang} toggleGuestLang={toggleGuestLang} onAuth={goAuth}/>;
+  }
+
   /* ============ CHARGEMENT ============ */
   if(!authReady||checkoutPending){
     return(
