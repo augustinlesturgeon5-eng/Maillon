@@ -1065,6 +1065,7 @@ const TRANSLATIONS={en:{
   "Localisation":"Location",
   "Logistique":"Logistics",
   "Logo de l'entreprise":"Company logo",
+  "Changer le logo":"Change logo",
   "Ma page entreprise":"My company page",
   "Maillon Central":"Maillon Central",
   "Maillon Fort":"Maillon Fort",
@@ -1105,6 +1106,7 @@ const TRANSLATIONS={en:{
   "Ouvrir":"Open",
   "Ouvrir la discussion":"Open the conversation",
   "PNG, JPG ou SVG — carré de préférence.":"PNG, JPG or SVG — square preferred.",
+  "PNG, JPG ou SVG — recadré automatiquement en carré.":"PNG, JPG or SVG — automatically cropped to a square.",
   "Paiement sécurisé via Stripe.":"Secure payment via Stripe.",
   "Par défaut, ce service ne voit que sa messagerie par pôle.":"By default, this department only sees its own department's messaging.",
   "Partager":"Share",
@@ -2158,26 +2160,48 @@ export default function Maillon(){
     return Math.max(51,Math.min(97,Math.round(s)));
   };
 
-  const onLogo=(e)=>{
-    const file=e.target.files&&e.target.files[0];if(!file)return;
+  /* Recadre l'image importée en carré (centré) et en extrait la couleur dominante, pour un affichage net et cohérent partout où le logo apparaît (avatars, cartes, etc.) */
+  const cropLogoFile=(file)=>new Promise((resolve,reject)=>{
     const reader=new FileReader();
     reader.onload=()=>{
-      const url=reader.result;const img=new Image();
+      const img=new Image();
       img.onload=()=>{
-        let col=form.color;
+        const side=Math.min(img.width,img.height);
+        const sx=(img.width-side)/2,sy=(img.height-side)/2;
+        const size=480;
+        const cv=document.createElement("canvas");cv.width=size;cv.height=size;
+        const ctx=cv.getContext("2d");
+        ctx.drawImage(img,sx,sy,side,side,0,0,size,size);
+        let col=null;
         try{
-          const cv=document.createElement("canvas");cv.width=16;cv.height=16;
-          const ctx=cv.getContext("2d");ctx.drawImage(img,0,0,16,16);
-          const d=ctx.getImageData(0,0,16,16).data;let r=0,g=0,b=0,n=0;
+          const sc=document.createElement("canvas");sc.width=16;sc.height=16;
+          const sctx=sc.getContext("2d");sctx.drawImage(img,sx,sy,side,side,0,0,16,16);
+          const d=sctx.getImageData(0,0,16,16).data;let r=0,g=0,b=0,n=0;
           for(let i=0;i<d.length;i+=4){if(d[i+3]<128)continue;r+=d[i];g+=d[i+1];b+=d[i+2];n++;}
-          if(n){col=`rgb(${Math.round(r/n)},${Math.round(g/n)},${Math.round(b/n)})`;}
-        }catch(err){/* image cross-origin ou svg — on garde la couleur par défaut */}
-        setForm((f)=>({...f,logo:url,color:col}));
+          if(n)col=`rgb(${Math.round(r/n)},${Math.round(g/n)},${Math.round(b/n)})`;
+        }catch(err){/* image cross-origin ou svg — pas de couleur extraite */}
+        resolve({dataUrl:cv.toDataURL("image/png"),color:col});
       };
-      img.onerror=()=>setForm((f)=>({...f,logo:url}));
-      img.src=url;
+      img.onerror=()=>reject(new Error("image invalide"));
+      img.src=reader.result;
     };
+    reader.onerror=reject;
     reader.readAsDataURL(file);
+  });
+  const onLogo=(e)=>{
+    const file=e.target.files&&e.target.files[0];if(!file)return;
+    cropLogoFile(file).then(({dataUrl,color})=>{
+      setForm((f)=>({...f,logo:dataUrl,color:color||f.color}));
+    }).catch(()=>toast("Image invalide"));
+  };
+  const onLogoAccount=(e)=>{
+    const file=e.target.files&&e.target.files[0];if(!file||!me)return;
+    cropLogoFile(file).then(({dataUrl})=>{
+      setMe((m)=>({...m,logo:dataUrl}));
+      supabase.from("companies").update({logo_url:dataUrl}).eq("id",me.id).then(()=>{});
+      logEvent("Logo de l'entreprise modifié");
+      toast("Logo mis à jour");
+    }).catch(()=>toast("Image invalide"));
   };
 
   const joinViaInvite=async()=>{
@@ -2906,7 +2930,7 @@ export default function Maillon(){
                 <div className="logoprev" style={{background:form.color}}>{form.logo?<img src={form.logo} alt="logo"/>:(form.name?form.name[0]:"?")}</div>
                 <div>
                   <label className="uplabel btn-ghost sm">{t("Importer votre logo")}<input type="file" accept="image/*" onChange={onLogo} style={{display:"none"}}/></label>
-                  <div className="uphint">{t("PNG, JPG ou SVG — carré de préférence.")}</div>
+                  <div className="uphint">{t("PNG, JPG ou SVG — recadré automatiquement en carré.")}</div>
                 </div>
               </div></div>
             <div className="uphint" style={{marginTop:4}}>{t("Tous les champs sont obligatoires.")}</div>
@@ -3951,6 +3975,16 @@ export default function Maillon(){
                 <div className="pcell"><div className="k">{t("Abonnement")}</div><div className="v" style={{color:me.membre?"var(--emerald)":"var(--ink)"}}>{me.planId==="gratuit"?me.plan:`${me.plan} · ${me.billing}`}</div></div>
               </div>
               <div className="profsec"><h5>{t("Pôle de réception des demandes")}</h5><p>{t("Les demandes de mise en relation adressées à votre entreprise arrivent aux pôles")} <b>{polesText(me.receptionPoles)}</b>.</p></div>
+              <div className="profsec">
+                <h5>{t("Logo de l'entreprise")}</h5>
+                <div className="logoup">
+                  <div className="logoprev" style={{background:me.color}}>{logoImg(me)}</div>
+                  <div>
+                    <label className="uplabel btn-ghost sm">{t("Changer le logo")}<input type="file" accept="image/*" onChange={onLogoAccount} style={{display:"none"}}/></label>
+                    <div className="uphint">{t("PNG, JPG ou SVG — recadré automatiquement en carré.")}</div>
+                  </div>
+                </div>
+              </div>
               <div className="profsec"><h5>{t("Présentation")}</h5><p>{me.desc}</p></div>
               <div className="profsec"><h5>{t("Ce que nous recherchons")}</h5>
                 <div className="seek" style={{marginTop:4}}>{me.seek.map((s)=><span key={s} className="pill seek">↳ {s}</span>)}</div></div>
