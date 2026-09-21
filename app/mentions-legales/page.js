@@ -4,7 +4,7 @@ export const metadata = { title: "Mentions légales" };
 
 export default function MentionsLegales() {
   return (
-    <LegalLayout title="Mentions légales" updated="4 septembre 2026">
+    <LegalLayout title="Mentions légales" updated="21 septembre 2026">
       <h2>Éditeur du site</h2>
       <p>
         Le site getmaillon.fr (« Maillon ») est édité par :<br />
@@ -12,6 +12,7 @@ export default function MentionsLegales() {
         SIRET : 102 531 068 00017<br />
         Siège social : 35 rue de la Mairie, 22150 Plouguenast-Langast, France<br />
         TVA non applicable, article 293 B du Code général des impôts<br />
+        Téléphone : <a href="tel:+33698753192">06 98 75 31 92</a><br />
         Contact : <a href="mailto:contact@getmaillon.fr">contact@getmaillon.fr</a>
       </p>
 
