@@ -58,6 +58,7 @@ const CSS = `
 .mln .bar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:rgba(251,250,247,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
 .mln .brand{display:flex;align-items:center;gap:9px;cursor:pointer;}
 .mln .nav{display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);padding:4px;border-radius:999px;}
+.mln .nav.subnav{display:inline-flex;width:fit-content;}
 .mln .nav button{font-size:13px;font-weight:600;padding:7px 14px;border-radius:999px;color:var(--slate);display:flex;align-items:center;gap:6px;transition:.12s;}
 .mln .nav button.on{background:var(--ink);color:#fff;}
 .mln .badge{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 5px;border-radius:999px;font-size:10.5px;font-weight:700;background:var(--coral);color:#fff;}
@@ -786,6 +787,7 @@ const TRANSLATIONS={en:{
   "Activer la double authentification":"Enable two-factor authentication",
   "Activité":"Business",
   "Actualités":"News",
+  "Calendrier":"Calendar",
   "Administrateur":"Administrator",
   "Adresse(s) email de réception":"Receiving email address(es)",
   "Affinité":"Affinity",
@@ -3089,12 +3091,9 @@ export default function Maillon(){
           <button className={view==="discover"?"on":""} onClick={()=>setView("discover")}><span className="lbl">{t("Découvrir")}</span></button>
           <button className={view==="requests"?"on":""} onClick={()=>setView("requests")}><span className="lbl">{t("Demandes")}</span>{visIncoming.length>0&&<span className="badge">{visIncoming.length}</span>}</button>
           <button className={view==="messages"?"on":""} onClick={()=>setView("messages")}><span className="lbl">{t("Messages")}</span>{connected.length>0&&<span className="badge">{connected.length}</span>}</button>
-          <button className={view==="lists"?"on":""} onClick={()=>setView("lists")}><span className="lbl">{t("Listes")}</span></button>
-          <button className={view==="emailing"?"on":""} onClick={()=>setView("emailing")}><span className="lbl">{t("Emailing")}</span></button>
-          <button className={view==="needs"?"on":""} onClick={()=>setView("needs")}><span className="lbl">{t("Besoins")}</span>{matchingNeeds.length>0&&<span className="badge">{matchingNeeds.length}</span>}</button>
-          <button className={view==="agenda"?"on":""} onClick={()=>setView("agenda")}><span className="lbl">{t("Événements")}</span>{roleEvents.length>0&&<span className="badge">{roleEvents.length}</span>}</button>
-          <button className={view==="library"?"on":""} onClick={()=>setView("library")}><span className="lbl">{t("Bibliothèque")}</span></button>
-          <button className={view==="blog"?"on":""} onClick={()=>setView("blog")}><span className="lbl">{t("Actualités")}</span></button>
+          <button className={(view==="emailing"||view==="lists")?"on":""} onClick={()=>setView("emailing")}><span className="lbl">{t("Emailing")}</span></button>
+          <button className={(view==="agenda"||view==="library")?"on":""} onClick={()=>setView("agenda")}><span className="lbl">{t("Événements")}</span>{roleEvents.length>0&&<span className="badge">{roleEvents.length}</span>}</button>
+          <button className={(view==="blog"||view==="needs")?"on":""} onClick={()=>setView("blog")}><span className="lbl">{t("Actualités")}</span>{matchingNeeds.length>0&&<span className="badge">{matchingNeeds.length}</span>}</button>
           <button className={"teamnav"+(chatOpen?" on":"")} onClick={()=>{setChatPane("list");setChatOpen(true);}}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 7V5a4 4 0 0 1 8 0v2M3 7h10v6H3z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/></svg>
             <span className="lbl">{t("Chat")}</span>
@@ -3481,6 +3480,10 @@ export default function Maillon(){
         };
         return (
         <div className="wrap"><div className="page">
+          <div className="nav subnav" style={{marginBottom:18}}>
+            <button className={view==="agenda"?"on":""} onClick={()=>setView("agenda")}><span className="lbl">{t("Calendrier")}</span></button>
+            <button className={view==="library"?"on":""} onClick={()=>setView("library")}><span className="lbl">{t("Bibliothèque")}</span></button>
+          </div>
           <h2 className="ptitle disp">{t("Événements")}</h2>
           <p className="psub">{t("Toutes vos visios à venir avec les entreprises connectées, ainsi que vos événements libres, classés par date.")}{!isAdmin&&` ${t("En tant que")} ${t(role)}, ${t("vous ne voyez que les visios de votre service.")}`}</p>
           <div style={{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap"}}>
@@ -3558,6 +3561,10 @@ export default function Maillon(){
       {/* BIBLIOTHÈQUE — registre de toutes les actions */}
       {view==="library"&&(
         <div className="wrap"><div className="page">
+          <div className="nav subnav" style={{marginBottom:18}}>
+            <button className={view==="agenda"?"on":""} onClick={()=>setView("agenda")}><span className="lbl">{t("Calendrier")}</span></button>
+            <button className={view==="library"?"on":""} onClick={()=>setView("library")}><span className="lbl">{t("Bibliothèque")}</span></button>
+          </div>
           <h2 className="ptitle disp">{t("Bibliothèque")}</h2>
           <p className="psub">{t("Le registre de toutes les actions effectuées sur votre espace : demandes envoyées, mises en relation, visios, publications…")}</p>
           <div className="toolbar">
@@ -3616,6 +3623,10 @@ export default function Maillon(){
         const openCampaign=()=>{setCampaignForm({name:"",subject:"",body:"",list:"all",html:""});setSelectedIds(allListedCompanies.map((c)=>c.id));setCampaignOpen(true);};
         return(
         <div className="wrap"><div className="page">
+          <div className="nav subnav" style={{marginBottom:18}}>
+            <button className={view==="emailing"?"on":""} onClick={()=>setView("emailing")}><span className="lbl">{t("Emailing")}</span></button>
+            <button className={view==="lists"?"on":""} onClick={()=>setView("lists")}><span className="lbl">{t("Listes")}</span></button>
+          </div>
           <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
             <div><h2 className="ptitle disp">{t("Emailing")}</h2>
               <p className="psub" style={{marginBottom:0}}>{t("Envoyez des campagnes uniquement aux entreprises qui ont accepté de les recevoir, au moment de la mise en relation.")}</p></div>
@@ -3753,6 +3764,10 @@ export default function Maillon(){
       {/* LISTES DE DIFFUSION */}
       {view==="lists"&&(()=>{const eligible=connected.filter((c)=>c.emailingConsent);return(
         <div className="wrap"><div className="page">
+          <div className="nav subnav" style={{marginBottom:18}}>
+            <button className={view==="emailing"?"on":""} onClick={()=>setView("emailing")}><span className="lbl">{t("Emailing")}</span></button>
+            <button className={view==="lists"?"on":""} onClick={()=>setView("lists")}><span className="lbl">{t("Listes")}</span></button>
+          </div>
           <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
             <div><h2 className="ptitle disp">{t("Listes de diffusion")}</h2>
               <p className="psub" style={{marginBottom:0}}>{t("Regroupez vos entreprises abonnées dans des listes réutilisables (ex : « Mail du jeudi matin ») pour ne plus avoir à tout recocher à chaque campagne.")}</p></div>
@@ -3841,6 +3856,10 @@ export default function Maillon(){
       {/* MUR DE BESOINS */}
       {view==="needs"&&(
         <div className="wrap"><div className="page">
+          <div className="nav subnav" style={{marginBottom:18}}>
+            <button className={view==="blog"?"on":""} onClick={()=>setView("blog")}><span className="lbl">{t("Actualités")}</span></button>
+            <button className={view==="needs"?"on":""} onClick={()=>setView("needs")}><span className="lbl">{t("Besoins")}</span></button>
+          </div>
           <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
             <div><h2 className="ptitle disp">{t("Mur de besoins")}</h2>
               <p className="psub" style={{marginBottom:0}}>{t("Exprimez ce que vous cherchez, ou proposez vos services aux entreprises qui cherchent. La mise en relation vient à vous.")}</p></div>
@@ -4181,6 +4200,10 @@ export default function Maillon(){
       {/* BLOG CENTRAL */}
       {view==="blog"&&(
         <div className="wrap"><div className="page">
+          <div className="nav subnav" style={{marginBottom:18}}>
+            <button className={view==="blog"?"on":""} onClick={()=>setView("blog")}><span className="lbl">{t("Actualités")}</span></button>
+            <button className={view==="needs"?"on":""} onClick={()=>setView("needs")}><span className="lbl">{t("Besoins")}</span></button>
+          </div>
           <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
             <div><h2 className="ptitle disp">{t("Actualités")}</h2>
               <p className="psub" style={{marginBottom:0}}>{t("Le fil commun des entreprises de Maillon. La lecture est ouverte à tous ; publier demande une adhésion.")}</p></div>
